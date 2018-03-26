@@ -5,8 +5,9 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include "isce/core/Poly1d.h"
-#include "gtest/gtest.h"
+#include <pyre/journal.h>
+#include <gtest/gtest.h>
+#include <isce/core.h>
 
 
 struct Poly1DTest : public ::testing::Test {
@@ -15,7 +16,13 @@ struct Poly1DTest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "Poly1D::TearDown sees failures" << std::endl;
+            // create testerror channel
+            pyre::journal::firewall_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "Poly1D::TearDown sees " << fails << " failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;
@@ -36,7 +43,7 @@ TEST_F(Poly1DTest, Constant) {
         double value = poly.eval(i*1.0);
         EXPECT_DOUBLE_EQ(value, refval);
     }
-    
+
     fails += ::testing::Test::HasFailure();
 }
 

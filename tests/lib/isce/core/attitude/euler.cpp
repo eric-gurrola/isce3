@@ -9,11 +9,28 @@
 #include <cstdio>
 #include <cmath>
 #include <gtest/gtest.h>
-
-#include "isce/core/Attitude.h"
+#include <portinfo>
+#include <pyre/journal.h>
+#include <isce/core.h>
 
 
 struct EulerTest : public ::testing::Test {
+    unsigned fails;
+    virtual void SetUp() {
+        fails = 0;
+    }
+    virtual void TearDown() {
+        if (fails > 0) {
+            // create testerror channel
+            pyre::journal::error_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "euler::TearDown sees " << fails << " failures"
+                << pyre::journal::endl;
+        }
+    }
+
 
     typedef isce::core::EulerAngles EulerAngles;
 
@@ -48,7 +65,7 @@ struct EulerTest : public ::testing::Test {
             };
 
             // Set tolerance
-            tol = 1.0e-10;
+            tol = 1.0e-20;
         }
 
         ~EulerTest() {
@@ -64,6 +81,7 @@ TEST_F(EulerTest, CheckYPR) {
             ASSERT_NEAR(R_ypr_ref[i][j], R_ypr[i][j], tol);
         }
     }
+    fails += ::testing::Test::HasFailure();
 }
 
 TEST_F(EulerTest, CheckRPY) {
@@ -73,6 +91,7 @@ TEST_F(EulerTest, CheckRPY) {
             ASSERT_NEAR(R_rpy_ref[i][j], R_rpy[i][j], tol);
         }
     }
+    fails += ::testing::Test::HasFailure();
 }
 
 

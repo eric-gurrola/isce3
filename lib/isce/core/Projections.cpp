@@ -10,20 +10,11 @@
 #include <vector>
 #include <iostream>
 #include "Projections.h"
-using isce::core::CEA;
-using isce::core::Geocent;
-using isce::core::PolarStereo;
-using isce::core::ProjectionBase;
-using isce::core::UTM;
-using std::cout;
-using std::endl;
-using std::invalid_argument;
-using std::string;
-using std::to_string;
-using std::vector;
 
 /* * * * * * * * * * * * * * * * * * * * Geocent Projection * * * * * * * * * * * * * * * * * * * */
-int Geocent::forward(const vector<double> &llh, vector<double>& xyz) const {
+int
+isce::core::Geocent::
+forward(const std::vector<double> &llh, std::vector<double>& xyz) const {
     /*
      * This is to transform LLH to Geocent, which is just a pass-through to latLonToXyz.
      *
@@ -33,12 +24,14 @@ int Geocent::forward(const vector<double> &llh, vector<double>& xyz) const {
      * swapped (resolving the discrepancy and preserving the inputs).
      */
 
-    vector<double> llh_swapped = {llh[1], llh[0], llh[2]};
+    std::vector<double> llh_swapped = {llh[1], llh[0], llh[2]};
     ellipse.latLonToXyz(llh_swapped, xyz);
     return 0;
 }
 
-int Geocent::inverse(const vector<double> &xyz, vector<double>& llh) const {
+int
+isce::core::Geocent::
+inverse(const std::vector<double> &xyz, std::vector<double>& llh) const {
     /*
      * This is to transform Geocent to LLH, which is just a pass-through to xyzToLatLon. As with
      * ::forward, there's an issue with internal LLH ordering (lat/lon vs lon/lat), so we swap the
@@ -96,7 +89,8 @@ double clenS(const double *a, int size, double real, double imag, double &R, dou
     return R;
 }
 
-UTM::UTM(int code) : ProjectionBase(code) {
+isce::core::UTM::
+UTM(int code) : isce::core::ProjectionBase(code) {
     /*
      * Value constructor, delegates to base constructor before continuing with UTM-specific setup
      * code (previously contained in a private _setup() method but moved given that _setup() was
@@ -109,10 +103,10 @@ UTM::UTM(int code) : ProjectionBase(code) {
         zone = _epsgcode - 32700;
         isnorth = false;
     } else {
-        string errstr = "In UTM::UTM - Invalid EPSG Code for UTM Projection. Received ";
-        errstr += to_string(_epsgcode);
+        std::string errstr = "In UTM::UTM - Invalid EPSG Code for UTM Projection. Received ";
+        errstr += std::to_string(_epsgcode);
         errstr += ", expected in ranges (32600,32660] or (32700,32760].";
-        throw invalid_argument(errstr);
+        throw std::invalid_argument(errstr);
     }
 
     lon0 = ((zone - 0.5) * (M_PI / 30.)) - M_PI;
@@ -176,7 +170,9 @@ UTM::UTM(int code) : ProjectionBase(code) {
     Zb = -Qn * (Z + clens(gtu, 6, 2*Z));
 }
 
-int UTM::forward(const vector<double> &llh, vector<double> &utm) const {
+int
+isce::core::UTM::
+forward(const std::vector<double> &llh, std::vector<double> &utm) const {
     /*
      * Transform from LLH to UTM.
      */
@@ -206,7 +202,9 @@ int UTM::forward(const vector<double> &llh, vector<double> &utm) const {
     }
 }
 
-int UTM::inverse(const vector<double> &utm, vector<double> &llh) const {
+int
+isce::core::UTM::
+inverse(const std::vector<double> &utm, std::vector<double> &llh) const {
     /*
      * Transform from UTM to LLH.
      */
@@ -250,7 +248,8 @@ double pj_tsfn(double phi, double sinphi, double e) {
     return tan(.5 * ((.5*M_PI) - phi)) / pow((1. - sinphi) / (1. + sinphi), .5*e);
 }
 
-PolarStereo::PolarStereo(int code) : ProjectionBase(code) {
+isce::core::PolarStereo::
+PolarStereo(int code) : isce::core::ProjectionBase(code) {
     /*
      * Set up various parameters for polar stereographic projection. Currently only EPSG:3031
      * (Antarctic) and EPSG:3413 (Greenland) are supported.
@@ -267,19 +266,21 @@ PolarStereo::PolarStereo(int code) : ProjectionBase(code) {
         lat_ts = 70. * (M_PI / 180.);
         lon0 = -45. * (M_PI / 180.);
     } else {
-        string errstr = "In PolarStereo::PolarStereo - Invalid EPSG Code for Polar Stereographic ";
+        std::string errstr = "In PolarStereo::PolarStereo - Invalid EPSG Code for Polar Stereographic ";
         errstr += "projection. Received ";
-        errstr += to_string(_epsgcode);
+        errstr += std::to_string(_epsgcode);
         errstr += ", expected either 3031 (Antarctic) or 3413 (Greenland). [NOTE: Other codes are ";
         errstr += "currently not supported]";
-        throw invalid_argument(errstr);
+        throw std::invalid_argument(errstr);
     }
     e = sqrt(ellipse.e2);
     akm1 = cos(lat_ts) / pj_tsfn(lat_ts, sin(lat_ts), e);
     akm1 *= ellipse.a / sqrt(1. - (pow(e,2) * pow(sin(lat_ts),2)));
 }
 
-int PolarStereo::forward(const vector<double> &llh, vector<double> &out) const {
+int
+isce::core::PolarStereo::
+forward(const std::vector<double> &llh, std::vector<double> &out) const {
     /*
      * Transform from LLH to Polar Stereo.
      */
@@ -295,7 +296,9 @@ int PolarStereo::forward(const vector<double> &llh, vector<double> &out) const {
     return 0;
 }
 
-int PolarStereo::inverse(const vector<double> &ups, vector<double> &llh) const {
+int
+isce::core::PolarStereo::
+inverse(const std::vector<double> &ups, std::vector<double> &llh) const {
     /*
      * Transform from Polar Stereo to LLH.
      */
@@ -328,7 +331,8 @@ double pj_qsfn(double sinphi, double e, double one_es) {
     return one_es * ((sinphi / (1. - pow(con,2))) - ((.5 / e) * log((1. - con) / (1. + con))));
 }
 
-CEA::CEA() : ProjectionBase(6933) {
+isce::core::CEA::
+CEA() : isce::core::ProjectionBase(6933) {
     /*
      * Set up parameters for equal area projection.
      */
@@ -342,7 +346,9 @@ CEA::CEA() : ProjectionBase(6933) {
     qp = pj_qsfn(1., e, one_es);
 }
 
-int CEA::forward(const vector<double> &llh, vector<double> &enu) const {
+int
+isce::core::CEA::
+forward(const std::vector<double> &llh, std::vector<double> &enu) const {
     /*
      * Transform from LLH to CEA.
      */
@@ -352,7 +358,9 @@ int CEA::forward(const vector<double> &llh, vector<double> &enu) const {
     return 0;
 }
 
-int CEA::inverse(const vector<double> &enu, vector<double> &llh) const {
+int
+isce::core::CEA::
+inverse(const std::vector<double> &enu, std::vector<double> &llh) const {
     /*
      * Transform from LLH to CEA.
      */
@@ -366,8 +374,8 @@ int CEA::inverse(const vector<double> &enu, vector<double> &llh) const {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /* * * * * * * * * * * * * * * * * * * Projection Transformer * * * * * * * * * * * * * * * * * * */
-int projTransform(ProjectionBase &in, ProjectionBase &out, const vector<double> &inpts,
-                  vector<double> &outpts) {
+int projTransform(isce::core::ProjectionBase &in, isce::core::ProjectionBase &out,
+                  const std::vector<double> &inpts, std::vector<double> &outpts) {
     if (in._epsgcode == out._epsgcode) {
         // If input/output projections are the same don't even bother processing
         outpts = inpts;
@@ -379,7 +387,7 @@ int projTransform(ProjectionBase &in, ProjectionBase &out, const vector<double> 
         // Consider case where output is Lat/Lon
         return -out.inverse(inpts, outpts);
     } else {
-        vector<double> temp(3);
+        std::vector<double> temp(3);
         if (in.inverse(inpts, temp) != 0) return -2;
         if (out.forward(temp, outpts) != 0) return 2;
     }

@@ -11,14 +11,10 @@
 #include <vector>
 #include "Constants.h"
 #include "LinAlg.h"
-using isce::core::LinAlg;
-using std::invalid_argument;
-using std::string;
-using std::to_string;
-using std::vector;
 
-
-void LinAlg::cross(const vector<double> &u, const vector<double> &v, vector<double> &w) {
+void
+isce::core::
+LinAlg::cross(const std::vector<double> &u, const std::vector<double> &v, std::vector<double> &w) {
     /*
      *  Calculate the vector cross product of two 1x3 vectors (u, v) and store the resulting vector
      *  in w.
@@ -34,7 +30,9 @@ void LinAlg::cross(const vector<double> &u, const vector<double> &v, vector<doub
     w[2] = (u[0] * v[1]) - (u[1] * v[0]);
 }
 
-double LinAlg::dot(const vector<double> &v, const vector<double> &w) {
+double
+isce::core::
+LinAlg::dot(const std::vector<double> &v, const std::vector<double> &w) {
     /*
      *  Calculate the vector dot product of two 1x3 vectors and return the result.
      */
@@ -46,8 +44,10 @@ double LinAlg::dot(const vector<double> &v, const vector<double> &w) {
     return (v[0] * w[0]) + (v[1] * w[1]) + (v[2] * w[2]);
 }
 
-void LinAlg::linComb(double k1, const vector<double> &u, double k2, const vector<double> &v,
-                     vector<double> &w) {
+void
+isce::core::
+LinAlg::linComb(double k1, const std::vector<double> &u, double k2, const std::vector<double> &v,
+                std::vector<double> &w) {
     /*
      *  Calculate the linear combination of two pairs of scalars and 1x3 vectors and store the
      *  resulting vector in w.
@@ -61,8 +61,10 @@ void LinAlg::linComb(double k1, const vector<double> &u, double k2, const vector
     for (int i=0; i<3; i++) w[i] = (k1 * u[i]) + (k2 * v[i]);
 }
 
-void LinAlg::matMat(const vector<vector<double>> &a, const vector<vector<double>> &b,
-                    vector<vector<double>> &c) {
+void
+isce::core::
+LinAlg::matMat(const std::vector<std::vector<double>> &a, const std::vector<std::vector<double>> &b,
+               std::vector<std::vector<double>> &c) {
     /*
      *  Calculate the matrix product of two 3x3 matrices and store the resulting matrix in c.
      */
@@ -79,7 +81,10 @@ void LinAlg::matMat(const vector<vector<double>> &a, const vector<vector<double>
     }
 }
 
-void LinAlg::matVec(const vector<vector<double>> &t, const vector<double> &v, vector<double> &w) {
+void
+isce::core::
+LinAlg::matVec(const std::vector<std::vector<double>> &t, const std::vector<double> &v,
+               std::vector<double> &w) {
     /*
      *  Calculate the matrix product of a 1x3 vector with a 3x3 matrix and store the resulting
      *  vector in w.
@@ -93,7 +98,9 @@ void LinAlg::matVec(const vector<vector<double>> &t, const vector<double> &v, ve
     for (int i=0; i<3; i++) w[i] = (t[i][0] * v[0]) + (t[i][1] * v[1]) + (t[i][2] * v[2]);
 }
 
-double LinAlg::norm(const vector<double> &v) {
+double
+isce::core::
+LinAlg::norm(const std::vector<double> &v) {
     /*
      *  Calculate the magnitude of a 1x3 vector and return the result
      */
@@ -104,7 +111,9 @@ double LinAlg::norm(const vector<double> &v) {
     return sqrt(pow(v[0], 2.) + pow(v[1], 2.) + pow(v[2], 2.));
 }
 
-void LinAlg::tranMat(const vector<vector<double>> &a, vector<vector<double>> &b) {
+void
+isce::core::
+LinAlg::tranMat(const std::vector<std::vector<double>> &a, std::vector<std::vector<double>> &b) {
     /*
      *  Transpose a 3x3 matrix and store the resulting matrix in b.
      */
@@ -121,7 +130,9 @@ void LinAlg::tranMat(const vector<vector<double>> &a, vector<vector<double>> &b)
     }
 }
 
-void LinAlg::unitVec(const vector<double> &u, vector<double> &v) {
+void
+isce::core::
+LinAlg::unitVec(const std::vector<double> &u, std::vector<double> &v) {
     /*
      *  Calculate the normalized unit vector from a 1x3 vector and store the resulting vector in v.
      */
@@ -136,7 +147,9 @@ void LinAlg::unitVec(const vector<double> &u, vector<double> &v) {
     }
 }
 
-void LinAlg::enuBasis(double lat, double lon, vector<vector<double>> &enumat) {
+void
+isce::core::
+LinAlg::enuBasis(double lat, double lon, std::vector<std::vector<double>> &enumat) {
     /*
      *
      */

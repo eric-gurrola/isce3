@@ -6,17 +6,9 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include "isce/core/Constants.h"
-#include "isce/core/Orbit.h"
-#include "gtest/gtest.h"
-using isce::core::orbitInterpMethod;
-using isce::core::HERMITE_METHOD;
-using isce::core::LEGENDRE_METHOD;
-using isce::core::SCH_METHOD;
-using isce::core::Orbit;
-using std::cout;
-using std::endl;
-using std::vector;
+#include <pyre/journal.h>
+#include <gtest/gtest.h>
+#include <isce/core.h>
 
 struct OrbitTest : public ::testing::Test {
     virtual void SetUp() {
@@ -24,7 +16,13 @@ struct OrbitTest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "Orbit::TearDown sees failures" << std::endl;
+            // create testerror channel
+            pyre::journal::firewall_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "Orbit::TearDown sees " << fails << " failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;
@@ -37,8 +35,8 @@ struct OrbitTest : public ::testing::Test {
     EXPECT_EQ(a[2], b[2]);
 
 
-void makeLinearSV(double dt, vector<double> &opos, vector<double> &ovel, vector<double> &pos,
-                  vector<double> &vel) {
+void makeLinearSV(double dt, std::vector<double> &opos, std::vector<double> &ovel,
+                  std::vector<double> &pos, std::vector<double> &vel) {
     pos = {opos[0] + (dt * ovel[0]), opos[1] + (dt * ovel[1]), opos[2] + (dt * ovel[2])};
     vel = ovel;
 }
@@ -48,12 +46,12 @@ TEST_F(OrbitTest,Reverse) {
      * Test linear orbit.
      */
 
-    Orbit orb(1,11);
+    isce::core::Orbit orb(1,11);
     double t = 1000.;
     double t1;
-    vector<double> opos = {0., 0., 0.};
-    vector<double> ovel = {4000., -1000., 4500.};
-    vector<double> pos(3), vel(3);
+    std::vector<double> opos = {0., 0., 0.};
+    std::vector<double> ovel = {4000., -1000., 4500.};
+    std::vector<double> pos(3), vel(3);
 
     // Create straight-line orbit with 11 state vectors, each 10 s apart
     for (int i=0; i<11; i++) {
@@ -62,7 +60,7 @@ TEST_F(OrbitTest,Reverse) {
     }
 
 
-    Orbit newOrb(1,0);
+    isce::core::Orbit newOrb(1,0);
 
     for(int i=10; i>=0; i--)
     {
@@ -89,12 +87,12 @@ TEST_F(OrbitTest,OutOfOrder) {
      * Test linear orbit.
      */
 
-    Orbit orb(1,11);
+    isce::core::Orbit orb(1,11);
     double t = 1000.;
     double t1;
-    vector<double> opos = {0., 0., 0.};
-    vector<double> ovel = {4000., -1000., 4500.};
-    vector<double> pos(3), vel(3);
+    std::vector<double> opos = {0., 0., 0.};
+    std::vector<double> ovel = {4000., -1000., 4500.};
+    std::vector<double> pos(3), vel(3);
 
     // Create straight-line orbit with 11 state vectors, each 10 s apart
     for (int i=0; i<11; i++) {
@@ -103,7 +101,7 @@ TEST_F(OrbitTest,OutOfOrder) {
     }
 
 
-    Orbit newOrb(1,0);
+    isce::core::Orbit newOrb(1,0);
 
     for(int i=10; i>=0; i-=2)
     {

@@ -17,7 +17,7 @@ all: test clean
 test: $(TESTS)
 	@echo "testing:"
 	@for testcase in $(TESTS); do { \
-            echo "    $${testcase}" ; ./$${testcase} || exit 1 ; \
+            echo "    $${testcase}" ; ./$${testcase} ; \
             } done
 
 # build

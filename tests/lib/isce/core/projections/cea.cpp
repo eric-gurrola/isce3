@@ -6,16 +6,14 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include "isce/core/Projections.h"
+#include <pyre/journal.h>
+#include "isce/core.h"
 #include "gtest/gtest.h"
-using isce::core::CEA;
-using std::cout;
-using std::endl;
+
 using std::vector;
 
 
-
-CEA proj;
+isce::core::CEA proj;
 
 struct CEATest : public ::testing::Test {
     virtual void SetUp() {
@@ -23,12 +21,17 @@ struct CEATest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "CEA::TearDown sees failures" << std::endl;
+            // create testerror channel
+            pyre::journal::error_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "CEA::TearDown sees " << fails << " failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;
 };
-
 
 #define ceaTest(name,p,q,r,x,y,z)       \
     TEST_F(CEATest, name) {       \

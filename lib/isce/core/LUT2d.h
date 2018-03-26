@@ -19,16 +19,16 @@ namespace isce { namespace core {
         std::vector<std::vector<T>> values;
 
         LUT2d() = default;
-        LUT2d(std::vector<double> &_xidx, std::vector<double> &_yidx, 
+        LUT2d(std::vector<double> &_xidx, std::vector<double> &_yidx,
               std::vector<std::vector<T>> &_vals) : x_index(_xidx), y_index(_yidx), values(_vals) {}
         T eval(double, double) const;
     };
 
     // Forward declarations for the constructor
-    template LUT2d<double>::LUT2d(std::vector<double>&,std::vector<double>&,
-                                  std::vector<std::vector<double>>&);
-    template LUT2d<std::complex<double>>::LUT2d(std::vector<double>&,std::vector<double>&,
-                                                std::vector<std::vector<std::complex<double>>>&);
+//emg    template LUT2d<double>::LUT2d(std::vector<double>&,std::vector<double>&,
+//emg                                  std::vector<std::vector<double>>&);
+//emg    template LUT2d<std::complex<double>>::LUT2d(std::vector<double>&,std::vector<double>&,
+//emg                                                std::vector<std::vector<std::complex<double>>>&);
 }}
 
 #endif

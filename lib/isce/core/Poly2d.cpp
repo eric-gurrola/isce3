@@ -4,13 +4,14 @@
 //
 
 #include <iostream>
+#include <pyre/journal.h>
+
 #include "Constants.h"
 #include "Poly2d.h"
-using isce::core::Poly2d;
-using std::cout;
-using std::endl;
 
-double Poly2d::eval(double azi, double rng) const {
+double
+isce::core::Poly2d::
+eval(double azi, double rng) const {
 
     double xval = (rng - rangeMean) / rangeNorm;
     double yval = (azi - azimuthMean) / azimuthNorm;
@@ -27,12 +28,25 @@ double Poly2d::eval(double azi, double rng) const {
     return val;
 }
 
-void Poly2d::printPoly() const {
-    cout << "Polynomial Order: " << azimuthOrder << " - by - " << rangeOrder << endl;
+void
+isce::core::Poly2d::
+printPoly() const {
+    // make a channel
+    pyre::journal::debug_t channel("isce.core.debug");
+    // print information
+    channel
+        << pyre::journal::at(__HERE__)
+        << "Polynomial order (azimuth, range): "
+        << azimuthOrder
+        << ", "
+        << rangeOrder
+        << pyre::journal::newline;
+
     for (int i=0; i<=azimuthOrder; i++) {
         for (int j=0; j<=rangeOrder; j++) {
-            cout << getCoeff(i,j) << " ";
+            channel << getCoeff(i,j) << " ";
         }
-        cout << endl;
+        channel << pyre::journal::newline;
     }
+    channel << pyre::journal::endl;
 }

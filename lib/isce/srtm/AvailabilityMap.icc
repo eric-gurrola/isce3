@@ -1,0 +1,71 @@
+// -*- C++ -*-
+//
+// michael a.g. aïvázis <michael.aivazis@para-sim.com>
+// (c) 2003-2018 all rights reserved
+//
+
+// code guard
+#if !defined(isce_srtm_AvailabilityMap_icc)
+#error This header file contains implementation details of class isce::srtm::Image
+#endif
+
+
+// meta-methods
+isce::srtm::AvailabilityMap::
+AvailabilityMap(uri_type uri) :
+    _grid { uri, {{360u, 180u}, {1u, 0u}} }
+{}
+
+
+// interface
+// size
+auto
+isce::srtm::AvailabilityMap::
+size() const
+{
+    // my tile knows
+    return _grid.layout().size();
+}
+
+
+// grant write access to the tile status at {offset}
+auto &
+isce::srtm::AvailabilityMap::
+operator[](size_type offset)
+{
+    // ask my grid
+    return _grid[offset];
+}
+
+
+// grant read access to the tile status at {offset}
+auto
+isce::srtm::AvailabilityMap::
+operator[](size_type offset) const
+{
+    // ask my grid
+    return _grid[offset];
+}
+
+
+// grant write access to the tile status at {index}
+auto &
+isce::srtm::AvailabilityMap::
+operator[](const index_type & index)
+{
+    // ask my grid
+    return _grid[index];
+}
+
+
+// grant read access to the tile status at {index}
+auto
+isce::srtm::AvailabilityMap::
+operator[](const index_type & index) const
+{
+    // ask my grid
+    return _grid[index];
+}
+
+
+// end of file

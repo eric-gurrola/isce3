@@ -1,20 +1,19 @@
 # -*- Makefile -*-
 #
-# eric m. gurrola
+# eric m. gurrola <eric.m.gurrola@jpl.nasa.gov>
 # jet propulsion lab/california institute of technology
 # (c) 2017 all rights reserved
 #
 
 
-# get the global defaults
+# project defaults
 include isce.def
 
 # the list of directories to visit
 RECURSE_DIRS = \
     isce \
 
-#--------------------------------------------------------------------------
-# the recursive targets
+# the standard targets
 
 all:
 	BLD_ACTION="all" $(MM) recurse
@@ -34,34 +33,10 @@ export::
 release::
 	BLD_ACTION="release" $(MM) recurse
 
-#--------------------------------------------------------------------------
 #  shortcuts to building in subdirectories
+.PHONY: $(RECURSE_DIRS)
 
-.PHONY: bin defaults doc examples tests
-
-bin:
-	(cd bin; $(MM))
-
-defaults:
-	(cd defaults; $(MM))
-
-doc:
-	(cd doc; $(MM))
-
-examples:
-	(cd examples; $(MM))
-
-extensions:
-	(cd extensions; $(MM))
-
-packages:
-	(cd packages; $(MM))
-
-tests:
-	(cd tests; $(MM))
-
-users:
-	(cd users; $(MM))
-
+$(RECURSE_DIRS):
+	(cd $@; $(MM))
 
 # end of file

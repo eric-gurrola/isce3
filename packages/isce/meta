@@ -1,0 +1,53 @@
+# -*- Python -*-
+# -*- coding: utf-8 -*-
+#
+# michael a.g. aïvázis <michael.aivazis@para-sim.com>
+# NASA Jet Propulsion Laboratory/Caltech Institute of Technology
+# (c) 2003-2018 all rights reserved
+#
+
+# expansion placeholders
+date = "TODAY"
+major = MAJOR
+minor = MINOR
+revision = REVISION
+
+
+# assemble the version tuple
+version = (major, minor, revision)
+
+
+# decorations for the help system
+copyright = """
+    (c) 2003-YEAR NASA Jet Propulsion Laboratory/
+    California Institute of Technology
+    ALL RIGHTS RESERVED
+"""
+
+banner = f"""
+    isce {major}.{minor} revision {revision}
+""" + copyright
+
+header = banner + """
+authors:
+    Piyush Agram        <piyush.agram@jpl.nasa.gov>
+    Michael Aïvázis     <michael.aivazis@para-sim.com>
+    Joshua Cohen        <joshua.cohen@jpl.nasa.gov>
+    Heresh Fatahi       <heresh.fattahi@jpl.nasa.gov>
+    Eric Gurrola        <eric.m.gurrola@jpl.nasa.gov>
+    Marco Lavalle       <marco.lavalle@jpl.nasa.gov>
+    Brian Riel          <bryan.v.riel@jpl.nasa.gov>
+    Paul Rosen          <paul.a.rosen@jpl.nasa.gov>
+"""
+
+license = header + """
+license:
+    The complete usage terms can be found in the file LICENSE.txt
+"""
+
+acknowledgments = header + """
+acknowledgments:
+"""
+
+
+# end of file

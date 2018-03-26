@@ -22,6 +22,8 @@ PACKAGES = \
     poly \
     projections \
     serialization \
+#    attitude \
+#    doppler \
 
 # the standard targets
 all:

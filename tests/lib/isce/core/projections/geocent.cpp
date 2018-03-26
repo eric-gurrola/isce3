@@ -6,8 +6,10 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include "isce/core/Projections.h"
-#include "gtest/gtest.h"
+#include <portinfo>
+#include <pyre/journal.h>
+#include <gtest/gtest.h>
+#include <isce/core.h>
 
 using isce::core::Geocent;
 using std::cout;
@@ -25,7 +27,13 @@ struct GeocentTest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "Geocent::TearDown sees failures" << std::endl;
+            // create test error channel
+            pyre::journal::error_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "Geocent::TearDown sees " << fails << " failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;

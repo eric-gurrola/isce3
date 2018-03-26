@@ -11,22 +11,16 @@
 #include "LinAlg.h"
 #include "Peg.h"
 #include "Pegtrans.h"
-using std::vector;
-using isce::core::Baseline;
-using isce::core::LinAlg;
-using isce::core::orbitInterpMethod;
-using isce::core::HERMITE_METHOD;
-using isce::core::Peg;
-using isce::core::Pegtrans;
 
-void Baseline::init() {
+
+void isce::core::Baseline::init() {
     /*
      * Initialization function to compute look vector and set basis vectors.
      */
     // Set orbit method
-    orbit_method = HERMITE_METHOD;
+    orbit_method = isce::core::HERMITE_METHOD;
     // Initialize basis for the first orbit using the middle of the orbit
-    vector<double> _1(3), _2(3);
+    std::vector<double> _1(3), _2(3);
     double tmid;
     orbit1.getStateVector(orbit1.nVectors/2, tmid, _1, _2);
     initBasis(tmid);
@@ -34,47 +28,47 @@ void Baseline::init() {
     calculateLookVector(tmid);
 }
 
-void Baseline::initBasis(double t) {
+void isce::core::Baseline::initBasis(double t) {
     /*
      * For a given time, calculate an orthogonal basis for cross-track and velocity directions for
      * orbit1.
      */
     // Local working vectors
-    vector<double> xyz(3), vel(3), crossvec(3), vertvec(3), vel_norm(3);
+    std::vector<double> xyz(3), vel(3), crossvec(3), vertvec(3), vel_norm(3);
     // Interpolate orbit to azimuth time
     orbit1.interpolate(t, xyz, vel, orbit_method);
     refxyz = xyz;
-    velocityMagnitude = LinAlg::norm(vel);
+    velocityMagnitude = isce::core::LinAlg::norm(vel);
     // Get normalized vectors
-    LinAlg::unitVec(xyz, rhat);
-    LinAlg::unitVec(vel, vel_norm);
+    isce::core::LinAlg::unitVec(xyz, rhat);
+    isce::core::LinAlg::unitVec(vel, vel_norm);
     // Compute cross-track vectors
-    LinAlg::cross(rhat, vel_norm, crossvec);
-    LinAlg::unitVec(crossvec, chat);
+    isce::core::LinAlg::cross(rhat, vel_norm, crossvec);
+    isce::core::LinAlg::unitVec(crossvec, chat);
     // Compute velocity vector perpendicular to cross-track vector
-    LinAlg::cross(chat, rhat, vertvec);
-    LinAlg::unitVec(vertvec, vhat);
+    isce::core::LinAlg::cross(chat, rhat, vertvec);
+    isce::core::LinAlg::unitVec(vertvec, vhat);
 }
 
-vector<double> Baseline::calculateBasisOffset(const vector<double> &position) const {
+std::vector<double> isce::core::Baseline::calculateBasisOffset(const std::vector<double> &position) const {
     /*
      * Given a position vector, calculate offset between reference position and that vector,
      * projected in the reference basis.
      */
-    vector<double> dx = {position[0] - refxyz[0],
+    std::vector<double> dx = {position[0] - refxyz[0],
                          position[1] - refxyz[1],
                          position[2] - refxyz[2]};
-    vector<double> off = {LinAlg::dot(dx, vhat),
-                          LinAlg::dot(dx, rhat),
-                          LinAlg::dot(dx, chat)};
+    std::vector<double> off = {isce::core::LinAlg::dot(dx, vhat),
+                          isce::core::LinAlg::dot(dx, rhat),
+                          isce::core::LinAlg::dot(dx, chat)};
     return off;
 }
 
-void Baseline::computeBaselines() {
+void isce::core::Baseline::computeBaselines() {
     /*
      * Compute horizontal and vertical baselines.
      */
-    vector<double> xyz2(3), vel2(3), offset(3);
+    std::vector<double> xyz2(3), vel2(3), offset(3);
     double t, delta_t;
     // Start with sensing mid of orbit 2
     orbit2.getStateVector(orbit2.nVectors/2, t, xyz2, vel2);
@@ -90,19 +84,19 @@ void Baseline::computeBaselines() {
     bv = offset[1];
 }
 
-void Baseline::calculateLookVector(double t) {
+void isce::core::Baseline::calculateLookVector(double t) {
     /*
      * Calculate look vector.
      */
     // Local working vectors
-    vector<double> xyz(3), vel(3), llh(3);
+    std::vector<double> xyz(3), vel(3), llh(3);
     // Interpolate orbit to azimuth time
     orbit1.interpolate(t, xyz, vel, orbit_method);
     elp.xyzToLatLon(xyz, llh);
     // Make a Peg
-    Peg peg(llh[0], llh[1], radar.pegHeading);
+    isce::core::Peg peg(llh[0], llh[1], radar.pegHeading);
     // And a Peg Transformation
-    Pegtrans ptm;
+    isce::core::Pegtrans ptm;
     ptm.radarToXYZ(elp, peg);
     double Ra = ptm.radcur;
     double height = llh[2];

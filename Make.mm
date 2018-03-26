@@ -8,12 +8,13 @@
 
 # get the global defaults
 include isce.def
-
 # the list of directories to visit
 RECURSE_DIRS = \
+    bin \
     lib \
     extensions \
     contrib \
+    packages \
     tests \
 
 #--------------------------------------------------------------------------

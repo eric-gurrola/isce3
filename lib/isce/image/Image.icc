@@ -1,0 +1,27 @@
+// -*- C++ -*-
+//
+// michael a.g. aïvázis <michael.aivazis@para-sim.com>
+// (c) 2003-2018 all rights reserved
+//
+
+// code guard
+#if !defined(isce_image_Image_icc)
+#error This header file contains implementation details of class isce::image::Image
+#endif
+
+
+// meta-methods
+template <typename pixelT, typename layoutT, typename storageT>
+isce::image::Image<pixelT, layoutT, storageT>::
+Image(layout_type layout, const storage_type & storage) :
+    grid_t<pixelT, layoutT, storageT> { layout, storage }
+{}
+
+
+template <typename pixelT, typename layoutT, typename storageT>
+isce::image::Image<pixelT, layoutT, storageT>::
+Image(layout_type layout, storage_type && storage) :
+    grid_t<pixelT, layoutT, storageT> { layout, std::move(storage) }
+{}
+
+// end of file

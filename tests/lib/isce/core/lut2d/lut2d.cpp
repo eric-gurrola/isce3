@@ -5,8 +5,10 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include "isce/core/LUT2d.h"
-#include "gtest/gtest.h"
+#include <portinfo>
+#include <pyre/journal.h>
+#include <gtest/gtest.h>
+#include <isce/core.h>
 
 
 struct LUT2DTest : public ::testing::Test {
@@ -15,7 +17,13 @@ struct LUT2DTest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "LUT2D::TearDown sees failures" << std::endl;
+            // create testerror channel
+            pyre::journal::firewall_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "LUT2D::TearDown sees  " << fails << " failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;

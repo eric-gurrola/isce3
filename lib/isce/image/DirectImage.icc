@@ -1,0 +1,21 @@
+// -*- C++ -*-
+//
+// michael a.g. aïvázis <michael.aivazis@para-sim.com>
+// (c) 2003-2018 all rights reserved
+//
+
+// code guard
+#if !defined(isce_image_DirectImage_icc)
+#error This header file contains implementation details of class isce::image::DirectImage
+#endif
+
+
+// meta-methods
+template <typename pixelT, typename layoutT, typename storageT>
+isce::image::DirectImage<pixelT, layoutT, storageT>::
+DirectImage(uri_type uri, layout_type layout) :
+    directgrid_t<pixelT, layoutT, storageT> { uri, layout }
+{}
+
+
+// end of file

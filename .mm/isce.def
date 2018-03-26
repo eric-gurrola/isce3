@@ -10,13 +10,21 @@
 include shared/target.def
 # pull in pyre support
 include pyre/default.def
+# pull in fftw support
+include fftw/default.def
+# pull in MPI support
+include MPI/default.def
+# pull in HDF5 support
+include HDF5/default.def
 
-# global options for spisce
+# global options for isce
 PROJECT = isce
 
 # version info
 PROJECT_MAJOR = 3
 PROJECT_MINOR = 0
+
+# place the temporaries here
 
 # place the public headers here
 EXPORT_INCDIR = $(EXPORT_ROOT)/include/$(PROJECT)-$(PROJECT_MAJOR).$(PROJECT_MINOR)
@@ -27,11 +35,23 @@ PROJ_REPO_HOST = https://github-fn.jpl.nasa.gov/ericmg/isce.git
 
 # project settings
 # C++
+PROJ_CXX_DEFINES = HAVE_FFTW
 PROJ_CXX_FLAGS = $(COMPILER_CXX_STD17)
+
 
 # figure out the build type
 ifeq (debug, ${findstring debug, $(BLD_USER_TARGET)})
    PROJ_CXX_DEFINES += DEBUG_CHECK_BOUNDS
 endif
+
+# C
+PROJ_CC_DEFINES = HAVE_FFTW
+
+# FORTRAN
+PROJ_F77_DEFINES = HAVE_FFTW
+PROJ_F90_MODULES = $(PROJ_INCDIR)
+PROJ_F77_FLAGS = \
+  $(COMPILER_F77_LONGLINES) $(COMPILER_F77_NORANGECHECK) \
+  $(F77_MODULE_PLACEMENT_FLAG)$(PROJ_INCDIR)
 
 # end of file

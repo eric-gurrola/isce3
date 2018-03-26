@@ -6,17 +6,34 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include "isce/core/Constants.h"
-#include "isce/core/Ellipsoid.h"
-#include "gtest/gtest.h"
+// needed for searching lines of stdout
+#include <iostream>
+#include <string>
+#include <regex>
+#include <algorithm>
+#include <iterator>
+// end includes for searching lines of stdout
+#include <portinfo>
+#include <pyre/journal.h>
+#include <gtest/gtest.h>
+#include <isce/core.h>
 
-using isce::core::Ellipsoid;
-using std::cout;
-using std::endl;
-using std::vector;
+// function to split content
+std::vector<std::string> splitter(std::string in_pattern, std::string& content) {
+    std::vector<std::string> split_content;
+
+    std::regex pattern(in_pattern);
+    copy(
+        std::sregex_token_iterator(content.begin(), content.end(), pattern, -1),
+        std::sregex_token_iterator(),
+        std::back_inserter(split_content)
+    );
+    return split_content;
+}
+// end function to split content
 
 //Some commonly used values
-Ellipsoid wgs84(6378137.0, 0.0066943799901);
+isce::core::Ellipsoid wgs84(6378137.0, 0.0066943799901);
 const double a = wgs84.a;
 const double b = a * std::sqrt(1.0 - wgs84.e2);
 
@@ -27,7 +44,13 @@ struct EllipsoidTest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "Ellipsoid::TearDown sees failures" << std::endl;
+            // create testerror channel
+            pyre::journal::error_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "Ellipsoid::TearDown sees " << fails << " failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;
@@ -37,14 +60,14 @@ struct EllipsoidTest : public ::testing::Test {
 
 #define ellipsoidTest(name,x,y,z,p,q,r)       \
     TEST_F(EllipsoidTest, name) {       \
-        vector<double> ref_llh({p,q,r});    \
-        vector<double> ref_xyz({x,y,z});    \
-        vector<double> xyz(3), llh(3);  \
+        std::vector<double> ref_llh({p,q,r});    \
+        std::vector<double> ref_xyz({x,y,z});    \
+        std::vector<double> xyz(3), llh(3);  \
         llh = ref_llh;                  \
         wgs84.latLonToXyz(llh, xyz);    \
         EXPECT_NEAR(xyz[0], ref_xyz[0], 1.0e-6);\
         EXPECT_NEAR(xyz[1], ref_xyz[1], 1.0e-6);\
-        EXPECT_NEAR(xyz[2], ref_xyz[2], 1.0e-6);\
+        EXPECT_NEAR(xyz[2], ref_xyz[2], 1.0e-20);\
         xyz = ref_xyz;                  \
         wgs84.xyzToLatLon(xyz, llh);    \
         EXPECT_NEAR(llh[0], ref_llh[0], 1.0e-9);\
@@ -67,7 +90,7 @@ ellipsoidTest(NorthPole, {0.,0.,b}, {0.5*M_PI,0.,0.});
 ellipsoidTest(SouthPole, {0.,0.,-b}, {-0.5*M_PI,0.,0.});
 
 ellipsoidTest(Point1, {1030784.925758840050548,  2210337.910070449113846,
-        -5881839.839890958741307}, {-1.180097204507889e+00, 
+        -5881839.839890958741307}, {-1.180097204507889e+00,
         1.134431523585921e+00, 7.552767636707697e+03});
 
 ellipsoidTest(Point2, {-2457926.302319798618555, -5531693.075449729338288,
@@ -129,7 +152,37 @@ ellipsoidTest(Point15, {218676.696484291809611, -3026189.824885316658765,
 
 int main(int argc, char **argv) {
 
-    ::testing::InitGoogleTest(&argc, argv);
+    testing::InitGoogleTest(&argc, argv);
 
-    return RUN_ALL_TESTS();
+    testing::internal::CaptureStdout();
+
+    int run_out = RUN_ALL_TESTS();
+
+    std::string stdoutput = testing::internal::GetCapturedStdout();
+
+// split stdoutput on new lines and find lines containing 'error'
+    std::vector<std::string> lines = splitter(R"(\n)", stdoutput);
+
+// turn this into a function where the number of lines can be specified
+    for ( unsigned int i = 0; i < lines.size(); i++ ) {
+        if( lines[i].find("error")    != std::string::npos ||
+            lines[i].find("firewall") != std::string::npos    ) {
+            std::cout << lines[i] << std::endl;
+            std::cout << lines[i+1] << std::endl;
+            std::cout << lines[i+2] << std::endl;
+
+        }
+    }
+
+//    for ( std::string line : lines ) {
+//        if( line.find("error")    != std::string::npos ||
+//            line.find("firewall") != std::string::npos )
+//            std::cout << line << std::endl;
+//    }
+//    std::cout << stdoutput << std::endl;
+
+    return run_out;
+
 }
+
+//end of file

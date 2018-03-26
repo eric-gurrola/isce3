@@ -7,6 +7,8 @@
 
 #include <iostream>
 #include <exception>
+#include <pyre/journal.h>
+
 #include "Constants.h"
 #include "LinAlg.h"
 #include "Peg.h"
@@ -24,10 +26,19 @@ Doppler(Orbit & orbit, Attitude * attitude, Ellipsoid & ellipsoid, double epoch)
     // Interpolate orbit to epoch
     int stat = orbit.interpolate(epoch, satxyz, satvel, HERMITE_METHOD);
     if (stat != 0) {
-        std::cerr << "Error in Doppler::Doppler - error getting state vector." << std::endl;
-        std::cerr << " - requested time: " << epoch << std::endl;
-        std::cerr << " - bounds: " << orbit.UTCtime[0] << " -> " 
-                  << orbit.UTCtime[orbit.nVectors-1] << std::endl;
+        // make a journal channel
+        pyre::journal::firewall_t channel("isce.core.interpolate");
+        // complain
+        channel
+            << "Error in Doppler::Doppler - error getting state vector."
+            << pyre::journal::newline
+            << " - requested time: "
+            << epoch << pyre::journal::newline
+            << " - bounds: "
+            << orbit.UTCtime[0]
+            << " -> "
+            << orbit.UTCtime[orbit.nVectors-1]
+            << pyre::journal::endl;
         throw std::out_of_range("Orbit out of range");
     }
     // Compute llh
@@ -70,10 +81,10 @@ centroid(double slantRange, double wvl, std::string frame, size_t max_iter,
     // Compute u0 directly if quaternion
     std::vector<double> u0(3), temp(3);
     if (attitude->attitude_type.compare("quaternion") == 0) {
-        
+
         temp = {1.0, 0.0, 0.0};
         std::vector<std::vector<double>> R = attitude->rotmat("");
-        LinAlg::matVec(R, temp, u0); 
+        LinAlg::matVec(R, temp, u0);
 
     // Else multiply orbit and attitude matrix
     } else if (attitude->attitude_type.compare("euler") == 0) {
@@ -163,13 +174,13 @@ centroid(double slantRange, double wvl, std::string frame, size_t max_iter,
     ellipsoid.latLonToXyz(targetLLH, targetVec);
     LinAlg::linComb(1.0, satxyz, -1.0, targetVec, R);
     LinAlg::unitVec(R, Rhat);
-    
+
     // Compute doppler
     double fd = -2.0 / wvl * LinAlg::dot(satvel, Rhat);
     return fd;
 
 }
 
-    
+
 
 // end of file

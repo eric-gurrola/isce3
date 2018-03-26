@@ -6,16 +6,13 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include "isce/core/Projections.h"
-#include "gtest/gtest.h"
-using isce::core::PolarStereo;
-using std::cout;
-using std::endl;
-using std::vector;
+#include <portinfo>
+#include <pyre/journal.h>
+#include <gtest/gtest.h>
+#include <isce/core.h>
 
-PolarStereo North(3413);
-PolarStereo South(3031);
-
+isce::core::PolarStereo North(3413);
+isce::core::PolarStereo South(3031);
 
 struct PolarTest : public ::testing::Test {
     virtual void SetUp() {
@@ -23,7 +20,13 @@ struct PolarTest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "Polar::TearDown sees failures" << std::endl;
+            // create error channel
+            pyre::journal::firewall_t channel("isce.core.error");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "Polar::TearDown sees " << fails << "failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;
@@ -32,9 +35,9 @@ struct PolarTest : public ::testing::Test {
 
 #define polarTest(hemi,name,p,q,r,x,y,z)       \
     TEST_F(PolarTest, name) {       \
-        vector<double> ref_llh({p,q,r});    \
-        vector<double> ref_xyz({x,y,z});    \
-        vector<double> xyz(3), llh(3);  \
+        std::vector<double> ref_llh({p,q,r});    \
+        std::vector<double> ref_xyz({x,y,z});    \
+        std::vector<double> xyz(3), llh(3);  \
         llh = ref_llh;                  \
         hemi.forward(llh, xyz);    \
         EXPECT_NEAR(xyz[0], ref_xyz[0], 1.0e-6);\

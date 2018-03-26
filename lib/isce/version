@@ -1,0 +1,16 @@
+// -*- C++ -*-
+//
+// michael a.g. aïvázis <michael.aivazis@para-sim.com>
+// (c) 2003-2018 all rights reserved
+//
+
+// my declarations
+#include "version.h"
+
+isce::version_t
+isce::version() {
+    //
+    return version_t { MAJOR, MINOR, REVISION };
+}
+
+// end of file

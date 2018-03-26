@@ -6,12 +6,10 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include "isce/core/Projections.h"
-#include "gtest/gtest.h"
-using isce::core::UTM;
-using std::cout;
-using std::endl;
-using std::vector;
+#include <portinfo>
+#include <pyre/journal.h>
+#include <gtest/gtest.h>
+#include <isce/core.h>
 
 struct UTMTest : public ::testing::Test {
     virtual void SetUp() {
@@ -19,7 +17,13 @@ struct UTMTest : public ::testing::Test {
     }
     virtual void TearDown() {
         if (fails > 0) {
-            std::cerr << "UTM::TearDown sees failures" << std::endl;
+            // create testerror channel
+            pyre::journal::firewall_t channel("tests.lib.core.fails");
+            // complain
+            channel
+                << pyre::journal::at(__HERE__)
+                << "UTM::TearDown sees " << fails << " failures"
+                << pyre::journal::endl;
         }
     }
     unsigned fails;
@@ -28,10 +32,10 @@ struct UTMTest : public ::testing::Test {
 
 #define utmTest(code,name,p,q,r,x,y,z)       \
     TEST_F(UTMTest, name) {       \
-        UTM proj(code); \
-        vector<double> ref_llh({p,q,r});    \
-        vector<double> ref_xyz({x,y,z});    \
-        vector<double> xyz(3), llh(3);  \
+        isce::core::UTM proj(code); \
+        std::vector<double> ref_llh({p,q,r});    \
+        std::vector<double> ref_xyz({x,y,z});    \
+        std::vector<double> xyz(3), llh(3);  \
         llh = ref_llh;                  \
         proj.forward(llh, xyz);    \
         EXPECT_NEAR(xyz[0], ref_xyz[0], 1.0e-6);\
@@ -47,7 +51,7 @@ struct UTMTest : public ::testing::Test {
 
 
 //Test origins for various northern systems
-#define utmOriginNorthName(ind)  ind ## _NOrigin 
+#define utmOriginNorthName(ind)  ind ## _NOrigin
 #define utmOriginNorthTest(x)\
     utmTest(32600+x, utmOriginNorthName(x), {(-177.0+(x-1)*6.0) * M_PI / 180.0, 0., 0.}, {500000., 0., 0.});
 
@@ -113,7 +117,7 @@ utmOriginNorthTest(59);
 utmOriginNorthTest(60);
 
 
-#define utmOriginSouthName(ind)  ind ## _SOrigin 
+#define utmOriginSouthName(ind)  ind ## _SOrigin
 #define utmOriginSouthTest(x)\
     utmTest(32700+x, utmOriginSouthName(x), {(-177.0+(x-1)*6.0) * M_PI / 180.0, 0., 0.}, {500000., 10000000., 0.});
 
