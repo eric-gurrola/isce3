@@ -30,6 +30,30 @@ std::vector<std::string> splitter(std::string in_pattern, std::string& content) 
     );
     return split_content;
 }
+
+std::vector<std::string> string_splitter(const std::string split_token, const std::string& content) {
+    // function to split string content on a given token
+    std::vector<std::string> split_content;
+    for( auto x : split_content ){ std::cout << x << std::endl; }
+    std::regex pattern(split_token);
+    copy(
+        std::sregex_token_iterator(content.begin(), content.end(), pattern, -1),
+        std::sregex_token_iterator(),
+
+ std::back_inserter(split_content)
+    );
+    return split_content;
+}
+
+std::vector<std::string> string_to_lines(const std::string& content) {
+    // function to split content on newlines
+    std::vector<std::string> split_content;
+
+    const std::string pattern = R"(\n)";
+    split_content = string_splitter(pattern, content);
+    return split_content;
+}
+
 // end function to split content
 
 //Some commonly used values
@@ -67,7 +91,7 @@ struct EllipsoidTest : public ::testing::Test {
         wgs84.latLonToXyz(llh, xyz);    \
         EXPECT_NEAR(xyz[0], ref_xyz[0], 1.0e-6);\
         EXPECT_NEAR(xyz[1], ref_xyz[1], 1.0e-6);\
-        EXPECT_NEAR(xyz[2], ref_xyz[2], 1.0e-20);\
+        EXPECT_NEAR(xyz[2], ref_xyz[2], 1.0e-6);\
         xyz = ref_xyz;                  \
         wgs84.xyzToLatLon(xyz, llh);    \
         EXPECT_NEAR(llh[0], ref_llh[0], 1.0e-9);\
@@ -150,37 +174,41 @@ ellipsoidTest(Point15, {218676.696484291809611, -3026189.824885316658765,
          -1.498660315787147e+00, 8.472554905622580e+02});
 
 
-int main(int argc, char **argv) {
-
-    testing::InitGoogleTest(&argc, argv);
-
-    testing::internal::CaptureStdout();
-
-    int run_out = RUN_ALL_TESTS();
-
-    std::string stdoutput = testing::internal::GetCapturedStdout();
-
-// split stdoutput on new lines and find lines containing 'error'
-    std::vector<std::string> lines = splitter(R"(\n)", stdoutput);
-
-// turn this into a function where the number of lines can be specified
+void report_gtest_errors( const std::string gtest_std_out ) {
+    // split gtest_std_out on new lines
+    const std::vector<std::string> lines = string_to_lines(gtest_std_out);
+    for ( auto x : lines ){ std::cout << x << std::endl; }
+    // find the lines containing error messages
     for ( unsigned int i = 0; i < lines.size(); i++ ) {
-        if( lines[i].find("error")    != std::string::npos ||
-            lines[i].find("firewall") != std::string::npos    ) {
+        if ( lines[i].find("error")    != std::string::npos ||
+             lines[i].find("firewall") != std::string::npos   ){
             std::cout << lines[i] << std::endl;
             std::cout << lines[i+1] << std::endl;
             std::cout << lines[i+2] << std::endl;
-
         }
     }
+}
 
-//    for ( std::string line : lines ) {
-//        if( line.find("error")    != std::string::npos ||
-//            line.find("firewall") != std::string::npos )
-//            std::cout << line << std::endl;
-//    }
-//    std::cout << stdoutput << std::endl;
+int main(int argc, char **argv) {
 
+    // initialize the tests
+    testing::InitGoogleTest(&argc, argv);
+
+    // capture the std output
+    testing::internal::CaptureStdout();
+
+    // run the tests
+    int run_out = RUN_ALL_TESTS();
+
+    // if there are any test failures report them
+    if( run_out != 0 ) {
+        // get the capturedStdOut
+        const std::string stdoutput = testing::internal::GetCapturedStdout();
+        // send to error reporter for handling
+        report_gtest_errors(stdoutput);
+    }
+
+    // return status of test runs
     return run_out;
 
 }

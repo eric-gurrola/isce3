@@ -5,17 +5,43 @@
 // Copyright 2018
 //
 
-#include <iostream>
 #include <cstdio>
 #include <cmath>
+#include <vector>
+#include <string>
+#include <regex>
+#include <algorithm>
+#include <iterator>
 #include <gtest/gtest.h>
 #include <portinfo>
 #include <pyre/journal.h>
 #include <isce/core.h>
 
+std::vector<std::string> string_splitter(const std::string split_token, const std::string& content) {
+    // function to split string content on a given token
+    std::vector<std::string> split_content;
+    for( auto x : split_content ){ std::cout << x << std::endl; }
+    std::regex pattern(split_token);
+    copy(
+        std::sregex_token_iterator(content.begin(), content.end(), pattern, -1),
+        std::sregex_token_iterator(),
+
+ std::back_inserter(split_content)
+    );
+    return split_content;
+}
+
+std::vector<std::string> string_to_lines(const std::string& content) {
+    // function to split content on newlines
+    std::vector<std::string> split_content;
+
+    const std::string pattern = R"(\n)";
+    split_content = string_splitter(pattern, content);
+    return split_content;
+}
+
 
 struct EulerTest : public ::testing::Test {
-    unsigned fails;
     virtual void SetUp() {
         fails = 0;
     }
@@ -30,6 +56,7 @@ struct EulerTest : public ::testing::Test {
                 << pyre::journal::endl;
         }
     }
+    unsigned fails;
 
 
     typedef isce::core::EulerAngles EulerAngles;
@@ -65,7 +92,7 @@ struct EulerTest : public ::testing::Test {
             };
 
             // Set tolerance
-            tol = 1.0e-20;
+            tol = 1.0e-9;
         }
 
         ~EulerTest() {
@@ -95,9 +122,42 @@ TEST_F(EulerTest, CheckRPY) {
 }
 
 
+void report_gtest_errors( const std::string gtest_std_out ) {
+    // split gtest_std_out on new lines
+    const std::vector<std::string> lines = string_to_lines(gtest_std_out);
+    for ( auto x : lines ){ std::cout << x << std::endl; }
+    // find the lines containing error messages
+    for ( unsigned int i = 0; i < lines.size(); i++ ) {
+        if ( lines[i].find("error")    != std::string::npos ||
+             lines[i].find("firewall") != std::string::npos   ){
+            std::cout << lines[i] << std::endl;
+            std::cout << lines[i+1] << std::endl;
+            std::cout << lines[i+2] << std::endl;
+        }
+    }
+}
+
 int main(int argc, char * argv[]) {
+
+    // innitialize the tests
     testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+
+    // capture the std output
+    testing::internal::CaptureStdout();
+
+    // run the tests
+    int run_out = RUN_ALL_TESTS();
+
+    // if there are any test failures report them
+    if( run_out != 0 ) {
+        // get the capturedStdOut
+        const std::string stdoutput = testing::internal::GetCapturedStdout();
+        // send to error reporter for handling
+        report_gtest_errors(stdoutput);
+    }
+
+    // return status of test runs
+    return run_out;
 }
 
 // end of file
