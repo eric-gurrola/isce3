@@ -8,7 +8,7 @@
 # access the machinery for building shared objects
 include shared/target.def
 # project defaults
-include isce.def
+include pyre.def
 # my subdirectories
 RECURSE_DIRS = \
     algebra \
