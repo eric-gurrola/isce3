@@ -6,6 +6,7 @@ string(TOLOWER ${PROJECT_NAME} LOCALPROJ)
 set(LOCAL_SRCS 
     DEMInterpolator.cpp
     Geo2rdr.cpp
+    Baseline.cpp
     geometry.cpp
     Topo.cpp)
 
@@ -20,6 +21,8 @@ set(${PACKAGENAME}_EXPORT_HEADERS
     DEMInterpolator.h
     Geo2rdr.h
     Geo2rdr.icc
+    Baseline.h
+    Baseline.icc
     geometry.h
     Serialization.h
     Topo.h
