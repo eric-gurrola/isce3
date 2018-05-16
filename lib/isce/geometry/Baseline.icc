@@ -1,0 +1,91 @@
+//-*- C++ -*-
+//-*- coding: utf-8 -*-
+//
+// Author: Bryan V. Riel, Marco Lavalle
+// Copyright 2017-2018
+
+#if !defined(ISCE_GEOMETRY_BASELINE_ICC)
+#error "Baseline.icc is an implementation detail of class Baseline"
+#endif
+
+// Constructor
+isce::geometry::Baseline::
+Baseline(isce::core::Ellipsoid ellipsoidMaster, isce::core::Orbit orbitMaster, isce::core::Metadata metaMaster, isce::core::Ellipsoid ellipsoidSlave, isce::core::Orbit orbitSlave, isce::core::Metadata metaSlave) {
+    // Copy objects
+    _ellipsoidMaster = ellipsoidMaster;
+    _orbitMaster = orbitMaster;
+    _metaMaster = metaMaster;
+    // For numerical precision purposes, set reference epoch 2 days prior
+    _refEpochMaster._init(_metaMaster.sensingStart.year, _metaMaster.sensingStart.months,
+                    _metaMaster.sensingStart.days - 2, 0, 0, 0, 0.0);
+    // Reformat orbit using this epoch
+    _orbitMaster.reformatOrbit(_refEpochMaster);
+
+
+    // Copy objects
+    _ellipsoidSlave = ellipsoidSlave;
+    _orbitSlave = orbitSlave;
+    _metaSlave = metaSlave;
+    // For numerical precision purposes, set reference epoch 2 days prior
+    _refEpochSlave._init(_metaSlave.sensingStart.year, _metaSlave.sensingStart.months,
+                    _metaSlave.sensingStart.days - 2, 0, 0, 0, 0.0);
+    // Reformat orbit using this epoch
+    _orbitSlave.reformatOrbit(_refEpochSlave);
+}
+
+// Set threshold
+void isce::geometry::Baseline::
+threshold(double t) {
+    _threshold = t;
+}
+
+// Set number of iterations
+void isce::geometry::Baseline::
+numiter(int n) {
+    _numiter = n;
+}
+
+// Set the orbit interpolation method while checking its validity
+void isce::geometry::Baseline::
+orbitMethod(isce::core::orbitInterpMethod method) {
+
+    // Check validity
+    if (method == isce::core::HERMITE_METHOD) {
+        if (_orbitMaster.nVectors < 4) {
+            pyre::journal::error_t error("isce.geometry.Baseline");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Baseline::orbitMethod - Need at least 4 state vectors for using "
+                << "hermite polynomial interpolation."
+                << pyre::journal::endl;
+        }
+    } else if (method == isce::core::SCH_METHOD) {
+        if (_orbitMaster.nVectors < 4) {
+            pyre::journal::error_t error("isce.geometry.Baseline");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Baseline::orbitMethod - Need at least 4 state vectors for using "
+                << "SCH interpolation."
+                << pyre::journal::endl;
+        }
+    } else if (method == isce::core::LEGENDRE_METHOD) {
+        if (_orbitMaster.nVectors < 9) {
+            pyre::journal::error_t error("isce.geometry.Baseline");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Baseline::orbitMethod - Need at least 9 state vectors for using "
+                << "legendre polynomial interpolation."
+                << pyre::journal::endl;
+        }
+    } else {
+        pyre::journal::error_t error("isce.geometry.Baseline");
+        error
+            << pyre::journal::at(__HERE__)
+            << "Error in Baseline::orbitMethod - Undefined orbit interpolation method."
+            << pyre::journal::endl;
+    }
+
+    // Save
+    _orbitMethod = method;
+}
+
