@@ -247,4 +247,93 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
     return converged;
 }
 
+
+
+
+
+// **************
+// ml
+// *************
+int isce::geometry::
+geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit & orbit,
+        const Poly2d & doppler, const Metadata & meta, double & aztime, double & slantRange,
+        double threshold, int maxIter, double deltaRange, cartesian_t & satposFinal) {
+
+    cartesian_t satpos, satvel, inputXYZ, dr;
+
+    // Convert LLH to XYZ
+    ellipsoid.latLonToXyz(inputLLH, inputXYZ);
+
+    // Pre-compute scale factor for doppler
+    const double dopscale = 0.5 * meta.radarWavelength;
+
+    // Starting guess for azimuth time is middle of orbit
+    aztime = orbit.UTCtime[orbit.nVectors / 2];
+    
+    // Begin iterations
+    int converged = 0;
+    double slantRange_old = 0.0;
+    for (int i = 0; i < maxIter; ++i) {
+
+        // Interpolate the orbit to current estimate of azimuth time
+        orbit.interpolateWGS84Orbit(aztime, satpos, satvel);
+	satposFinal = satpos;
+	
+        // Compute slant range from satellite to ground point
+        LinAlg::linComb(1.0, inputXYZ, -1.0, satpos, dr);
+        slantRange = LinAlg::norm(dr);
+        // Check convergence
+        if (std::abs(slantRange - slantRange_old) < threshold) {
+            converged = 1;
+            return converged;
+        } else {
+            slantRange_old = slantRange;
+        }
+
+        // Compute slant range bin
+        const double rbin = (slantRange - meta.rangeFirstSample) / meta.slantRangePixelSpacing;
+        // Compute doppler
+        const double dopfact = LinAlg::dot(dr, satvel);
+        const double fdop = doppler.eval(0, rbin) * dopscale;
+        // Use forward difference to compute doppler derivative
+        const double fdopder = (doppler.eval(0, rbin + deltaRange) * dopscale - fdop)
+                             / deltaRange;
+        
+        // Evaluate cost function and its derivative
+        const double fn = dopfact - fdop * slantRange;
+        const double c1 = -1.0 * LinAlg::dot(satvel, satvel);
+        const double c2 = (fdop / slantRange) + fdopder;
+        const double fnprime = c1 + c2 * dopfact;
+
+        // Update guess for azimuth time
+        aztime -= fn / fnprime;
+    }
+    // If we reach this point, no convergence for specified threshold
+    return converged;
+}
+
+
+// Baseline
+int isce::geometry::
+baseline(const cartesian_t & inputLLH, const Ellipsoid & ellipsoidMaster, const Ellipsoid & ellipsoidSlave, const Orbit & orbitMaster,
+	 const Orbit & orbitSlave, const Poly2d & dopplerMaster, const Poly2d & dopplerSlave,
+	 const Metadata & metaMaster, const Metadata & metaSlave,
+	 double & aztime, double & slantRange, double threshold, int maxIter, double deltaRange) {
+
+  cartesian_t satposMaster, satposSlave;
+  
+  int geostatMaster = isce::geometry::geo2rdr(
+					      inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
+					      metaMaster, aztime, slantRange, threshold, maxIter, 1.0e-8,
+					      satposMaster
+					      );
+  
+  int geostatSlave = isce::geometry::geo2rdr(
+					     inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
+					     metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
+					     satposSlave
+					     );
+  
+}
+  
 // end of file

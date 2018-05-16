@@ -61,6 +61,30 @@ namespace isce {
                     const isce::core::Metadata &,
                     double &, double &,
                     double, int, double);
+
+
+      // geo->radar with output satpos (ml 2018/05/16)
+        int geo2rdr(const cartesian_t &,
+                    const isce::core::Ellipsoid &,
+                    const isce::core::Orbit &,
+                    const isce::core::Poly2d &,
+                    const isce::core::Metadata &,
+                    double &, double &,
+                    double, int, double,
+		    cartesian_t &);
+
+      // baseline (ml 2018/05/16)
+      int baseline(const cartesian_t &,
+		   const isce::core::Ellipsoid &,
+		   const isce::core::Ellipsoid &,
+		   const isce::core::Orbit &,
+		   const isce::core::Orbit &,
+		   const isce::core::Poly2d &,
+		   const isce::core::Poly2d &,
+		   const isce::core::Metadata &,
+		   const isce::core::Metadata &,
+		   double &, double &,
+		   double, int, double);
     }
 }
 
