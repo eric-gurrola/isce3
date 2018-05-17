@@ -13,4 +13,9 @@
     <numIterations>50</numIterations>
     <orbitMethod>0</orbitMethod>
   </Geo2rdr>
+  <Baseline>
+    <threshold>1.0e-9</threshold>
+    <numIterations>50</numIterations>
+    <orbitMethod>0</orbitMethod>
+  </Baseline>
 </cereal>
