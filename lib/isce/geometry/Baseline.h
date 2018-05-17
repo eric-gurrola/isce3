@@ -46,20 +46,20 @@ class isce::geometry::Baseline {
 
         // Run geo2rdr - main entrypoint
         void computeBaseline(isce::core::Raster &,
-                     isce::core::Raster &,
-                     isce::core::Raster &,
-                     isce::core::Poly2d &,
+			     isce::core::Raster &,
+			     isce::core::Raster &,
 			     isce::core::Poly2d &,
-                     const std::string &,
-                     double, double);
+			     isce::core::Poly2d &,
+			     const std::string &,
+			     double, double);
 
         // Alternative: run geo2rdr with no constant offsets
         void computeBaseline(isce::core::Raster &,
-                     isce::core::Raster &,
-                     isce::core::Raster &,
-                     isce::core::Poly2d &,
+			     isce::core::Raster &,
+			     isce::core::Raster &,
 			     isce::core::Poly2d &,
-                     const std::string &);
+			     isce::core::Poly2d &,
+			     const std::string &);
 
         // Value for null pixels
         const double NULL_VALUE = -1000.0;
