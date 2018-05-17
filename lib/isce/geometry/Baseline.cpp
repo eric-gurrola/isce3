@@ -94,7 +94,7 @@ computeBaseline(isce::core::Raster & latRaster,
     int converged = 0;
     for (size_t line = 0; line < demLength; ++line) {
 
-        // Periodic diagnostic printing
+      // Periodic diagnostic printing
         if ((line % 1000) == 0) {
             info 
                 << "Processing line: " << line << " " << pyre::journal::newline
@@ -118,10 +118,13 @@ computeBaseline(isce::core::Raster & latRaster,
             cartesian_t llh = {lat[pixel]*rad, lon[pixel]*rad, hgt[pixel]};
             double aztime, slantRange;
 	    cartesian_t satposMaster, satposSlave;
-            int geostatMaster = isce::geometry::baseline(
-							 llh, _ellipsoidMaster, _ellipsoidSlave, _orbitMaster, _orbitSlave, dopplerMaster, dopplerSlave,  _metaMaster, _metaSlave, aztime, slantRange, _threshold, 
-                _numiter, 1.0e-8
-            );
+            int geostat = isce::geometry::baseline(
+						   llh, _ellipsoidMaster, _ellipsoidSlave,
+						   _orbitMaster, _orbitSlave,
+						   dopplerMaster, dopplerSlave,
+						   _metaMaster, _metaSlave,
+						   aztime, slantRange, _threshold, _numiter, 1.0e-8
+						   );
 
 
             // Check of solution is out of bounds
@@ -135,7 +138,7 @@ computeBaseline(isce::core::Raster & latRaster,
             if (!isOutside) {
                 rgoff[pixel] = ((slantRange - r0) / dmrg) - float(pixel);
                 azoff[pixel] = ((aztime - t0) / dtaz) - float(line);
-                converged += geostatMaster;
+                converged += geostat;
             } else {
                 rgoff[pixel] = NULL_VALUE;
                 azoff[pixel] = NULL_VALUE;

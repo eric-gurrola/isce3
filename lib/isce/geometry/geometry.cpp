@@ -315,25 +315,26 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
 
 // Baseline
 int isce::geometry::
-baseline(const cartesian_t & inputLLH, const Ellipsoid & ellipsoidMaster, const Ellipsoid & ellipsoidSlave, const Orbit & orbitMaster,
-	 const Orbit & orbitSlave, const Poly2d & dopplerMaster, const Poly2d & dopplerSlave,
+baseline(const cartesian_t & inputLLH,
+	 const Ellipsoid & ellipsoidMaster, const Ellipsoid & ellipsoidSlave,
+	 const Orbit & orbitMaster, const Orbit & orbitSlave,
+	 const Poly2d & dopplerMaster, const Poly2d & dopplerSlave,
 	 const Metadata & metaMaster, const Metadata & metaSlave,
 	 double & aztime, double & slantRange, double threshold, int maxIter, double deltaRange) {
 
   cartesian_t satposMaster, satposSlave;
-  
+
   int geostatMaster = isce::geometry::geo2rdr(
 					      inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
 					      metaMaster, aztime, slantRange, threshold, maxIter, 1.0e-8,
-					      satposMaster
-					      );
+					      satposMaster);
   
   int geostatSlave = isce::geometry::geo2rdr(
-					     inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
-					     metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
+  					     inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
+  					     metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
 					     satposSlave
-					     );
-  
+  					     );
+  return geostatMaster;
 }
   
 // end of file
