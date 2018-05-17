@@ -14,6 +14,7 @@
 
 #include <isce/geometry/Topo.h>
 #include <isce/geometry/Geo2rdr.h>
+#include <isce/geometry/Baseline.h>
 
 namespace isce {
     namespace geometry {
@@ -83,6 +84,33 @@ namespace isce {
             geo.threshold(threshold);
             geo.numiter(numiter);
             geo.orbitMethod(orbitMethod);
+        }
+
+
+      // ----------------------------------------------------------------------
+      // Serialization for Baseline
+      // ----------------------------------------------------------------------
+
+        // Baseline save does nothing
+        template <class Archive>
+        void save(Archive & archive, const Baseline & bas) {}
+
+        // Baseline load
+        template <class Archive>
+        void load(Archive & archive, Baseline & bas) {
+
+            // Deserialize scalar values
+            double threshold;
+            size_t numiter;
+            isce::core::orbitInterpMethod orbitMethod;
+            archive(cereal::make_nvp("threshold", threshold),
+                    cereal::make_nvp("numIterations", numiter),
+                    cereal::make_nvp("orbitMethod", orbitMethod));
+
+            // Send to Baseline setters
+            bas.threshold(threshold);
+            bas.numiter(numiter);
+            bas.orbitMethod(orbitMethod);
         }
 
     }
