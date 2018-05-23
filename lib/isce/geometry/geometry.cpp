@@ -58,11 +58,11 @@ rdr2geo(double aztime, double slantRange, double dopfact, const Orbit & orbit,
     ellipsoid.xyzToLatLon(state.position(), llhsat);
 
     // Estimate heading
-    const double heading = orbit.getENUHeading(aztime); 
+    const double heading = orbit.getENUHeading(aztime);
 
     // Set peg point right below satellite
     isce::core::Peg peg(llhsat[0], llhsat[1], heading);
-   
+
     // Initialize peg transformation
     Pegtrans ptm;
     ptm.radarToXYZ(ellipsoid, peg);
@@ -116,7 +116,7 @@ rdr2geo(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
         // Compute angles
         const double a = satLLH[2] + ptm.radcur;
         const double b = ptm.radcur + targetSCH[2];
-        const double costheta = 0.5 * (a / pixel.range() + pixel.range() / a 
+        const double costheta = 0.5 * (a / pixel.range() + pixel.range() / a
                               - (b/a) * (b/pixel.range()));
         const double sintheta = std::sqrt(1.0 - costheta*costheta);
 
@@ -124,9 +124,9 @@ rdr2geo(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
         const double gamma = pixel.range() * costheta;
         const double alpha = (pixel.dopfact() - gamma * ndotv) / vdott;
         const double beta = -side * std::sqrt(std::pow(pixel.range(), 2)
-                                            * std::pow(sintheta, 2) 
+                                            * std::pow(sintheta, 2)
                                             - std::pow(alpha, 2));
-        
+
         // Compute vector from satellite to ground
         LinAlg::linComb(alpha, that, beta, chat, delta_temp);
         LinAlg::linComb(1.0, delta_temp, gamma, nhat, delta);
@@ -184,7 +184,7 @@ rdr2geo(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
     LinAlg::linComb(1.0, state.position(), 1.0, delta, targetVec);
 
     // Compute LLH of ground point
-    ellipsoid.xyzToLatLon(targetVec, targetLLH);    
+    ellipsoid.xyzToLatLon(targetVec, targetLLH);
 
     // Return convergence flag
     return converged;
@@ -205,7 +205,7 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
 
     // Starting guess for azimuth time is middle of orbit
     aztime = orbit.UTCtime[orbit.nVectors / 2];
-    
+
     // Begin iterations
     int converged = 0;
     double slantRange_old = 0.0;
@@ -233,7 +233,7 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
         // Use forward difference to compute doppler derivative
         const double fdopder = (doppler.eval(0, rbin + deltaRange) * dopscale - fdop)
                              / deltaRange;
-        
+
         // Evaluate cost function and its derivative
         const double fn = dopfact - fdop * slantRange;
         const double c1 = -1.0 * LinAlg::dot(satvel, satvel);
@@ -269,7 +269,7 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
 
     // Starting guess for azimuth time is middle of orbit
     aztime = orbit.UTCtime[orbit.nVectors / 2];
-    
+
     // Begin iterations
     int converged = 0;
     double slantRange_old = 0.0;
@@ -277,18 +277,19 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
 
         // Interpolate the orbit to current estimate of azimuth time
         orbit.interpolateWGS84Orbit(aztime, satpos, satvel);
-	satposFinal = satpos;
-	
+        satposFinal = satpos;
+
         // Compute slant range from satellite to ground point
         LinAlg::linComb(1.0, inputXYZ, -1.0, satpos, dr);
         slantRange = LinAlg::norm(dr);
         // Check convergence
         if (std::abs(slantRange - slantRange_old) < threshold) {
             converged = 1;
+            //std::cout << "Slant range: " << slantRange << std::endl;
             return converged;
-        } else {
-            slantRange_old = slantRange;
         }
+        // Non converged, update slantRange
+        slantRange_old = slantRange;
 
         // Compute slant range bin
         const double rbin = (slantRange - meta.rangeFirstSample) / meta.slantRangePixelSpacing;
@@ -298,7 +299,7 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
         // Use forward difference to compute doppler derivative
         const double fdopder = (doppler.eval(0, rbin + deltaRange) * dopscale - fdop)
                              / deltaRange;
-        
+
         // Evaluate cost function and its derivative
         const double fn = dopfact - fdop * slantRange;
         const double c1 = -1.0 * LinAlg::dot(satvel, satvel);
@@ -316,25 +317,33 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
 // Baseline
 int isce::geometry::
 baseline(const cartesian_t & inputLLH,
-	 const Ellipsoid & ellipsoidMaster, const Ellipsoid & ellipsoidSlave,
-	 const Orbit & orbitMaster, const Orbit & orbitSlave,
-	 const Poly2d & dopplerMaster, const Poly2d & dopplerSlave,
-	 const Metadata & metaMaster, const Metadata & metaSlave,
-	 double & aztime, double & slantRange, double threshold, int maxIter, double deltaRange) {
+         const Ellipsoid & ellipsoidMaster, const Ellipsoid & ellipsoidSlave,
+         const Orbit & orbitMaster, const Orbit & orbitSlave,
+         const Poly2d & dopplerMaster, const Poly2d & dopplerSlave,
+         const Metadata & metaMaster, const Metadata & metaSlave,
+         double & aztime, double & slantRange, double threshold, int maxIter, double deltaRange, double & basTot) {
 
   cartesian_t satposMaster, satposSlave;
 
   int geostatMaster = isce::geometry::geo2rdr(
-					      inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
-					      metaMaster, aztime, slantRange, threshold, maxIter, 1.0e-8,
-					      satposMaster);
-  
+                                              inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
+                                              metaMaster, aztime, slantRange, threshold, maxIter, 1.0e-8,
+                                              satposMaster
+                                              );
+
   int geostatSlave = isce::geometry::geo2rdr(
-  					     inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
-  					     metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
-					     satposSlave
-  					     );
+                                             inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
+                                             metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
+                                             satposSlave
+                                             );
+
+  std::cout << "Master (" << geostatMaster <<"): " << satposMaster[0] << " " << satposMaster[1] << " " << satposMaster[2] << std::endl;
+  std::cout << "Slave  (" << geostatSlave << "): " << satposSlave[0] << " " << satposSlave[1] << " " << satposSlave[2] << std::endl;
+
+  cartesian_t basVect;
+  isce::core::LinAlg::linComb(1, satposMaster, -1, satposSlave, basVect);
+  basTot = isce::core::LinAlg::norm(basVect);
   return geostatMaster;
 }
-  
+
 // end of file

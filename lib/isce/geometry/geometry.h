@@ -41,7 +41,7 @@ namespace isce {
                     const DEMInterpolator &,
                     cartesian_t &,
                     int, double, int, int,
-                    isce::core::orbitInterpMethod); 
+                    isce::core::orbitInterpMethod);
 
         // radar->geo using pre-computed basis and state vectors, and DEM
         int rdr2geo(const isce::core::Pixel &,
@@ -71,20 +71,20 @@ namespace isce {
                     const isce::core::Metadata &,
                     double &, double &,
                     double, int, double,
-		    cartesian_t &);
+                    cartesian_t &);
 
       // baseline (ml 2018/05/16)
       int baseline(const cartesian_t &,
-		   const isce::core::Ellipsoid &,
-		   const isce::core::Ellipsoid &,
-		   const isce::core::Orbit &,
-		   const isce::core::Orbit &,
-		   const isce::core::Poly2d &,
-		   const isce::core::Poly2d &,
-		   const isce::core::Metadata &,
-		   const isce::core::Metadata &,
-		   double &, double &,
-		   double, int, double);
+                   const isce::core::Ellipsoid &,
+                   const isce::core::Ellipsoid &,
+                   const isce::core::Orbit &,
+                   const isce::core::Orbit &,
+                   const isce::core::Poly2d &,
+                   const isce::core::Poly2d &,
+                   const isce::core::Metadata &,
+                   const isce::core::Metadata &,
+                   double &, double &,
+                   double, int, double, double &);
     }
 }
 

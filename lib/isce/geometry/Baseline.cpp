@@ -31,7 +31,7 @@ computeBaseline(isce::core::Raster & latRaster,
         isce::core::Raster & lonRaster,
         isce::core::Raster & hgtRaster,
         isce::core::Poly2d & dopplerMaster,
-		isce::core::Poly2d & dopplerSlave,
+                isce::core::Poly2d & dopplerSlave,
         const std::string & outdir) {
   computeBaseline(latRaster, lonRaster, hgtRaster, dopplerMaster, dopplerSlave, outdir, 0.0, 0.0);
 }
@@ -42,7 +42,7 @@ computeBaseline(isce::core::Raster & latRaster,
         isce::core::Raster & lonRaster,
         isce::core::Raster & hgtRaster,
         isce::core::Poly2d & dopplerMaster,
-		isce::core::Poly2d & dopplerSlave,
+                isce::core::Poly2d & dopplerSlave,
         const std::string & outdir,
         double azshift, double rgshift) {
 
@@ -64,7 +64,7 @@ computeBaseline(isce::core::Raster & latRaster,
         GDT_Float32, "ISCE");
     Raster azoffRaster = Raster(outdir + "/kz.bin", demWidth, demLength, 1,
         GDT_Float32, "ISCE");
-    
+
     // Cache sensing start
     double t0 = _metaMaster.sensingStart.secondsSinceEpoch(_refEpochMaster);
     // Adjust for const azimuth shift
@@ -92,16 +92,21 @@ computeBaseline(isce::core::Raster & latRaster,
 
     // Loop over DEM lines
     int converged = 0;
-    for (size_t line = 0; line < demLength; ++line) {
+    for (size_t line = 0; line < demLength/100; ++line) { //ml - remove 100
 
       // Periodic diagnostic printing
-        if ((line % 1000) == 0) {
-            info 
+      if ((line % 100) == 0) {     //ml - change 100 to 1000
+            info
                 << "Processing line: " << line << " " << pyre::journal::newline
-                << "Dopplers near mid far: "
+                << "Dopplers near mid far (master): "
                 << dopplerMaster.eval(0, 0) << " "
                 << dopplerMaster.eval(0, (_metaMaster.width / 2) - 1) << " "
                 << dopplerMaster.eval(0, _metaMaster.width - 1) << " "
+                << pyre::journal::newline
+                << "Dopplers near mid far (slave): "
+                << dopplerSlave.eval(0, 0) << " "
+                << dopplerSlave.eval(0, (_metaSlave.width / 2) - 1) << " "
+                << dopplerSlave.eval(0, _metaSlave.width - 1) << " "
                 << pyre::journal::endl;
         }
 
@@ -116,15 +121,25 @@ computeBaseline(isce::core::Raster & latRaster,
 
             // Perform geo->rdr iterations
             cartesian_t llh = {lat[pixel]*rad, lon[pixel]*rad, hgt[pixel]};
-            double aztime, slantRange;
-	    cartesian_t satposMaster, satposSlave;
+            double aztime, slantRange, basTot;
+            cartesian_t satposMaster, satposSlave;
             int geostat = isce::geometry::baseline(
-						   llh, _ellipsoidMaster, _ellipsoidSlave,
-						   _orbitMaster, _orbitSlave,
-						   dopplerMaster, dopplerSlave,
-						   _metaMaster, _metaSlave,
-						   aztime, slantRange, _threshold, _numiter, 1.0e-8
-						   );
+                                                   llh, _ellipsoidMaster, _ellipsoidSlave,
+                                                   _orbitMaster, _orbitSlave,
+                                                   dopplerMaster, dopplerSlave,
+                                                   _metaMaster, _metaSlave,
+                                                   aztime, slantRange, _threshold, _numiter, 1.0e-8, basTot
+                                                   );
+
+             if ((pixel % 3000) == 0) {     //ml - change 100 to 1000
+               //std::cout << basTot << std::endl;
+               info
+                 << pyre::journal::at(__HERE__)
+                 << "Norm of satposMaster-satposSlave: "
+                 << basTot
+                 << pyre::journal::endl;
+             }
+
 
 
             // Check of solution is out of bounds
@@ -133,10 +148,10 @@ computeBaseline(isce::core::Raster & latRaster,
                 isOutside = true;
             if ((slantRange < r0) || (slantRange > rngend))
                 isOutside = true;
-            
+
             // Save result if valid
             if (!isOutside) {
-                rgoff[pixel] = ((slantRange - r0) / dmrg) - float(pixel);
+              rgoff[pixel] = basTot; //((slantRange - r0) / dmrg) - float(pixel);
                 azoff[pixel] = ((aztime - t0) / dtaz) - float(line);
                 converged += geostat;
             } else {
@@ -149,7 +164,7 @@ computeBaseline(isce::core::Raster & latRaster,
         rgoffRaster.setLine(rgoff, line);
         azoffRaster.setLine(azoff, line);
     }
-            
+
     // Print out convergence statistics
     info << "Total convergence: " << converged << " out of "
          << (demWidth * demLength) << pyre::journal::endl;
