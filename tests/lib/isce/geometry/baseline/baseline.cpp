@@ -38,9 +38,9 @@ TEST(BaselineTest, RunBaseline) {
     isce::core::Ellipsoid ellipsoidSlave;
     isce::core::Metadata metaSlave;
 
-    
+
     // Load metadata
-    std::stringstream metastreamMaster = streamFromVRT("/Users/mlavalle/dat/uavsar/lope.vrt");
+    std::stringstream metastreamMaster = streamFromVRT("/home/mlavalle/dat/uavsar/lope2/lopenp_14043_16015_001_160308/lope.vrt");
     {
     cereal::XMLInputArchive archive(metastreamMaster);
     archive(cereal::make_nvp("Orbit", orbitMaster),
@@ -49,7 +49,7 @@ TEST(BaselineTest, RunBaseline) {
             cereal::make_nvp("Radar", metaMaster));
     }
 
-    std::stringstream metastreamSlave = streamFromVRT("/Users/mlavalle/dat/uavsar/forty.vrt");
+    std::stringstream metastreamSlave = streamFromVRT("/home/mlavalle/dat/uavsar/lope2/fortym_14045_16008_004_160225/forty.vrt");
     {
     cereal::XMLInputArchive archive(metastreamSlave);
     archive(cereal::make_nvp("Orbit", orbitSlave),
@@ -70,9 +70,9 @@ TEST(BaselineTest, RunBaseline) {
     }
 
     // Open lat raster
-    isce::core::Raster latRaster("../../data/topo/lat.rdr");
-    isce::core::Raster lonRaster("../../data/topo/lon.rdr");
-    isce::core::Raster hgtRaster("../../data/topo/z.rdr");
+    isce::core::Raster latRaster("/home/mlavalle/dat/uavsar/lope2/topo/lat.rdr");
+    isce::core::Raster lonRaster("/home/mlavalle/dat/uavsar/lope2/topo/lon.rdr");
+    isce::core::Raster hgtRaster("/home/mlavalle/dat/uavsar/lope2/topo/z.rdr");
 
     // Run geo2rdr
     bas.computeBaseline(latRaster, lonRaster, hgtRaster, dopplerMaster, dopplerSlave, ".");
