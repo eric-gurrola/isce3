@@ -24,6 +24,36 @@
 // Declaration for utility function to read metadata stream from VRT
 std::stringstream streamFromVRT(const char * filename, int bandNum=1);
 
+// Function to compute median of a valarray
+template <typename T>
+T median(std::valarray<T> v) {
+    T value;
+    size_t n = v.size();
+    size_t nmid = v.size() / 2;
+    std::nth_element(std::begin(v), std::begin(v) + nmid, std::end(v));
+    value = v[nmid];
+    if (n % 2 == 1) {
+        return value;
+    }
+    std::nth_element(std::begin(v), std::begin(v) + nmid - 1, std::end(v));
+    value = 0.5 * (value + v[nmid - 1]);
+    return value;
+}
+
+// Function to compute median absolute deviation of a valarray
+template <typename T>
+T medianAbsoluteDeviation(std::valarray<T> v) {
+    // Compute median
+    T medianValue = median(v);
+    // Subtract median and take absolute value
+    for (size_t i = 0; i < v.size(); ++i) {
+        v[i] = std::abs(v[i] - medianValue);
+    }
+    // Compute median of normalized values
+    T mad = median(v);
+    return mad;
+}
+
 TEST(TopoTest, RunTopo) {
 
     // Instantiate isce::core objects
@@ -67,7 +97,7 @@ TEST(TopoTest, CheckResults) {
         "hdg.rdr", "localInc.rdr", "localPsi.rdr"};
 
     // The associated tolerances
-    std::vector<double> tols{1.0e-5, 1.0e-5, 0.15, 1.0e-4, 1.0e-4, 0.02, 0.02};
+    std::vector<double> tols{1.0e-6, 1.0e-6, 0.03, 1.0e-5, 1.0e-8, 0.035, 0.035};
 
     // The directories where the data are
     std::string test_dir = "./";
@@ -81,7 +111,7 @@ TEST(TopoTest, CheckResults) {
         isce::core::Raster refRaster(ref_dir + layers[k]);
         // Compute sum of absolute error
         const size_t N = testRaster.length() * testRaster.width();
-        double error = 0.0;
+        std::valarray<double> errors(N);
         for (size_t i = 0; i < testRaster.length(); ++i) {
             for (size_t j = 0; j < testRaster.width(); ++j) {
                 // Get the values
@@ -89,11 +119,11 @@ TEST(TopoTest, CheckResults) {
                 testRaster.getValue(testVal, j, i);
                 refRaster.getValue(refVal, j, i);
                 // Accumulate the error
-                error += std::abs(testVal - refVal);
+                errors[i*testRaster.width() + j] = testVal - refVal;
             }
         }
         // Normalize the error and check
-        ASSERT_TRUE((error / N) < tols[k]);
+        ASSERT_TRUE(medianAbsoluteDeviation(errors) < tols[k]);
     }
 }
 

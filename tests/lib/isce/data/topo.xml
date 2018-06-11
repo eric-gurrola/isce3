@@ -6,7 +6,7 @@
     <extraIterations>10</extraIterations>
     <orbitMethod>0</orbitMethod>
     <!-- 0: sinc, 1: bilinear, 2: bicubic, 3: nearest, 4: akima, 5: biquintic -->
-    <demMethod>5</demMethod>
+    <demMethod>2</demMethod>
   </Topo>
   <Geo2rdr>
     <threshold>1.0e-9</threshold>
