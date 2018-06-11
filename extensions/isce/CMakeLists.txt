@@ -28,7 +28,7 @@ target_include_directories(
 )
 
 # Add necessary library links
-target_link_libraries(isceextension ${LISCE} m)
+target_link_libraries(isceextension ${LISCE} fitpack m)
 
 # Install
 install(

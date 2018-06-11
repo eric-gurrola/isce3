@@ -4,7 +4,6 @@
 # Copyright 2017-2018
 #
 
-import numpy as np
 from Basis cimport Basis
 
 cdef class pyBasis:
