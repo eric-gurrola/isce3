@@ -38,7 +38,7 @@ namespace isce {
         int rdr2geo(double, double, double,
                     const isce::core::Orbit &,
                     const isce::core::Ellipsoid &,
-                    const DEMInterpolator &,
+                    DEMInterpolator &,
                     cartesian_t &,
                     double, int, double, int, int,
                     isce::core::orbitInterpMethod); 
@@ -49,7 +49,7 @@ namespace isce {
                     const isce::core::StateVector &,
                     const isce::core::Ellipsoid &,
                     const isce::core::Pegtrans &,
-                    const DEMInterpolator &,
+                    DEMInterpolator &,
                     cartesian_t &,
                     int, double, int, int);
 
@@ -57,7 +57,7 @@ namespace isce {
                     const isce::core::Basis &,
                     const isce::core::StateVector &,
                     const isce::core::Ellipsoid &,
-                    const DEMInterpolator &,
+                    DEMInterpolator &,
                     cartesian_t &,
                     int, double, int, int);
 

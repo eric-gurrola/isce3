@@ -60,18 +60,45 @@ loadDEM(isce::core::Raster & demRaster,
     _deltax = deltaX;
     _deltay = deltaY;
 
-    // Resize memory
-    const int width = xend - xstart;
-    const int length = yend - ystart;
-    _dem.resize(length, width);
+    // Create memory to feed into spline interpolator
+    _width = xend - xstart;
+    _length = yend - ystart;
 
-    //Read in the DEM
-    demRaster.getBlock(_dem.data(), xstart, ystart, width, length);
-    
+    // Read in the DEM
+    _dem.resize(_length * _width);
+    demRaster.getBlock(&_dem[0], xstart, ystart, _width, _length);
+
     // Indicate we have loaded a valid raster
     _haveRaster = true;
     // Store interpolation method
     _interpMethod = interpMethod;
+
+    // If nearest neighbor interpolation requested, we skip spline initialization
+    if (_interpMethod == isce::core::NEAREST_METHOD) {
+        return;
+    }
+
+    // Fill in XY coordinates
+    std::valarray<double> Y(_length), X(_width);
+    for (int i = 0; i < _length; ++i)
+        Y[i] = i;
+    for (int j = 0; j < _width; ++j)
+        X[j] = j;
+
+    // Choose correct spline degree based on interpolation method
+    int splineDeg;
+    if (interpMethod == isce::core::BILINEAR_METHOD) {
+        splineDeg = 1;
+    } else if (_interpMethod == isce::core::BICUBIC_METHOD) {
+        splineDeg = 3;
+    } else if (_interpMethod == isce::core::BIQUINTIC_METHOD) { 
+        splineDeg = 5;
+    } else {
+        splineDeg = 3;      // Fall back to bicubic
+    }
+
+    // Initialize spline
+    _spline.initialize(Y, X, _dem, splineDeg, splineDeg, 0.0);
 }
 
 // Load DEM subset into memory
@@ -81,10 +108,10 @@ declare() const {
     info << pyre::journal::newline
          << "Actual DEM bounds used:" << pyre::journal::newline
          << "Top Left: " << _xstart << " " << _ystart << pyre::journal::newline
-         << "Bottom Right: " << _xstart + _deltax * (_dem.width() - 1) << " "
-         << _ystart + _deltay * (_dem.length() - 1) << " " << pyre::journal::newline
+         << "Bottom Right: " << _xstart + _deltax * (_width - 1) << " "
+         << _ystart + _deltay * (_length - 1) << " " << pyre::journal::newline
          << "Spacing: " << _deltax << " " << _deltay << pyre::journal::newline
-         << "Dimensions: " << _dem.width() << " " << _dem.length() << pyre::journal::newline;
+         << "Dimensions: " << _width << " " << _length << pyre::journal::newline;
 }
 
 // Compute maximum DEM height
@@ -99,15 +126,15 @@ computeHeightStats(float & maxValue, float & meanValue, pyre::journal::info_t & 
     } else {
         maxValue = -10000.0;
         float sum = 0.0;
-        for (int i = 0; i < int(_dem.length()); ++i) {
-            for (int j = 0; j < int(_dem.width()); ++j) {
-                float value = _dem(i,j);
+        for (int i = 0; i < _length; ++i) {
+            for (int j = 0; j < _width; ++j) {
+                float value = _dem[i*_width + j];
                 if (value > maxValue)
                     maxValue = value;
                 sum += value;
             }
         }
-        meanValue = sum / (_dem.width() * _dem.length());
+        meanValue = sum / (_length * _width);
     }
     // Announce results
     info << "Max DEM height: " << maxValue << pyre::journal::newline
@@ -116,41 +143,38 @@ computeHeightStats(float & maxValue, float & meanValue, pyre::journal::info_t & 
 
 // Interpolate DEM
 double isce::geometry::DEMInterpolator::
-interpolate(double x, double y) const {
-    // If we don't have a DEM, just return reference height
-    double value = _refHeight;
-    if (!_haveRaster) {
-        return value;
-    } else {
-        // Compute the row and column for requested lat and lon
-        const double row = (y - _ystart) / _deltay;
-        const double col = (x - _xstart) / _deltax;
+interpolate(double x, double y) {
 
-        // Check validity of interpolation coordinates
-        const int irow = int(std::floor(row));
-        const int icol = int(std::floor(col));
-        // If outside bounds, return reference height
-        if (irow < 2 || irow >= int(_dem.length() - 1))
-            return _refHeight;
-        if (icol < 2 || icol >= int(_dem.width() - 1))
-            return _refHeight;
-        
-        // Choose correct interpolation routine
-        if (_interpMethod == isce::core::BILINEAR_METHOD) {
-            value = isce::core::Interpolator::bilinear(col, row, _dem);
-        } else if (_interpMethod == isce::core::BICUBIC_METHOD) {
-            value = isce::core::Interpolator::bicubic(col, row, _dem);
-        } else if (_interpMethod == isce::core::AKIMA_METHOD) {
-            value = isce::core::Interpolator::akima(_dem.width(), _dem.length(), _dem,
-                col, row);
-        } else if (_interpMethod == isce::core::BIQUINTIC_METHOD) { 
-            value = isce::core::Interpolator::interp_2d_spline(6, _dem, col, row);
-        } else if (_interpMethod == isce::core::NEAREST_METHOD) {
-            value = _dem(int(std::round(row)), int(std::round(col)));
-        }
-        // Done
-        return value;
+    // If we don't have a DEM, just return reference height
+    if (!_haveRaster) {
+        return _refHeight;
+    } 
+
+    // Compute the row and column for requested lat and lon
+    const double row = (y - _ystart) / _deltay;
+    const double col = (x - _xstart) / _deltax;
+
+    // Check validity of interpolation coordinates
+    const int irow = int(std::floor(row));
+    const int icol = int(std::floor(col));
+    // If outside bounds, return reference height
+    if (irow < 2 || irow >= (_length - 1))
+        return _refHeight;
+    if (icol < 2 || icol >= (_width - 1))
+        return _refHeight;
+
+    // If nearest neighbor interpolation, get the value directly
+    double value;
+    if (_interpMethod == isce::core::NEAREST_METHOD) {
+        const int index = int(std::round(row)) * _width + int(std::round(col));
+        value = _dem[index];
+    // Otherwise, evaluate spline
+    } else {
+        value = _spline.eval(row, col);
     }
+
+    // Done
+    return value;
 }
 
 // end of file

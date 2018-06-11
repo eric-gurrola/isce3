@@ -12,11 +12,15 @@
 #include <portinfo>
 #include <pyre/journal.h>
 
+// OpenCV
+#include <opencv2/imgproc/imgproc.hpp>
+
 // isce::core
 #include <isce/core/Constants.h>
 #include <isce/core/Interpolator.h>
 #include <isce/core/Raster.h>
 #include <isce/core/Projections.h>
+#include <isce/core/RectBSpline.h>
 
 // Declaration
 namespace isce {
@@ -44,27 +48,32 @@ class isce::geometry::DEMInterpolator {
         void computeHeightStats(float &maxValue, float &meanValue,
                     pyre::journal::info_t &info) const;
         // Interpolate at a given latitude and longitude
-        double interpolate(double x, double y) const;
+        double interpolate(double x, double y);
         // Get transform properties
         double xStart() const { return _xstart; }
         double yStart() const { return _ystart; }
         double deltaX() const { return _deltax; }
         double deltaY() const { return _deltay; }
         // Middle X and Y coordinates
-        double midX() const { return _xstart + 0.5*_dem.width()*_deltax; }
-        double midY() const { return _ystart + 0.5*_dem.length()*_deltay; }
+        double midX() const { return _xstart + 0.5*_width*_deltax; }
+        double midY() const { return _ystart + 0.5*_length*_deltay; }
 
     private:
         // Flag indicating whether we have access to a DEM raster
         bool _haveRaster;
         // Constant value if no raster is provided
         float _refHeight;
-        // 2D array for storing DEM subset
-        isce::core::Matrix<float> _dem;
         // Starting x/y for DEM subset and spacing
         double _xstart, _ystart, _deltax, _deltay;
+        // DEM subset size
+        int _length, _width;
         // Interpolation method
         isce::core::dataInterpMethod _interpMethod;
+
+        // BSpline data
+        std::valarray<double> _dem;
+        isce::core::RectBSpline _spline;
+
 };
 
 #endif

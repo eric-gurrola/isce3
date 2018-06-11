@@ -28,7 +28,7 @@ using isce::core::StateVector;
 
 int isce::geometry::
 rdr2geo(double aztime, double slantRange, double doppler, const Orbit & orbit,
-        const Ellipsoid & ellipsoid, const DEMInterpolator & demInterp, cartesian_t & targetLLH,
+        const Ellipsoid & ellipsoid, DEMInterpolator & demInterp, cartesian_t & targetLLH,
         double wvl, int side, double threshold, int maxIter, int extraIter,
         isce::core::orbitInterpMethod orbitMethod) {
     /*
@@ -70,7 +70,7 @@ rdr2geo(double aztime, double slantRange, double doppler, const Orbit & orbit,
 
 int isce::geometry::
 rdr2geo(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
-        const Ellipsoid & ellipsoid, const DEMInterpolator & demInterp,
+        const Ellipsoid & ellipsoid, DEMInterpolator & demInterp,
         cartesian_t & targetLLH, int side, double threshold, int maxIter, int extraIter) {
     /*
     Assume orbit has been interpolated to correct azimuth time, then estimate geographic
@@ -194,16 +194,13 @@ rdr2geo(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
     // Compute LLH of ground point
     ellipsoid.xyzToLatLon(targetVec, targetLLH);    
 
-    // Interpolate DEM at current lat/lon point
-    targetLLH[2] = demInterp.interpolate(degrees*targetLLH[1], degrees*targetLLH[0]);
-
     // Return convergence flag
     return converged;
 }
 
 int isce::geometry::
 rdr2geo_old(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
-        const Ellipsoid & ellipsoid, const Pegtrans & ptm, const DEMInterpolator & demInterp,
+        const Ellipsoid & ellipsoid, const Pegtrans & ptm, DEMInterpolator & demInterp,
         cartesian_t & targetLLH, int side, double threshold, int maxIter, int extraIter) {
     /*
     Assume orbit has been interpolated to correct azimuth time, then estimate geographic

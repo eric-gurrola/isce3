@@ -23,6 +23,7 @@ set(LOCAL_SRCS
               Projections.cpp
               Quaternion.cpp
 	          Raster.cpp
+              RectBSpline.cpp
               ResampSlc.cpp
               TimeDelta.cpp)
 
@@ -42,6 +43,7 @@ set(${PACKAGENAME}_EXPORT_HEADERS   Attitude.h
                                     Ellipsoid.h
                                     EulerAngles.h
                                     EulerAngles.icc
+                                    FCMangle.h
                                     Interpolator.h
                                     LUT2d.h
                                     LinAlg.h
@@ -59,6 +61,7 @@ set(${PACKAGENAME}_EXPORT_HEADERS   Attitude.h
                                     Serialization.h
                                     Raster.h
 				                    Raster.icc
+                                    RectBSpline.h
                                     ResampSlc.h
                                     ResampSlc.icc
                                     Serialization.h
