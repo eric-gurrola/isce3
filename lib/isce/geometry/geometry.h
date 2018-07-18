@@ -84,7 +84,7 @@ namespace isce {
                    const isce::core::Metadata &,
                    const isce::core::Metadata &,
                    double &, double &,
-                   double, int, double, double &);
+                   double, int, double, double &, double &);
     }
 }
 

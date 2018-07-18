@@ -92,10 +92,10 @@ computeBaseline(isce::core::Raster & latRaster,
 
     // Loop over DEM lines
     int converged = 0;
-    for (size_t line = 0; line < demLength/100; ++line) { //ml - remove 100
+    for (size_t line = 0; line < demLength; ++line) {    // ml - REMOVE 100 when DONE debugging
 
       // Periodic diagnostic printing
-      if ((line % 100) == 0) {     //ml - change 100 to 1000
+      if ((line % 1000) == 0) {     //ml - change 100 to 1000
             info
                 << "Processing line: " << line << " " << pyre::journal::newline
                 << "Dopplers near mid far (master): "
@@ -121,24 +121,35 @@ computeBaseline(isce::core::Raster & latRaster,
 
             // Perform geo->rdr iterations
             cartesian_t llh = {lat[pixel]*rad, lon[pixel]*rad, hgt[pixel]};
-            double aztime, slantRange, basTot;
+            double aztime, slantRange, basTot, basPerp;
             cartesian_t satposMaster, satposSlave;
             int geostat = isce::geometry::baseline(
                                                    llh, _ellipsoidMaster, _ellipsoidSlave,
                                                    _orbitMaster, _orbitSlave,
                                                    dopplerMaster, dopplerSlave,
                                                    _metaMaster, _metaSlave,
-                                                   aztime, slantRange, _threshold, _numiter, 1.0e-8, basTot
+                                                   aztime, slantRange, _threshold, _numiter, 1.0e-8, basTot, basPerp
                                                    );
 
-             if ((pixel % 3000) == 0) {     //ml - change 100 to 1000
-               //std::cout << basTot << std::endl;
-               info
-                 << pyre::journal::at(__HERE__)
-                 << "Norm of satposMaster-satposSlave: "
-                 << basTot
-                 << pyre::journal::endl;
-             }
+            if ((line % 1000) == 0) {
+              if ((pixel % 3000) == 0) {     //ml - change 100 to 1000
+                //std::cout << basTot << std::endl;
+                info
+                  << pyre::journal::at(__HERE__)
+                  << "Norm of satposMaster-satposSlave: "
+                  << basTot
+                  << pyre::journal::newline
+                  << "Perpendicular baseline: "
+                  << basPerp
+                  << pyre::journal::newline
+                << "aztime: "
+                  << aztime
+                  << pyre::journal::newline
+                << "slantrange: "
+                  << slantRange
+                  << pyre::journal::endl;
+              }
+            }
 
 
 
@@ -152,8 +163,9 @@ computeBaseline(isce::core::Raster & latRaster,
             // Save result if valid
             if (!isOutside) {
               rgoff[pixel] = basTot; //((slantRange - r0) / dmrg) - float(pixel);
-                azoff[pixel] = ((aztime - t0) / dtaz) - float(line);
-                converged += geostat;
+              azoff[pixel] = basPerp; //((aztime - t0) / dtaz) - float(line);
+              converged += geostat;
+              //std::cout << "converged" << std::endl;
             } else {
                 rgoff[pixel] = NULL_VALUE;
                 azoff[pixel] = NULL_VALUE;

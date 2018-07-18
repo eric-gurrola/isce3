@@ -321,9 +321,16 @@ baseline(const cartesian_t & inputLLH,
          const Orbit & orbitMaster, const Orbit & orbitSlave,
          const Poly2d & dopplerMaster, const Poly2d & dopplerSlave,
          const Metadata & metaMaster, const Metadata & metaSlave,
-         double & aztime, double & slantRange, double threshold, int maxIter, double deltaRange, double & basTot) {
+         double & aztime, double & slantRange, double threshold, int maxIter, double deltaRange, double & basTot, double & basPerp) {
 
-  cartesian_t satposMaster, satposSlave;
+  cartesian_t satposMaster, satposSlave, targetVec, lookVec, basVec;
+
+    int geostatSlave = isce::geometry::geo2rdr(
+                                             inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
+                                             metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
+                                             satposSlave
+                                             );
+
 
   int geostatMaster = isce::geometry::geo2rdr(
                                               inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
@@ -331,18 +338,19 @@ baseline(const cartesian_t & inputLLH,
                                               satposMaster
                                               );
 
-  int geostatSlave = isce::geometry::geo2rdr(
-                                             inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
-                                             metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
-                                             satposSlave
-                                             );
 
-  std::cout << "Master (" << geostatMaster <<"): " << satposMaster[0] << " " << satposMaster[1] << " " << satposMaster[2] << std::endl;
-  std::cout << "Slave  (" << geostatSlave << "): " << satposSlave[0] << " " << satposSlave[1] << " " << satposSlave[2] << std::endl;
+  //std::cout << "Master (" << geostatMaster <<"): " << satposMaster[0] << " " << satposMaster[1] << " " << satposMaster[2] << std::endl;
+  //std::cout << "Slave  (" << geostatSlave << "): " << satposSlave[0] << " " << satposSlave[1] << " " << satposSlave[2] << std::endl;
 
-  cartesian_t basVect;
-  isce::core::LinAlg::linComb(1, satposMaster, -1, satposSlave, basVect);
-  basTot = isce::core::LinAlg::norm(basVect);
+  // Baseline
+  isce::core::LinAlg::linComb(1, satposMaster, -1, satposSlave, basVec);
+  ellipsoidMaster.latLonToXyz(inputLLH, targetVec);
+  LinAlg::linComb(1.0, satposMaster, -1.0, targetVec, lookVec);
+  basTot  = isce::core::LinAlg::norm(basVec);
+  basPerp = isce::core::LinAlg::dot(basVec, lookVec) / isce::core::LinAlg::norm(lookVec);;
+
+
+
   return geostatMaster;
 }
 
