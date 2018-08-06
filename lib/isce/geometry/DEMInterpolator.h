@@ -16,6 +16,7 @@
 #include <isce/core/Constants.h>
 #include <isce/core/Interpolator.h>
 #include <isce/core/Raster.h>
+#include <isce/core/Projections.h>
 
 // Declaration
 namespace isce {
@@ -32,33 +33,44 @@ class isce::geometry::DEMInterpolator {
         DEMInterpolator() : _haveRaster(false), _refHeight(0.0) {}
         DEMInterpolator(float height) : _haveRaster(false), _refHeight(height) {}
 
-        // Read in subset of data
-        void loadDEM(isce::core::Raster &, double, double, double, double,
-                     isce::core::dataInterpMethod);
+        // Read in subset of data from a DEM with a supported projection
+        void loadDEM(isce::core::Raster &demRaster,
+                     double minLon, double maxLon,
+                     double minLat, double maxLat,
+                     isce::core::dataInterpMethod,
+                     int epsgcode=4326);
         // Print stats
         void declare() const;
         // Compute max and mean DEM height
-        void computeHeightStats(float &, float &, pyre::journal::info_t &) const;
-        // Interpolate at a given latitude and longitude
-        double interpolate(double, double) const;
+        void computeHeightStats(float &maxValue, float &meanValue,
+                    pyre::journal::info_t &info) const;
+        // Interpolate at a given longitude and latitude
+        double interpolateLonLat(double lon, double lat) const;
+        // Interpolate at native XY coordinates of DEM
+        double interpolateXY(double x, double y) const;
         // Get transform properties
-        double lonStart() const { return _lonstart; }
-        double latStart() const { return _latstart; }
-        double deltaLon() const { return _deltalon; }
-        double deltaLat() const { return _deltalat; }
-        // Middle latitude and longitude
-        double midLon() const { return _lonstart + 0.5*_dem.width()*_deltalon; }
-        double midLat() const { return _latstart + 0.5*_dem.length()*_deltalat; }
+        double xStart() const { return _xstart; }
+        double yStart() const { return _ystart; }
+        double deltaX() const { return _deltax; }
+        double deltaY() const { return _deltay; }
+        // Middle X and Y coordinates
+        double midX() const { return _xstart + 0.5*_dem.width()*_deltax; }
+        double midY() const { return _ystart + 0.5*_dem.length()*_deltay; }
+        // Middle lat/lon/h
+        isce::core::cartesian_t midLonLat(double height) const;
 
     private:
         // Flag indicating whether we have access to a DEM raster
         bool _haveRaster;
         // Constant value if no raster is provided
         float _refHeight;
+        // Pointer to a ProjectionBase
+        int _epsgcode;
+        isce::core::ProjectionBase * _proj;
         // 2D array for storing DEM subset
         isce::core::Matrix<float> _dem;
-        // Starting lat/lon for DEM subset and spacing
-        double _lonstart, _latstart, _deltalon, _deltalat;
+        // Starting x/y for DEM subset and spacing
+        double _xstart, _ystart, _deltax, _deltay;
         // Interpolation method
         isce::core::dataInterpMethod _interpMethod;
 };

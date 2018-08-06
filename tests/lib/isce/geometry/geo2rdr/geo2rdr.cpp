@@ -52,13 +52,11 @@ TEST(Geo2rdrTest, RunGeo2rdr) {
     archive(cereal::make_nvp("Geo2rdr", geo));
     }
 
-    // Open lat raster
-    isce::core::Raster latRaster("../../data/topo/lat.rdr");
-    isce::core::Raster lonRaster("../../data/topo/lon.rdr");
-    isce::core::Raster hgtRaster("../../data/topo/z.rdr");
+    // Open topo raster from topo unit test
+    isce::core::Raster topoRaster("../topo/topo.vrt");
 
     // Run geo2rdr
-    geo.geo2rdr(latRaster, lonRaster, hgtRaster, doppler, ".");
+    geo.geo2rdr(topoRaster, doppler, ".");
 
 }
 
@@ -85,7 +83,7 @@ TEST(Geo2rdrTest, CheckResults) {
     }
     // Check errors; azimuth errors tend to be a little larger
     ASSERT_TRUE(rg_error < 1.0e-10);
-    ASSERT_TRUE(az_error < 1.0e-6);
+    ASSERT_TRUE(az_error < 1.0e-10);
 }
 
 // Read metadata from a VRT file and return a stringstream object

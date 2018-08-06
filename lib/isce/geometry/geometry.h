@@ -40,15 +40,13 @@ namespace isce {
                     const isce::core::Ellipsoid &,
                     const DEMInterpolator &,
                     cartesian_t &,
-                    int, double, int, int,
+                    double, int, double, int, int,
                     isce::core::orbitInterpMethod);
 
-        // radar->geo using pre-computed basis and state vectors, and DEM
         int rdr2geo(const isce::core::Pixel &,
                     const isce::core::Basis &,
                     const isce::core::StateVector &,
                     const isce::core::Ellipsoid &,
-                    const isce::core::Pegtrans &,
                     const DEMInterpolator &,
                     cartesian_t &,
                     int, double, int, int);
@@ -85,6 +83,10 @@ namespace isce {
                    const isce::core::Metadata &,
                    double &, double &,
                    double, int, double, double &, double &);
+        // Utility function to compute geocentric TCN basis from state vector
+        void geocentricTCN(isce::core::StateVector &,
+                           isce::core::Basis &);
+
     }
 }
 

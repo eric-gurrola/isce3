@@ -53,7 +53,7 @@ TEST(TopoTest, RunTopo) {
     }
 
     // Open DEM raster
-    isce::core::Raster demRaster("../../data/cropped.dem.grd");
+    isce::core::Raster demRaster("../../data/srtm_cropped.tif");
 
     // Run topo
     topo.topo(demRaster, doppler, ".");
@@ -61,39 +61,45 @@ TEST(TopoTest, RunTopo) {
 }
 
 TEST(TopoTest, CheckResults) {
-
-    // The list of files to check
-    std::vector<std::string> layers{"lat.rdr", "lon.rdr", "z.rdr", "inc.rdr",
-        "hdg.rdr", "localInc.rdr", "localPsi.rdr"};
+    
+    // Open generated topo raster
+    isce::core::Raster testRaster("topo.vrt");
+    
+    // Open reference topo raster
+    isce::core::Raster refRaster("../../data/topo/topo.vrt");
 
     // The associated tolerances
-    std::vector<double> tols{1.0e-5, 1.0e-5, 0.1, 1.0e-4, 1.0e-4, 0.02, 0.02};
+    std::vector<double> tols{1.0e-5, 1.0e-5, 0.15, 1.0e-4, 1.0e-4, 0.02, 0.02};
 
     // The directories where the data are
     std::string test_dir = "./";
     std::string ref_dir = "../../data/topo/";
 
-    // Loop over files
-    for (size_t k = 0; k < layers.size(); ++k) {
-        // Open the test raster
-        isce::core::Raster testRaster(test_dir + layers[k]);
-        // Open the reference raster
-        isce::core::Raster refRaster(ref_dir + layers[k]);
+    // Valarrays to hold line of data
+    std::valarray<double> test(testRaster.width()), ref(refRaster.width());
+
+    // Loop over topo bands
+    for (size_t k = 0; k < refRaster.numBands(); ++k) {
         // Compute sum of absolute error
-        const size_t N = testRaster.length() * testRaster.width();
         double error = 0.0;
+        size_t count = 0;
         for (size_t i = 0; i < testRaster.length(); ++i) {
+            // Get line of data
+            testRaster.getLine(test, i, k + 1);
+            refRaster.getLine(ref, i, k + 1);
             for (size_t j = 0; j < testRaster.width(); ++j) {
                 // Get the values
-                double testVal, refVal;
-                testRaster.getValue(testVal, j, i);
-                refRaster.getValue(refVal, j, i);
-                // Accumulate the error
+                const double testVal = test[j];
+                const double refVal = ref[j];
+                // Accumulate the error (skip outliers)
+                const double currentError = std::abs(testVal - refVal);
+                if (currentError > 5.0) continue;
                 error += std::abs(testVal - refVal);
+                ++count;
             }
         }
         // Normalize the error and check
-        ASSERT_TRUE((error / N) < tols[k]);
+        ASSERT_TRUE((error / count) < tols[k]);
     }
 }
 

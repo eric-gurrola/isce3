@@ -15,6 +15,11 @@ Topo(isce::core::Ellipsoid ellipsoid, isce::core::Orbit orbit, isce::core::Metad
     _ellipsoid = ellipsoid;
     _orbit = orbit;
     _meta = meta;
+    // For numerical precision purposes, set reference epoch 2 days prior
+    _refEpoch._init(_meta.sensingStart.year, _meta.sensingStart.months,
+                    _meta.sensingStart.days - 2, 0, 0, 0, 0.0);
+    // Reformat orbit using this epoch
+    _orbit.reformatOrbit(_refEpoch);
     // Set initialization flag to false
     _initialized = false;
 }
@@ -121,6 +126,15 @@ demMethod(isce::core::dataInterpMethod method) {
 
     // Save
     _demMethod = method;
+}
+
+// Set the EPSG code of the output layers and configure projection
+void isce::geometry::Topo::
+epsgOut(int epsgcode) {
+    // Save the code
+    _epsgOut = epsgcode;
+    // Initialize the projection
+    _proj = isce::core::createProj(epsgcode);
 }
 
 // end of file

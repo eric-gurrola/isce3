@@ -12,6 +12,7 @@
 #include "Projections.h"
 using isce::core::CEA;
 using isce::core::Geocent;
+using isce::core::LonLat;
 using isce::core::PolarStereo;
 using isce::core::ProjectionBase;
 using isce::core::UTM;
@@ -26,28 +27,20 @@ using std::vector;
 /* * * * * * * * * * * * * * * * * * * * Geocent Projection * * * * * * * * * * * * * * * * * * * */
 int Geocent::forward(const cartesian_t &llh, cartesian_t& xyz) const {
     /*
-     * This is to transform LLH to Geocent, which is just a pass-through to latLonToXyz.
+     * This is to transform LLH to Geocent, which is just a pass-through to lonLatToXyz.
      *
-     * There's a discrepancy between ISCE's and proj4's ordering of LLH in that ISCE treats it as
-     * Lat-Lon-Height, and proj4 as Lon-Lat-Height. To resolve this without altering the isce::core
-     * objects, we pass a temporary input vector to latLonToXyz that contains the first two elements
-     * swapped (resolving the discrepancy and preserving the inputs).
      */
 
-    cartesian_t llh_swapped = {llh[1], llh[0], llh[2]};
-    ellipse.latLonToXyz(llh_swapped, xyz);
+    ellipse.lonLatToXyz(llh, xyz);
     return 0;
 }
 
 int Geocent::inverse(const cartesian_t &xyz, cartesian_t& llh) const {
     /*
-     * This is to transform Geocent to LLH, which is just a pass-through to xyzToLatLon. As with
-     * ::forward, there's an issue with internal LLH ordering (lat/lon vs lon/lat), so we swap the
-     * first two elements of the output llh vector before returning.
+     * This is to transform Geocent to LonLatHeight, which is just a pass-through to xyzToLonLat.
      */
 
-    ellipse.xyzToLatLon(xyz, llh);
-    llh = {llh[1], llh[0], llh[2]};
+    ellipse.xyzToLonLat(xyz, llh);
     return 0;
 }
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -366,6 +359,41 @@ int CEA::inverse(const cartesian_t &enu, cartesian_t &llh) const {
 }
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/* * * * * * * * * * * * * * * * * * * Projection Factory * * * * * * * * * * * * * * * * * * */
+ProjectionBase* isce::core::createProj(int epsgcode)
+{
+    //Check for Lat/Lon
+    if (epsgcode == 4326)
+    {
+        return new LonLat;
+    }
+    //Check for Geocentric
+    else if (epsgcode == 4978)
+    {
+        return new Geocent;
+    }
+    //Check if UTM
+    else if (epsgcode > 32600 && epsgcode < 32800)
+    {
+        return new UTM{epsgcode};
+    }
+    //Check if Polar Stereo
+    else if (epsgcode == 3031  || epsgcode == 3413)
+    {
+        return new PolarStereo{epsgcode};
+    }
+    //EASE2 grid
+    else if (epsgcode == 6933)
+    {
+        return new CEA;
+    }
+    else
+    {
+        throw "Unknown EPSG code in factory";
+    }
+}
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 /* * * * * * * * * * * * * * * * * * * Projection Transformer * * * * * * * * * * * * * * * * * * */
 int projTransform(ProjectionBase &in, ProjectionBase &out, const cartesian_t &inpts,
                   cartesian_t &outpts) {
@@ -373,12 +401,6 @@ int projTransform(ProjectionBase &in, ProjectionBase &out, const cartesian_t &in
         // If input/output projections are the same don't even bother processing
         outpts = inpts;
         return 0;
-    } else if (in._epsgcode == 4326) {
-        // Consider case where input is Lat/Lon
-        return out.forward(inpts, outpts);
-    } else if (out._epsgcode == 4326) {
-        // Consider case where output is Lat/Lon
-        return -out.inverse(inpts, outpts);
     } else {
         cartesian_t temp;
         if (in.inverse(inpts, temp) != 0) return -2;
