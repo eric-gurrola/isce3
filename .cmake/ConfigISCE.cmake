@@ -28,7 +28,7 @@ endfunction()
 ##Make sure that a reasonable version of Python is installed
 function(CheckISCEPython)
     FIND_PACKAGE(PythonInterp 3.6)
-    FIND_PACKAGE(PythonInterp 3.6)
+    FIND_PACKAGE(PythonLibs 3.6)
 endfunction()
 
 
@@ -54,30 +54,21 @@ function(CheckGDAL)
     endif()
 endfunction()
 
+##Check for HDF5 installation
+function(CheckHDF5)
+    FIND_PACKAGE(HDF5 REQUIRED COMPONENTS CXX)
+    message(STATUS "Found HDF5: ${HDF5_VERSION} ${HDF5_CXX_LIBRARIES}")
+    # Create space separated list of libraries
+    #string(REPLACE ";" " " TEMP_ITEM "${HDF5_CXX_LIBRARIES}")
+    # Use more standard names to propagate variables
+    set(HDF5_INCLUDE_DIR ${HDF5_INCLUDE_DIRS} CACHE PATH "HDF5 include directory")
+    set(HDF5_LIBRARY "${HDF5_CXX_LIBRARIES}" CACHE STRING "HDF5 libraries")
+endfunction()
+
 ##Check for Armadillo installation
 function(CheckArmadillo)
     FIND_PACKAGE(Armadillo REQUIRED)
     message (STATUS "Found Armadillo:  ${ARMADILLO_VERSION_STRING}")
-endfunction()
-
-
-##Check for CUDA installation
-set(USE_CUDA TRUE CACHE BOOL "Build CUDA")
-function(CheckCUDA)
-    if (USE_CUDA)
-        FIND_PACKAGE(CUDA)
-        if (CUDA_FOUND)
-            if ((CUDA_VERSION VERSION_GREATER 8.0) OR (CUDA_VERSION VERSION_EQUAL 8.0))
-                message (STATUS "Found CUDA: ${CUDA_VERSION}")
-                #set (CUDA_PROPAGATE_HOST_FLAGS ON)
-            else()
-                message (STATUS "Did not find a suitable CUDA version >= 8.0")
-                set(CUDA_FOUND FALSE)
-            endif()
-        else()
-            message (STATUS "CUDA not found. Continuing ... ")
-        endif()
-    endif()
 endfunction()
 
 #Check for OpenMP
