@@ -308,7 +308,7 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
     cartesian_t satpos, satvel, inputXYZ, dr;
 
     // Convert LLH to XYZ
-    ellipsoid.latLonToXyz(inputLLH, inputXYZ);
+    ellipsoid.lonLatToXyz(inputLLH, inputXYZ);
 
     // Pre-compute scale factor for doppler
     const double dopscale = 0.5 * meta.radarWavelength;
@@ -390,7 +390,7 @@ baseline(const cartesian_t & inputLLH,
 
   // Baseline
   isce::core::LinAlg::linComb(1, satposMaster, -1, satposSlave, basVec);
-  ellipsoidMaster.latLonToXyz(inputLLH, targetVec);
+  ellipsoidMaster.lonLatToXyz(inputLLH, targetVec);
   LinAlg::linComb(1.0, satposMaster, -1.0, targetVec, lookVec);
   basTot  = isce::core::LinAlg::norm(basVec);
   basPerp = isce::core::LinAlg::dot(basVec, lookVec) / isce::core::LinAlg::norm(lookVec);;
