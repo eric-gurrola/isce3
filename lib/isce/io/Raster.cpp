@@ -12,12 +12,12 @@
 #include <string>
 #include <vector>
 #include "Raster.h"
-    
+
 
 
 // Construct a Raster object referring to existing file
 isce::io::Raster::Raster(const std::string &fname,   // filename
-			   GDALAccess access) {        // GA_ReadOnly or GA_Update
+                         GDALAccess access) {        // GA_ReadOnly or GA_Update
 
   GDALAllRegister();  // GDAL checks internally if drivers are already loaded
   dataset( static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access)) );
@@ -29,37 +29,61 @@ isce::io::Raster::Raster(const std::string &fname,   // filename
 isce::io::Raster::Raster(const std::string &fname) :
   isce::io::Raster(fname, GA_ReadOnly) {}
 
+// Construct a Raster object referring to a srcwin within the raster image
+isce::io::Raster::Raster(const std::string &fname,   // filename
+                         size_t xoff,
+                         size_t yoff,
+                         size_t xsize,
+                         size_t ysize,
+                         GDALAccess access) {        // GA_ReadOnly or GA_Update
+
+  GDALAllRegister();  // GDAL checks internally if drivers are already loaded
+  dataset( static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access)) );
+  _xoff  = xoff;
+  _yoff  = yoff;
+  _xsize = xsize;
+  _ysize = ysize;
+}
+
+// Construct a Raster object referring to a srcwin within the raster image
+isce::io::Raster::Raster(const std::string &fname,   // filename
+                         size_t xoff,
+                         size_t yoff,
+                         size_t xsize,
+                         size_t ysize) :
+  isce::io::Raster(fname, xoff, yoff, xsize, ysize, GA_ReadOnly) {}
+
 
 // Construct a Raster object given an open GDAL Dataset
 isce::io::Raster::Raster(GDALDataset * inputDataset) {
   GDALAllRegister();
   dataset(inputDataset);
-} 
+}
 
 
 // Construct a Raster object referring to new file
-isce::io::Raster::Raster(const std::string &fname,          // filename 
-			   size_t width,                      // number of columns
-			   size_t length,                     // number of lines
-			   size_t numBands,                   // number of bands
-			   GDALDataType dtype,                // band datatype
-			   const std::string & driverName) {  // GDAL raster format
+isce::io::Raster::Raster(const std::string &fname,          // filename
+                           size_t width,                      // number of columns
+                           size_t length,                     // number of lines
+                           size_t numBands,                   // number of bands
+                           GDALDataType dtype,                // band datatype
+                           const std::string & driverName) {  // GDAL raster format
 
   GDALAllRegister();
   GDALDriver * outputDriver = GetGDALDriverManager()->GetDriverByName(driverName.c_str());
-  
+
   if (driverName == "VRT") {   // if VRT, create empty dataset and add a band, then update.
                                // Number of bands is forced to 1 for now (numBands is ignored).
-                               // Multi-band VRT can be created by adding band after creation 
+                               // Multi-band VRT can be created by adding band after creation
     dataset( outputDriver->Create (fname.c_str(), width, length, 0, dtype, NULL) );
     addRawBandToVRT( fname, dtype );
     GDALClose( dataset() );
     dataset( static_cast<GDALDataset*>(GDALOpenShared( fname.c_str(), GA_Update )) ); ;
   }
 
-  else                         // if non-VRT, create dataset using user-defined driver    
+  else                         // if non-VRT, create dataset using user-defined driver
     dataset( outputDriver->Create (fname.c_str(), width, length, numBands, dtype, NULL) );
-  
+
 }
 
 
@@ -104,15 +128,15 @@ isce::io::Raster::Raster(const Raster &rast) {
 
 // Construct a Raster object referring to a VRT dataset with multiple bands from a vector
 // of Raster objects. Input rasters with multiple bands are unfolded within the output raster
-isce::io::Raster::Raster(const std::string& fname, const std::vector<Raster>& rastVec) {  
+isce::io::Raster::Raster(const std::string& fname, const std::vector<Raster>& rastVec) {
   GDALAllRegister();
   GDALDriver * outputDriver = GetGDALDriverManager()->GetDriverByName("VRT");
   dataset( outputDriver->Create (fname.c_str(),
-				 rastVec.front().width(),
-				 rastVec.front().length(),
-				 0,    // bands are added below
-				 rastVec.front().dtype(),
-				 NULL) );  
+                                 rastVec.front().width(),
+                                 rastVec.front().length(),
+                                 0,    // bands are added below
+                                 rastVec.front().dtype(),
+                                 NULL) );
 
   for ( auto r : rastVec)     // for each input Raster object in rastVec
     addRasterToVRT( r );
@@ -127,28 +151,28 @@ int isce::io::Raster::getEPSG()
 
     //Extract WKT string corresponding to the dataset
     const char* pszProjection = GDALGetProjectionRef(_dataset);
-    
-    
+
+
     //If WKT string is not empty
     if ((pszProjection != nullptr) && strlen(pszProjection)>0)
     {
         //Create a spatial reference object
         OGRSpatialReference hSRS(nullptr);
 
-	//These two lines can be deleted if we enforce GDAL >= 2.3 
-	char* pszProjectionTmp = new char[strlen(pszProjection)];
-	strncpy(pszProjectionTmp, pszProjection, strlen(pszProjection));
-	
+        //These two lines can be deleted if we enforce GDAL >= 2.3
+        char* pszProjectionTmp = new char[strlen(pszProjection)];
+        strncpy(pszProjectionTmp, pszProjection, strlen(pszProjection));
+
         //Try to import WKT discovered from dataset
-	//if ( hSRS.importFromWkt(&pszProjection) == 0 )  // use char* if we enforce GDAL >= 2.3
+        //if ( hSRS.importFromWkt(&pszProjection) == 0 )  // use char* if we enforce GDAL >= 2.3
         if ( hSRS.importFromWkt( & pszProjectionTmp ) == 0 )
         {
 
             //This part of the code is for features below GDAL 2.3
             //We are forced to use AutoIdentifyEPSG which is not complete
-            
+
 #if GDAL_VERSION_MINOR < 3
-            if (hSRS.AutoIdentifyEPSG() == 0) 
+            if (hSRS.AutoIdentifyEPSG() == 0)
             {
                 std::string authorityName, authorityCode;
 
@@ -187,8 +211,8 @@ int isce::io::Raster::getEPSG()
             }
 #else
             //GDAL 2.3 provides OSRFindMatches which is more robust and thorough.
-            //Auto-discovery is only bound to get better. 
-            //GDAL 2.3 (May 2018) is still relatively new. 
+            //Auto-discovery is only bound to get better.
+            //GDAL 2.3 (May 2018) is still relatively new.
             //In about a year's time we will be able
             //to deprecate the above part.
             int nEntries = 0;
@@ -237,7 +261,7 @@ int isce::io::Raster::getEPSG()
         }
     }
 
-    return epsgcode; 
+    return epsgcode;
 }
 
 //Set projection system for raster based on EPSG code
@@ -248,7 +272,7 @@ int isce::io::Raster::setEPSG(int epsgcode)
     //Create a spatial reference object
     OGRSpatialReference hSRS(nullptr);
 
-    //Try importing from EPSGcode 
+    //Try importing from EPSGcode
     if (hSRS.importFromEPSG(epsgcode) == 0)
     {
         char *pszOutput = nullptr;
