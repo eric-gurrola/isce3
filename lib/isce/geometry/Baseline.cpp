@@ -21,15 +21,15 @@
 #include "Baseline.h"
 
 // pull in some isce::core namespaces
-using isce::core::Raster;
+using isce::io::Raster;
 using isce::core::Poly2d;
 using isce::core::LinAlg;
 
 // Run geo2rdr with no offsets
 void isce::geometry::Baseline::
-computeBaseline(isce::core::Raster & latRaster,
-        isce::core::Raster & lonRaster,
-        isce::core::Raster & hgtRaster,
+computeBaseline(isce::io::Raster & latRaster,
+        isce::io::Raster & lonRaster,
+        isce::io::Raster & hgtRaster,
         isce::core::Poly2d & dopplerMaster,
                 isce::core::Poly2d & dopplerSlave,
         const std::string & outdir) {
@@ -38,9 +38,9 @@ computeBaseline(isce::core::Raster & latRaster,
 
 // Run geo2rdr - main entrypoint
 void isce::geometry::Baseline::
-computeBaseline(isce::core::Raster & latRaster,
-        isce::core::Raster & lonRaster,
-        isce::core::Raster & hgtRaster,
+computeBaseline(isce::io::Raster & latRaster,
+        isce::io::Raster & lonRaster,
+        isce::io::Raster & hgtRaster,
         isce::core::Poly2d & dopplerMaster,
                 isce::core::Poly2d & dopplerSlave,
         const std::string & outdir,
