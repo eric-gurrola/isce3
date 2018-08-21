@@ -38,6 +38,7 @@ namespace isce {
       //                  (filename, STL container to infer width and datatype, length)
       Raster(const std::string&);
       Raster(const std::string&, GDALAccess);
+      Raster(const std::string&, const bool, const std::vector<size_t>);
       Raster(const std::string&, const bool, size_t, size_t, size_t, size_t);
       Raster(const std::string&, const bool, size_t, size_t, size_t, size_t, GDALAccess);
       Raster(const std::string&, size_t, size_t, size_t, GDALDataType, const std::string&);

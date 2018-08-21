@@ -24,8 +24,8 @@ isce::io::Raster::Raster(const std::string & fname,       // filename of new fil
 // Construct a Raster object referring to new file assuming default GDAL driver, type and band.
 template<typename T>
 isce::io::Raster::Raster(const std::string & fname,       // filename of new file to be created
-                           const std::valarray<T> & buffer, // buffer used to infer width and type
-                           size_t length) :                 // length of raster
+                         const std::valarray<T> & buffer, // buffer used to infer width and type
+                         size_t length) :                 // length of raster
   isce::io::Raster(fname, buffer.size(), length, 1, GDT.at(typeid(T))) {}
 
 

@@ -69,6 +69,13 @@ isce::io::Raster::Raster(const std::string &fname,   // filename
   isce::io::Raster(fname, asVRT, xoff, yoff, xsize, ysize, GA_ReadOnly) {}
 
 
+// Construct a Raster object referring to a srcwin within the raster image
+isce::io::Raster::Raster(const std::string &fname,   // filename
+                         const bool asVRT,
+                         const std::vector<size_t> srcwin) :
+  isce::io::Raster(fname, asVRT, srcwin[0], srcwin[1], srcwin[2], srcwin[3], GA_ReadOnly) {}
+
+
 // Construct a Raster object given an open GDAL Dataset
 isce::io::Raster::Raster(GDALDataset * inputDataset) {
   GDALAllRegister();
