@@ -61,15 +61,20 @@ inline void isce::io::Raster::addRasterToVRT(const isce::io::Raster& rast) {
 
 // Add a GDALRasterBand object to existing VRT dataset
 inline void isce::io::Raster::addBandToVRT(GDALRasterBand * inBand) {
+  addBandToVRT(inBand, 0, 0, inBand->GetXSize(), inBand->GetYSize());
+}
+
+// Add a GDALRasterBand object to existing VRT dataset
+inline void isce::io::Raster::addBandToVRT(GDALRasterBand * inBand, size_t xoff, size_t yoff, size_t xsize, size_t ysize) {
   if ( !strcmp(dataset()->GetDriverName(), "VRT") ) {                   // dataset is VRT
     dataset()->AddBand( inBand->GetRasterDataType(), NULL );            // add band to VRT dataset
     GDALRasterBand *rastBand = dataset()->GetRasterBand( numBands() );  // get last band
     VRTAddSimpleSource(rastBand,
                        inBand,
+                       xoff, yoff,
+                       xsize, ysize,
                        0, 0,
-                       inBand->GetXSize(), inBand->GetYSize(),
-                       0, 0,
-                       inBand->GetXSize(), inBand->GetYSize(),
+                       xsize, ysize,
                        NULL, VRT_NODATA_UNSET);
   }
     else

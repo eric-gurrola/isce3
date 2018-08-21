@@ -31,6 +31,7 @@ isce::io::Raster::Raster(const std::string &fname) :
 
 // Construct a Raster object referring to a srcwin within the raster image
 isce::io::Raster::Raster(const std::string &fname,   // filename
+                         const bool asVRT,
                          size_t xoff,
                          size_t yoff,
                          size_t xsize,
@@ -38,20 +39,34 @@ isce::io::Raster::Raster(const std::string &fname,   // filename
                          GDALAccess access) {        // GA_ReadOnly or GA_Update
 
   GDALAllRegister();  // GDAL checks internally if drivers are already loaded
-  dataset( static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access)) );
-  _xoff  = xoff;
-  _yoff  = yoff;
-  _xsize = xsize;
-  _ysize = ysize;
+
+  if (asVRT) {
+  GDALDataset * srcDataset = static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access));
+  GDALDriver * poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
+  //dataset( poDriver->CreateCopy( "", srcDataset, FALSE, NULL, NULL, NULL ) );
+  dataset ( (GDALDataset *) VRTCreate(srcDataset->GetRasterXSize(), srcDataset->GetRasterYSize()) );
+    for ( size_t b=1; b<=srcDataset->GetRasterCount(); ++b )           // for each band in input Raster
+      addBandToVRT( srcDataset->GetRasterBand(b), xoff, yoff, xsize, ysize );   // add GDALRasterBand to VRT
+    std::cout << "SIZE OF RASTER = " << width() << " " << length() << std::endl;
+  }
+
+  else {
+    dataset( static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access)) );
+    _xoff  = xoff;
+    _yoff  = yoff;
+    _xsize = xsize;
+    _ysize = ysize;
+  }
 }
 
 // Construct a Raster object referring to a srcwin within the raster image
 isce::io::Raster::Raster(const std::string &fname,   // filename
+                         const bool asVRT,
                          size_t xoff,
                          size_t yoff,
                          size_t xsize,
                          size_t ysize) :
-  isce::io::Raster(fname, xoff, yoff, xsize, ysize, GA_ReadOnly) {}
+  isce::io::Raster(fname, asVRT, xoff, yoff, xsize, ysize, GA_ReadOnly) {}
 
 
 // Construct a Raster object given an open GDAL Dataset
