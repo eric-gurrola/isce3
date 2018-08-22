@@ -46,8 +46,6 @@ class isce::geometry::Baseline {
 
         // Run geo2rdr - main entrypoint
         void computeBaseline(isce::io::Raster &,
-                             isce::io::Raster &,
-                             isce::io::Raster &,
                              isce::core::Poly2d &,
                              isce::core::Poly2d &,
                              const std::string &,
@@ -55,14 +53,12 @@ class isce::geometry::Baseline {
 
         // Alternative: run geo2rdr with no constant offsets
         void computeBaseline(isce::io::Raster &,
-                             isce::io::Raster &,
-                             isce::io::Raster &,
                              isce::core::Poly2d &,
                              isce::core::Poly2d &,
                              const std::string &);
 
         // Value for null pixels
-        const double NULL_VALUE = -1000.0;
+        const double NULL_VALUE = -1.0e6;
 
     private:
         // Print extents and image info
@@ -79,13 +75,15 @@ class isce::geometry::Baseline {
         isce::core::Ellipsoid _ellipsoidMaster;
         isce::core::Orbit _orbitMaster;
         isce::core::Metadata _metaMaster;
+        isce::core::DateTime _refEpochMaster;
 
         isce::core::Ellipsoid _ellipsoidSlave;
         isce::core::Orbit _orbitSlave;
         isce::core::Metadata _metaSlave;
-
-        isce::core::DateTime _refEpochMaster;
         isce::core::DateTime _refEpochSlave;
+
+        // Projection related data
+        isce::core::ProjectionBase * _projTopo;
 
         // Processing parameters
         int _numiter;

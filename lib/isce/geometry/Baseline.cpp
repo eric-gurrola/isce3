@@ -27,68 +27,67 @@ using isce::core::LinAlg;
 
 // Run geo2rdr with no offsets
 void isce::geometry::Baseline::
-computeBaseline(isce::io::Raster & latRaster,
-        isce::io::Raster & lonRaster,
-        isce::io::Raster & hgtRaster,
-        isce::core::Poly2d & dopplerMaster,
+computeBaseline(isce::io::Raster & topoRaster,
+                isce::core::Poly2d & dopplerMaster,
                 isce::core::Poly2d & dopplerSlave,
-        const std::string & outdir) {
-  computeBaseline(latRaster, lonRaster, hgtRaster, dopplerMaster, dopplerSlave, outdir, 0.0, 0.0);
+                const std::string & outdir) {
+  computeBaseline(topoRaster, dopplerMaster, dopplerSlave, outdir, 0.0, 0.0);
 }
 
-// Run geo2rdr - main entrypoint
+// Run Baseline - main entrypoint
 void isce::geometry::Baseline::
-computeBaseline(isce::io::Raster & latRaster,
-        isce::io::Raster & lonRaster,
-        isce::io::Raster & hgtRaster,
-        isce::core::Poly2d & dopplerMaster,
+computeBaseline(isce::io::Raster & topoRaster,
+                isce::core::Poly2d & dopplerMaster,
                 isce::core::Poly2d & dopplerSlave,
-        const std::string & outdir,
-        double azshift, double rgshift) {
+                const std::string & outdir,
+                double azshift, double rgshift) {
 
-    // Create reusable pyre::journal channels
-    pyre::journal::warning_t warning("isce.geometry.Baseline");
-    pyre::journal::info_t info("isce.geometry.Baseline");
+  // Create reusable pyre::journal channels
+  pyre::journal::warning_t warning("isce.geometry.Baseline");
+  pyre::journal::info_t info("isce.geometry.Baseline");
 
-    // Cache the size of the DEM images
-    const size_t demWidth = hgtRaster.width();
-    const size_t demLength = hgtRaster.length();
-    const double rad = M_PI / 180.0;
+  // Cache the size of the DEM images
+  const size_t demWidth = topoRaster.width();
+  const size_t demLength = topoRaster.length();
 
-    // Valarrays to hold line of results
-    std::valarray<double> lat(demWidth), lon(demWidth), hgt(demWidth);
-    std::valarray<float> rgoff(demWidth), azoff(demWidth);
+  // Initialize projection for topo results
+  _projTopo = isce::core::createProj(topoRaster.getEPSG());
 
-    // Create output rasters
-    Raster rgoffRaster = Raster(outdir + "/baseline.bin", demWidth, demLength, 1,
-        GDT_Float32, "ISCE");
-    Raster azoffRaster = Raster(outdir + "/kz.bin", demWidth, demLength, 1,
-        GDT_Float32, "ISCE");
+  // Valarrays to hold line of results
+  std::valarray<double> x(demWidth), y(demWidth), hgt(demWidth);
+  std::valarray<float> bperp(demWidth), kz(demWidth);
 
-    // Cache sensing start
-    double t0 = _metaMaster.sensingStart.secondsSinceEpoch(_refEpochMaster);
-    // Adjust for const azimuth shift
-    t0 -= (azshift - 0.5 * (_metaMaster.numberAzimuthLooks - 1)) / _metaMaster.prf;
+  // Create output rasters
+  Raster bperpRaster = Raster(outdir + "/bperp.bin", demWidth, demLength, 1,
+                              GDT_Float32, "ENVI");
+  Raster kzRaster = Raster(outdir + "/kz.bin", demWidth, demLength, 1,
+                           GDT_Float32, "ENVI");
 
-    // Cache starting range
-    double r0 = _metaMaster.rangeFirstSample;
-    // Adjust for constant range shift
-    r0 -= (rgshift - 0.5 * (_metaMaster.numberRangeLooks - 1)) * _metaMaster.slantRangePixelSpacing;
+  // Cache sensing start (pasted from geo2rdr)
+  double t0 = _metaMaster.sensingStart.secondsSinceEpoch(_refEpochMaster);
+  // Adjust for const azimuth shift
+  t0 -= (azshift - 0.5 * (_metaMaster.numberAzimuthLooks - 1)) / _metaMaster.prf;
 
-    // Compute azimuth time extents
-    double dtaz = _metaMaster.numberAzimuthLooks / _metaMaster.prf;
-    const double tend = t0 + ((_metaMaster.length - 1) * dtaz);
-    const double tmid = 0.5 * (t0 + tend);
+  // Cache starting range
+  double r0 = _metaMaster.rangeFirstSample;
+  // Adjust for constant range shift
+  r0 -= (rgshift - 0.5 * (_metaMaster.numberRangeLooks - 1)) * _metaMaster.slantRangePixelSpacing;
 
-    // Compute range extents
-    const double dmrg = _metaMaster.numberRangeLooks * _metaMaster.slantRangePixelSpacing;
-    const double rngend = r0 + ((_metaMaster.width - 1) * dmrg);
+  // Compute azimuth time extents
+  double dtaz = _metaMaster.numberAzimuthLooks / _metaMaster.prf;
+  const double tend = t0 + ((_metaMaster.length - 1) * dtaz);
+  const double tmid = 0.5 * (t0 + tend);
 
-    // Print out extents
-    _printExtents(info, t0, tend, dtaz, r0, rngend, dmrg, demWidth, demLength);
+  // Compute range extents
+  const double dmrg = _metaMaster.numberRangeLooks * _metaMaster.slantRangePixelSpacing;
+  const double rngend = r0 + ((_metaMaster.width - 1) * dmrg);
 
-    // Interpolate orbit to middle of the scene as a test
-    _checkOrbitInterpolation(tmid);
+  // Print out extents
+  _printExtents(info, t0, tend, dtaz, r0, rngend, dmrg, demWidth, demLength);
+
+  // Interpolate orbit to middle of the scene as a test
+  _checkOrbitInterpolation(tmid);
+
 
     // Loop over DEM lines
     int converged = 0;
@@ -110,46 +109,50 @@ computeBaseline(isce::io::Raster & latRaster,
                 << pyre::journal::endl;
         }
 
-        // Read line of data
-        latRaster.getLine(lat, line);
-        lonRaster.getLine(lon, line);
-        hgtRaster.getLine(hgt, line);
+      // Read line of data
+      topoRaster.getLine(x, line, 1);
+      topoRaster.getLine(y, line, 2);
+      topoRaster.getLine(hgt, line, 3);
 
-        // Loop over DEM pixels
-        #pragma omp parallel for reduction(+:converged)
-        for (size_t pixel = 0; pixel < demWidth; ++pixel) {
+      // Loop over DEM pixels
+      #pragma omp parallel for reduction(+:converged)
+      for (size_t pixel = 0; pixel < demWidth; ++pixel) {
 
-            // Perform geo->rdr iterations
-            cartesian_t llh = {lat[pixel]*rad, lon[pixel]*rad, hgt[pixel]};
-            double aztime, slantRange, basTot, basPerp;
-            cartesian_t satposMaster, satposSlave;
-            int geostat = isce::geometry::baseline(
-                                                   llh, _ellipsoidMaster, _ellipsoidSlave,
-                                                   _orbitMaster, _orbitSlave,
-                                                   dopplerMaster, dopplerSlave,
-                                                   _metaMaster, _metaSlave,
-                                                   aztime, slantRange, _threshold, _numiter, 1.0e-8, basTot, basPerp
-                                                   );
+        // Convert topo XYZ to LLH
+        isce::core::cartesian_t xyz{x[pixel], y[pixel], hgt[pixel]};
+        isce::core::cartesian_t llh;
+        _projTopo->inverse(xyz, llh);
 
-            if ((line % 1000) == 0) {
-              if ((pixel % 3000) == 0) {     //ml - change 100 to 1000
-                //std::cout << basTot << std::endl;
-                info
-                  << pyre::journal::at(__HERE__)
-                  << "Norm of satposMaster-satposSlave: "
-                  << basTot
-                  << pyre::journal::newline
-                  << "Perpendicular baseline: "
-                  << basPerp
-                  << pyre::journal::newline
-                << "aztime: "
-                  << aztime
-                  << pyre::journal::newline
-                << "slantrange: "
-                  << slantRange
-                  << pyre::journal::endl;
-              }
-            }
+        // Perform geo->rdr iterations
+        double aztime, slantRange, kzSample, bperpSample;
+        cartesian_t satposMaster, satposSlave;
+        int geostat = isce::geometry::baseline(llh, _ellipsoidMaster, _ellipsoidSlave,
+                                               _orbitMaster, _orbitSlave,
+                                               dopplerMaster, dopplerSlave,
+                                               _metaMaster, _metaSlave,
+                                               aztime, slantRange, _threshold, _numiter, 1.0e-8,
+                                               bperpSample, kzSample
+                                               );
+
+        if ((line % 1000) == 0) {
+          if ((pixel % 3000) == 0) {     //ml - change 100 to 1000
+            //std::cout << basTot << std::endl;
+            info
+              << pyre::journal::at(__HERE__)
+              << "Norm of satposMaster-satposSlave: "
+              << bperpSample
+              << pyre::journal::newline
+              << "Perpendicular baseline: "
+              << kzSample
+              << pyre::journal::newline
+              << "aztime: "
+              << aztime
+              << pyre::journal::newline
+              << "slantrange: "
+              << slantRange
+              << pyre::journal::endl;
+          }
+        }
 
 
 
@@ -162,19 +165,19 @@ computeBaseline(isce::io::Raster & latRaster,
 
             // Save result if valid
             if (!isOutside) {
-              rgoff[pixel] = basTot; //((slantRange - r0) / dmrg) - float(pixel);
-              azoff[pixel] = basPerp; //((aztime - t0) / dtaz) - float(line);
+              bperp[pixel] = bperpSample; //((slantRange - r0) / dmrg) - float(pixel);
+              kz[pixel] = kzSample; //((aztime - t0) / dtaz) - float(line);
               converged += geostat;
               //std::cout << "converged" << std::endl;
             } else {
-                rgoff[pixel] = NULL_VALUE;
-                azoff[pixel] = NULL_VALUE;
+                bperp[pixel] = NULL_VALUE;
+                kz[pixel] = NULL_VALUE;
             }
         }
 
         // Write data
-        rgoffRaster.setLine(rgoff, line);
-        azoffRaster.setLine(azoff, line);
+        bperpRaster.setLine(bperp, line);
+        kzRaster.setLine(kz, line);
     }
 
     // Print out convergence statistics

@@ -10,27 +10,33 @@
 
 // Constructor
 isce::geometry::Baseline::
-Baseline(isce::core::Ellipsoid ellipsoidMaster, isce::core::Orbit orbitMaster, isce::core::Metadata metaMaster, isce::core::Ellipsoid ellipsoidSlave, isce::core::Orbit orbitSlave, isce::core::Metadata metaSlave) {
-    // Copy objects
-    _ellipsoidMaster = ellipsoidMaster;
-    _orbitMaster = orbitMaster;
-    _metaMaster = metaMaster;
-    // For numerical precision purposes, set reference epoch 2 days prior
-    _refEpochMaster._init(_metaMaster.sensingStart.year, _metaMaster.sensingStart.months,
-                    _metaMaster.sensingStart.days - 2, 0, 0, 0, 0.0);
-    // Reformat orbit using this epoch
-    _orbitMaster.reformatOrbit(_refEpochMaster);
+Baseline(isce::core::Ellipsoid ellipsoidMaster,
+         isce::core::Orbit orbitMaster,
+         isce::core::Metadata metaMaster,
+         isce::core::Ellipsoid ellipsoidSlave,
+         isce::core::Orbit orbitSlave,
+         isce::core::Metadata metaSlave) {
+
+  // Copy objects
+  _ellipsoidMaster = ellipsoidMaster;
+  _orbitMaster = orbitMaster;
+  _metaMaster = metaMaster;
+  // For numerical precision purposes, set reference epoch 2 days prior
+  _refEpochMaster._init(_metaMaster.sensingStart.year, _metaMaster.sensingStart.months,
+                        _metaMaster.sensingStart.days - 2, 0, 0, 0, 0.0);
+  // Reformat orbit using this epoch
+  _orbitMaster.updateUTCTimes(_refEpochMaster);
 
 
-    // Copy objects
-    _ellipsoidSlave = ellipsoidSlave;
-    _orbitSlave = orbitSlave;
-    _metaSlave = metaSlave;
-    // For numerical precision purposes, set reference epoch 2 days prior
-    _refEpochSlave._init(_metaSlave.sensingStart.year, _metaSlave.sensingStart.months,
-                    _metaSlave.sensingStart.days - 2, 0, 0, 0, 0.0);
-    // Reformat orbit using this epoch
-    _orbitSlave.reformatOrbit(_refEpochSlave);
+  // Copy objects
+  _ellipsoidSlave = ellipsoidSlave;
+  _orbitSlave = orbitSlave;
+  _metaSlave = metaSlave;
+  // For numerical precision purposes, set reference epoch 2 days prior
+  _refEpochSlave._init(_metaSlave.sensingStart.year, _metaSlave.sensingStart.months,
+                       _metaSlave.sensingStart.days - 2, 0, 0, 0, 0.0);
+  // Reformat orbit using this epoch
+  _orbitSlave.updateUTCTimes(_refEpochSlave);
 }
 
 // Set threshold
@@ -88,4 +94,3 @@ orbitMethod(isce::core::orbitInterpMethod method) {
     // Save
     _orbitMethod = method;
 }
-
