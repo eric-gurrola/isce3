@@ -29,58 +29,6 @@ isce::io::Raster::Raster(const std::string &fname,   // filename
 isce::io::Raster::Raster(const std::string &fname) :
   isce::io::Raster(fname, GA_ReadOnly) {}
 
-// Construct a Raster object referring to a srcwin within the raster image
-isce::io::Raster::Raster(const std::string &fname,   // filename
-                         const bool asVRT,
-                         size_t xoff,
-                         size_t yoff,
-                         size_t xsize,
-                         size_t ysize,
-                         GDALAccess access) {        // GA_ReadOnly or GA_Update
-
-  GDALAllRegister();  // GDAL checks internally if drivers are already loaded
-
-  if (asVRT) {
-  GDALDataset * srcDataset = static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access));
-  GDALDriver * poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
-  //dataset( poDriver->CreateCopy( "", srcDataset, FALSE, NULL, NULL, NULL ) );
-  dataset ( (GDALDataset *) VRTCreate(srcDataset->GetRasterXSize(), srcDataset->GetRasterYSize()) );
-    for ( size_t b=1; b<=srcDataset->GetRasterCount(); ++b )           // for each band in input Raster
-      addBandToVRT( srcDataset->GetRasterBand(b), xoff, yoff, xsize, ysize );   // add GDALRasterBand to VRT
-    std::cout << "SIZE OF RASTER = " << width() << " " << length() << std::endl;
-  }
-
-  else {
-    dataset( static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access)) );
-    _xoff  = xoff;
-    _yoff  = yoff;
-    _xsize = xsize;
-    _ysize = ysize;
-  }
-}
-
-// Construct a Raster object referring to a srcwin within the raster image
-isce::io::Raster::Raster(const std::string &fname,   // filename
-                         const bool asVRT,
-                         size_t xoff,
-                         size_t yoff,
-                         size_t xsize,
-                         size_t ysize) :
-  isce::io::Raster(fname, asVRT, xoff, yoff, xsize, ysize, GA_ReadOnly) {}
-
-
-// Construct a Raster object referring to a srcwin within the raster image
-isce::io::Raster::Raster(const std::string &fname,   // filename
-                         const bool asVRT,
-                         const std::vector<size_t> srcwin) :
-  isce::io::Raster(fname, asVRT, srcwin[0], srcwin[1], srcwin[2], srcwin[3], GA_ReadOnly) {}
-
-
-// Construct a Raster object given an open GDAL Dataset
-isce::io::Raster::Raster(GDALDataset * inputDataset) {
-  GDALAllRegister();
-  dataset(inputDataset);
-}
 
 
 // Construct a Raster object referring to new file
@@ -107,7 +55,6 @@ isce::io::Raster::Raster(const std::string &fname,          // filename
     dataset( outputDriver->Create (fname.c_str(), width, length, numBands, dtype, NULL) );
 
 }
-
 
 
 // Construct a Raster object referring to new file assuming default GDAL driver.
@@ -144,6 +91,12 @@ isce::io::Raster::Raster(const std::string &fname, const Raster &rast) :
 isce::io::Raster::Raster(const Raster &rast) {
   dataset( rast._dataset );
   dataset()->Reference();
+}
+
+// Constructor
+isce::io::Raster::Raster(GDALDataset * ds) {
+  dataset( ds );                // assign dataset
+  dataset()->Reference();       // increment GDALDataset reference counter
 }
 
 

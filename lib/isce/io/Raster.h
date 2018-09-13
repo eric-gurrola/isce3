@@ -22,6 +22,9 @@
 #include "ogr_spatialref.h"
 #include "Constants.h"
 
+//#include "commonutils.h"
+#include "gdal_utils.h"
+
 //#include <pyre/journal.h>
 
 namespace isce {
@@ -38,9 +41,6 @@ namespace isce {
       //                  (filename, STL container to infer width and datatype, length)
       Raster(const std::string&);
       Raster(const std::string&, GDALAccess);
-      Raster(const std::string&, const bool, const std::vector<size_t>);
-      Raster(const std::string&, const bool, size_t, size_t, size_t, size_t);
-      Raster(const std::string&, const bool, size_t, size_t, size_t, size_t, GDALAccess);
       Raster(const std::string&, size_t, size_t, size_t, GDALDataType, const std::string&);
       Raster(const std::string&, size_t, size_t, size_t, GDALDataType);
       Raster(const std::string&, size_t, size_t, size_t);
@@ -56,10 +56,8 @@ namespace isce {
 
       // Operators, getters and setters
       inline Raster&      operator=(const Raster&);
-      // inline size_t       length()   const { return _ysize == 0 ? _dataset->GetRasterYSize() : _ysize; }
-      // inline size_t       width()    const { return _xsize == 0 ? _dataset->GetRasterXSize() : _xsize; }
-      inline size_t       length()   const { return _ysize == 0 ? _dataset->GetRasterBand(1)->GetYSize() : _ysize; }
-      inline size_t       width()    const { return _xsize == 0 ? _dataset->GetRasterBand(1)->GetXSize() : _xsize; }
+      inline size_t       length()   const { return _dataset->GetRasterYSize(); }
+      inline size_t       width()    const { return _dataset->GetRasterXSize(); }
       inline size_t       numBands() const { return _dataset->GetRasterCount(); }
       inline GDALAccess   access()   const { return _dataset->GetAccess(); }
       inline GDALDataset* dataset()  const { return _dataset; }
@@ -71,6 +69,7 @@ namespace isce {
       inline void         addBandToVRT(GDALRasterBand *);
       inline void         addBandToVRT(GDALRasterBand *, size_t, size_t, size_t, size_t);
       inline void         addRawBandToVRT(const std::string &, GDALDataType);
+      inline Raster       crop(size_t, size_t, size_t, size_t, std::string);
       //void close() { GDALClose( _dataset ); }  // todo: fix segfault conflict with destructor
 
 
@@ -141,10 +140,6 @@ namespace isce {
     private:
 
       GDALDataset * _dataset;
-      size_t _xoff  = 0;
-      size_t _yoff  = 0;
-      size_t _xsize = 0;
-      size_t _ysize = 0;
 
     };
   }

@@ -28,8 +28,8 @@ inline bool exists(const std::string& name) {
 struct RasterTest : public ::testing::Test {
   const uint nc = 100;    // number of columns
   const uint nl = 200;    // number of lines
-  const uint nbx = 5;      // block side length in x 
-  const uint nby = 7;      //block size length in y 
+  const uint nbx = 5;      // block side length in x
+  const uint nby = 7;      //block size length in y
   const std::string latFilename = "lat.tif";
   const std::string lonFilename = "lon.vrt";
   const std::string incFilename = "inc.bin";
@@ -255,6 +255,50 @@ TEST_F(RasterTest, addRasterToVRT) {
       }
 }
 
+
+TEST_F(RasterTest, checkSizeCroppedDatasetSingleBand) {
+  isce::io::Raster rs = isce::io::Raster( latFilename );
+  isce::io::Raster rsCropped = rs.crop(15, 18, 55, 23);
+
+  ASSERT_EQ( rsCropped.width(),    55 );  // width must be number of columns
+  ASSERT_EQ( rsCropped.length(),   23 );  // length must be number of lines
+  ASSERT_EQ( rsCropped.numBands(), 1  );  // only one band has been created
+  ASSERT_EQ( rsCropped.dtype(),    6  );  // GDT_Float32 = 6
+}
+
+TEST_F(RasterTest, checkWriteCroppedDataset) {
+  isce::io::Raster rs = isce::io::Raster( latFilename );
+  isce::io::Raster rsCropped = rs.crop(15, 18, 55, 23);
+
+  std::valarray<double> lineOut(rsCropped.width());
+  rsCropped.getLine( lineOut, 0 );                   // get line into std::valarray<double>
+  for ( uint x=0; x<rsCropped.width(); ++x )   // for each column
+      ASSERT_EQ( lineOut[x], (double) x+15);   // lat pixels store the column index
+
+  ASSERT_EQ( rsCropped.width(),    55 );  // width must be number of columns
+  ASSERT_EQ( rsCropped.length(),   23 );  // length must be number of lines
+  ASSERT_EQ( rsCropped.numBands(), 1  );  // only one band has been created
+  ASSERT_EQ( rsCropped.dtype(),    6  );  // GDT_Float32 = 6
+}
+
+
+TEST_F(RasterTest, checkSizeCroppedDatasetMultiBand) {
+  isce::io::Raster rs = isce::io::Raster( vrtFilename );
+  isce::io::Raster rsCropped = rs.crop(15, 18, 55, 23);
+
+  ASSERT_EQ( rsCropped.width(),    55 );  // width must be number of columns
+  ASSERT_EQ( rsCropped.length(),   23 );  // length must be number of lines
+  ASSERT_EQ( rsCropped.numBands(), rs.numBands()  );
+}
+
+
+TEST_F(RasterTest, checkCreationCroppedVRTFile) {
+  const std::string rsCroppedFilename = "lon_cropped.vrt";
+  isce::io::Raster rs = isce::io::Raster( lonFilename );
+  isce::io::Raster rsCropped = rs.crop(10, 11, 1, 2, rsCroppedFilename);
+
+  ASSERT_EQ(exists(rsCroppedFilename), true);
+}
 
 
 // Main

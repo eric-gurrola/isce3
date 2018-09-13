@@ -114,7 +114,7 @@ void isce::io::Raster::getSetValue(T & buffer,           // i/o buffer of type T
                                      GDALRWFlag iodir) {   // i/o direction (GF_Read or GF_Write)
 
   if ( GDT.count(typeid(T)) ) { // buffer type is supported by GDAL
-    auto iostat = _dataset->GetRasterBand(band)->RasterIO(iodir, xidx+_xoff, yidx+_yoff, 1, 1, &buffer,
+    auto iostat = _dataset->GetRasterBand(band)->RasterIO(iodir, xidx, yidx, 1, 1, &buffer,
                                                           1, 1, GDT.at(typeid(T)), 0, 0);
 
     if ( iostat != CPLE_None ) // RasterIO returned error
@@ -172,7 +172,7 @@ void isce::io::Raster::getSetLine(T *buffer,          // i/o buffer of type T
 
   if (GDT.count(typeid(T))) { // buffer type is supported by GDAL
     size_t rdwidth = std::min(iowidth, width()); // read the requested iowidth up to width()
-    auto iostat = _dataset->GetRasterBand(band)->RasterIO(iodir, _xoff, yidx+_yoff, rdwidth, 1, buffer,
+    auto iostat = _dataset->GetRasterBand(band)->RasterIO(iodir, 0, yidx, rdwidth, 1, buffer,
                                                           rdwidth, 1, GDT.at(typeid(T)), 0, 0);
 
     if (iostat != CPLE_None) // RasterIO returned errors
@@ -299,7 +299,7 @@ void isce::io::Raster::getSetBlock(T *buffer,            // i/o buffer of size i
   if (GDT.count(typeid(T))) { // buffer type is supported by GDAL
     size_t rdwidth = std::min(iowidth,   width()); // read the requested iowidth up to width()
     size_t rdlength = std::min(iolength, length()); // read the requested iowidth up to length()
-    auto iostat = _dataset->GetRasterBand(band)->RasterIO(iodir, xidx+_xoff, yidx+_yoff, rdwidth,
+    auto iostat = _dataset->GetRasterBand(band)->RasterIO(iodir, xidx, yidx, rdwidth,
                                                           rdlength, buffer, rdwidth,
                                                           rdlength, GDT.at(typeid(T)),
                                                           0, 0);
@@ -538,4 +538,31 @@ inline double isce::io::Raster::dy() const
     double trans[6];
     getGeoTransform(trans);
     return trans[5];
+}
+
+//Crop Raster and generate a new Raster pointing to a VRT dataset, optionally associated with a filename
+inline isce::io::Raster isce::io::Raster::crop(size_t xoff, size_t yoff, size_t xsize, size_t ysize, std::string vrtName = "") {
+
+  // Set up GDALTranslate format and srcwin options
+  char ** argv = NULL;
+  argv = CSLAddString(argv, "-of");
+  argv = CSLAddString(argv, "VRT");
+  argv = CSLAddString(argv, "-srcwin");
+  argv = CSLAddString(argv, std::to_string(xoff).c_str());
+  argv = CSLAddString(argv, std::to_string(yoff).c_str());
+  argv = CSLAddString(argv, std::to_string(xsize).c_str());
+  argv = CSLAddString(argv, std::to_string(ysize).c_str());
+
+  // Run GDAL translate using options
+  GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(argv, NULL);
+  GDALDatasetH hOutDS = GDALTranslate(vrtName.c_str(), dataset(), psOptions, NULL);
+
+  // Create Raster object for cropped dataset
+  isce::io::Raster croppedRaster = isce::io::Raster( (GDALDataset *) hOutDS);
+
+  // Free allocated variables
+  CSLDestroy(argv);
+  GDALTranslateOptionsFree(psOptions);
+
+  return croppedRaster;
 }
