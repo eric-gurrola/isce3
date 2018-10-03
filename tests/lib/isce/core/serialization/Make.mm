@@ -6,13 +6,15 @@
 
 # project defaults
 include isce.def
+# pull in mpi support
+include mpi/target.def
 
 # the pile of tests
 TESTS = \
-    serializeEllipsoid \
-    serializeOrbit \
-    serializeMetadata \
     serializeDoppler \
+    serializeEllipsoid \
+    serializeMetadata \
+    serializeOrbit \
 
 all: test clean
 

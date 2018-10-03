@@ -6,6 +6,8 @@
 
 # project defaults
 include isce.def
+# bring in mpi support
+include mpi/target.def
 
 # the pile of tests
 TESTS = \
