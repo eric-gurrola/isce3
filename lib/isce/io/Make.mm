@@ -22,8 +22,10 @@ EXPORT_LIBS = $(PROJ_DLL)
 EXPORT_PKG_HEADERS = \
     Constants.h \
     IH5.h \
+    IH5.icc \
     Raster.h \
     Raster.icc \
+    Serialization.h \
 
 # build
 PROJ_CXX_INCLUDES += $(EXPORT_ROOT)/include/$(PROJECT)-$(PROJECT_MAJOR).$(PROJECT_MINOR)

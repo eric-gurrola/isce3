@@ -10,7 +10,7 @@
 #include <vector>
 #include "isce/core/Constants.h"
 #include "isce/core/Orbit.h"
-#include "isce/core/cuda/gpuOrbit.h"
+#include "isce/cuda/core/gpuOrbit.h"
 #include "gtest/gtest.h"
 
 using isce::core::orbitInterpMethod;
@@ -18,7 +18,7 @@ using isce::core::HERMITE_METHOD;
 using isce::core::LEGENDRE_METHOD;
 using isce::core::SCH_METHOD;
 using isce::core::Orbit;
-using isce::core::cuda::gpuOrbit;
+using isce::cuda::core::gpuOrbit;
 using std::endl;
 using std::vector;
 using isce::core::cartesian_t;
@@ -52,7 +52,7 @@ TEST_F(gpuOrbitTest, LinearSCH) {
      */
 
     // create mirror orbit objects
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t opos = {0., 0., 0.};
     cartesian_t ovel = {4000., -1000., 4500.};
@@ -91,7 +91,7 @@ TEST_F(gpuOrbitTest,LinearHermite){
      */
 
     // create mirror orbit objects
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t opos = {0., 0., 0.};
     cartesian_t ovel = {4000., -1000., 4500.};
@@ -130,7 +130,7 @@ TEST_F(gpuOrbitTest,LinearLegendre){
      */
 
     // create mirror orbit objects
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t opos = {0., 0., 0.};
     cartesian_t ovel = {4000., -1000., 4500.};
@@ -185,7 +185,7 @@ TEST_F(gpuOrbitTest,CircleSCH) {
      * Test circular orbit.
      */
 
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t opos = {7000000., -4500000., 7800000.};
     cartesian_t ovel, pos, vel, hpos, hvel;
@@ -222,7 +222,7 @@ TEST_F(gpuOrbitTest,CircleHermite) {
      * Test circular orbit.
      */
 
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t opos = {7000000., -4500000., 7800000.};
     cartesian_t ovel, pos, vel, hpos, hvel;
@@ -259,7 +259,7 @@ TEST_F(gpuOrbitTest,CircleLegendre) {
      * Test circular orbit.
      */
 
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t opos = {7000000., -4500000., 7800000.};
     cartesian_t ovel, pos, vel, hpos, hvel;
@@ -345,7 +345,7 @@ TEST_F(gpuOrbitTest,PolynomialSCH) {
      * Test polynomial orbit.
      */
 
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t pos, vel, hpos, hvel;
 
@@ -385,7 +385,7 @@ TEST_F(gpuOrbitTest,PolynomialHermite) {
      * Test polynomial orbit.
      */
 
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t pos, vel, hpos, hvel;
 
@@ -425,7 +425,7 @@ TEST_F(gpuOrbitTest,LegendreSCH) {
      * Test polynomial orbit.
      */
 
-    Orbit orb_cpu(1,11);
+    Orbit orb_cpu(11);
     double t = 1000.;
     cartesian_t pos, vel, hpos, hvel;
 
