@@ -1,0 +1,170 @@
+//-*- C++ -*-
+//-*- coding: utf-8 -*-
+//
+// Author: Bryan V. Riel
+// Copyright 2017-2018
+
+#if !defined(ISCE_GEOMETRY_TOPO_ICC)
+#error "Topo.icc is an implementation detail of class Topo"
+#endif
+
+// Primary constructor from product
+isce::geometry::Topo::
+Topo(isce::product::Product & product) : _initialized(false) {
+
+    // Cache objects from product
+    isce::product::Identification id = product.metadata().identification();
+    isce::radar::Radar instrument = product.metadata().instrument();
+   
+    // Copy mode, orbit, ellipsoid, and doppler
+    _mode = product.complexImagery().primaryMode();
+    _orbit = product.metadata().orbitPOE();
+    _ellipsoid = id.ellipsoid();
+    _doppler = instrument.skewDoppler();
+    _lookSide = id.lookDirection();
+
+    // Adjust block length based in input SLC length
+    _linesPerBlock = std::min(_mode.length(), _linesPerBlock);
+
+    // For numerical precision purposes, set reference epoch 2 days prior
+    _refEpoch = _mode.startAzTime() - 86400*2;
+    // Update orbit epochs with new epoch
+    _orbit.updateUTCTimes(_refEpoch);
+
+}
+
+// Alternative constructor from ellipsoid, orbit, and metadata
+// Used for supporting VRT-formatted products
+isce::geometry::Topo::
+Topo(isce::core::Ellipsoid ellipsoid, isce::core::Orbit orbit,
+     isce::core::Poly2d doppler, isce::core::Metadata meta) :
+    _orbit(orbit), _ellipsoid(ellipsoid), _doppler(doppler), _mode(meta),
+    _initialized(false) {
+
+    // Other data
+    _lookSide = meta.lookSide;
+
+    // Adjust block length based in input SLC length
+    _linesPerBlock = std::min(_mode.length(), _linesPerBlock);
+
+    // For numerical precision purposes, set reference epoch 2 days prior
+    _refEpoch = _mode.startAzTime() - 86400*2;
+    // Update orbit epochs with new epoch
+    _orbit.updateUTCTimes(_refEpoch);
+
+}
+
+// Set initialization flag
+void isce::geometry::Topo::
+initialized(bool flag) {
+    _initialized = flag;
+}
+
+// Check initialization flag
+void isce::geometry::Topo::
+checkInitialization(pyre::journal::info_t & info) const {
+    if (!_initialized) {
+        pyre::journal::error_t error("isce.geometry.Topo");
+        error 
+            << pyre::journal::at(__HERE__)
+            << "Topo options have not been set." 
+            << pyre::journal::endl;
+    } else {
+        info
+            << "Primary iterations: " << _numiter << pyre::journal::newline
+            << "Secondary iterations: " << _extraiter << pyre::journal::newline
+            << "Distance threshold: " << _threshold << pyre::journal::newline;
+    }
+}
+
+// Set threshold
+void isce::geometry::Topo::
+threshold(double t) {
+    _threshold = t;
+}
+
+// Set number of iterations
+void isce::geometry::Topo::
+numiter(int n) {
+    _numiter = n;
+}
+
+// Set number of extra iterations
+void isce::geometry::Topo::
+extraiter(int n) {
+    _extraiter = n;
+}
+
+// Set the orbit interpolation method while checking its validity
+void isce::geometry::Topo::
+orbitMethod(isce::core::orbitInterpMethod method) {
+
+    // Check validity
+    if (method == isce::core::HERMITE_METHOD) {
+        if (_orbit.nVectors < 4) {
+            pyre::journal::error_t error("isce.geometry.Topo");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Topo::orbitMethod - Need at least 4 state vectors for using "
+                << "hermite polynomial interpolation."
+                << pyre::journal::endl;
+        }
+    } else if (method == isce::core::SCH_METHOD) {
+        if (_orbit.nVectors < 4) {
+            pyre::journal::error_t error("isce.geometry.Topo");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Topo::orbitMethod - Need at least 4 state vectors for using "
+                << "SCH interpolation."
+                << pyre::journal::endl;
+        }
+    } else if (method == isce::core::LEGENDRE_METHOD) {
+        if (_orbit.nVectors < 9) {
+            pyre::journal::error_t error("isce.geometry.Topo");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Topo::orbitMethod - Need at least 9 state vectors for using "
+                << "legendre polynomial interpolation."
+                << pyre::journal::endl;
+        }
+    } else {
+        pyre::journal::error_t error("isce.geometry.Topo");
+        error
+            << pyre::journal::at(__HERE__)
+            << "Error in Topo::orbitMethod - Undefined orbit interpolation method."
+            << pyre::journal::endl;
+    }
+
+    // Save
+    _orbitMethod = method;
+}
+
+// Set the DEM interpolation method while checking its validity
+void isce::geometry::Topo::
+demMethod(isce::core::dataInterpMethod method) {
+
+    // Check validity
+    if ((method != isce::core::SINC_METHOD) && (method != isce::core::BILINEAR_METHOD) &&
+        (method != isce::core::BICUBIC_METHOD) && (method != isce::core::NEAREST_METHOD) &&
+        (method != isce::core::AKIMA_METHOD) && (method != isce::core::BIQUINTIC_METHOD)) {
+        pyre::journal::error_t error("isce.geometry.Topo");
+        error
+            << pyre::journal::at(__HERE__)
+            << "Error in Topo::demMethod - Unsupported DEM interpolation method"
+            << pyre::journal::endl;
+    }
+
+    // Save
+    _demMethod = method;
+}
+
+// Set the EPSG code of the output layers and configure projection
+void isce::geometry::Topo::
+epsgOut(int epsgcode) {
+    // Save the code
+    _epsgOut = epsgcode;
+    // Initialize the projection
+    _proj = isce::core::createProj(epsgcode);
+}
+
+// end of file

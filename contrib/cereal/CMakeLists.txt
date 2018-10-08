@@ -1,9 +1,15 @@
+# CMake builder for cereal
 
-# Individual headers
-set(EXPORT_HEADERS macros.hpp cereal.hpp access.hpp)
-install(FILES ${EXPORT_HEADERS} DESTINATION include/cereal COMPONENT cereal_headers)
+# Set cereal source include directory to allow rest of project to find header files
+set(CEREAL_SRC_INCLUDEDIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    CACHE STRING
+    "cereal/include")
 
-# Relevant directories
-foreach(CEREAL_DIR archives details external types)
-    install(DIRECTORY ${CEREAL_DIR} DESTINATION include/cereal COMPONENT cereal_headers)
-endforeach()
+# Set output cereal install directory
+set(CEREAL_INCLUDEDIR
+    include/cereal
+    CACHE STRING
+    "cereal/include")
+
+add_subdirectory(include)

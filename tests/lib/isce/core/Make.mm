@@ -15,8 +15,10 @@ RECURSE_DIRS = \
 # the ones that are always available
 PACKAGES = \
     attitude \
+    datetime \
     doppler \
     ellipsoid \
+    interpolator \
     lut2d \
     orbit \
     poly \

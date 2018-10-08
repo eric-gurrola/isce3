@@ -8,6 +8,7 @@
 #define ISCE_CORE_DOPPLER_H
 
 #include <string>
+#include "Constants.h"
 #include "Orbit.h"
 #include "Pegtrans.h"
 #include "Ellipsoid.h"
@@ -16,6 +17,7 @@
 namespace isce {
 namespace core {
 
+/** Data structure for computing Doppler Centroids from Platform attitude and position*/
 struct Doppler {
 
     // Structs
@@ -26,17 +28,20 @@ struct Doppler {
     Attitude * attitude;
 
     // State vectors
-    std::vector<double> satxyz;
-    std::vector<double> satvel;
-    std::vector<double> satllh;
+    cartesian_t satxyz;
+    cartesian_t satvel;
+    cartesian_t satllh;
     double epoch;
 
-    // Constructors
+    /**Default empty constructor*/
     Doppler() {};
-    Doppler(Orbit &, Attitude *, Ellipsoid &, double);
 
-    double centroid(double, double, std::string, size_t max_iter=10, int side=-1,
-        bool precession=false);
+    /**Constructor with Orbit, Attitude and Ellipsoid objects*/
+    Doppler(Orbit &orbit, Attitude *attitude, Ellipsoid &ellipsoid, double epoch);
+
+    /**Compute the Doppler Centroid at given slant range*/
+    double centroid(double slantRange, double wvl, std::string frame,
+            size_t max_iter=10, int side=-1, bool precession=false);
 
 };
 

@@ -1,0 +1,98 @@
+//-*- C++ -*-
+//-*- coding: utf-8 -*-
+//
+// Author: Bryan V. Riel
+// Copyright 2017-2018
+
+#if !defined(ISCE_GEOMETRY_GEO2RDR_ICC)
+#error "Geo2rdr.icc is an implementation detail of class Geo2rdr"
+#endif
+
+// Default constructor from product
+isce::geometry::Geo2rdr::
+Geo2rdr(isce::product::Product & product) {
+
+    // Copy mode, orbit, ellipsoid, and doppler
+    _mode = product.complexImagery().primaryMode();
+    _orbit = product.metadata().orbitPOE();
+    _ellipsoid = product.metadata().identification().ellipsoid();
+    _doppler = product.metadata().instrument().skewDoppler();
+       
+    // For numerical precision purposes, set reference epoch 2 days prior
+    _sensingStart = _mode.startAzTime();
+    _refEpoch._init(_sensingStart.year, _sensingStart.months,
+                    _sensingStart.days - 2, 0, 0, 0, 0.0);
+    // Update orbit epochs with new epoch
+    _orbit.updateUTCTimes(_refEpoch);
+}
+
+// Alternative constructor from isce::core objects
+isce::geometry::Geo2rdr::
+Geo2rdr(isce::core::Ellipsoid ellipsoid, isce::core::Orbit orbit,
+        isce::core::Poly2d doppler, isce::core::Metadata meta) :
+        _ellipsoid(ellipsoid), _orbit(orbit), _doppler(doppler), _mode(meta) {
+
+    // For numerical precision purposes, set reference epoch 2 days prior
+    _sensingStart = _mode.startAzTime();
+    _refEpoch._init(_sensingStart.year, _sensingStart.months,
+                    _sensingStart.days - 2, 0, 0, 0, 0.0);
+    // Update orbit epochs with new epoch
+    _orbit.updateUTCTimes(_refEpoch);
+}
+
+// Set threshold
+void isce::geometry::Geo2rdr::
+threshold(double t) {
+    _threshold = t;
+}
+
+// Set number of iterations
+void isce::geometry::Geo2rdr::
+numiter(int n) {
+    _numiter = n;
+}
+
+// Set the orbit interpolation method while checking its validity
+void isce::geometry::Geo2rdr::
+orbitMethod(isce::core::orbitInterpMethod method) {
+
+    // Check validity
+    if (method == isce::core::HERMITE_METHOD) {
+        if (_orbit.nVectors < 4) {
+            pyre::journal::error_t error("isce.geometry.Geo2rdr");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Geo2rdr::orbitMethod - Need at least 4 state vectors for using "
+                << "hermite polynomial interpolation."
+                << pyre::journal::endl;
+        }
+    } else if (method == isce::core::SCH_METHOD) {
+        if (_orbit.nVectors < 4) {
+            pyre::journal::error_t error("isce.geometry.Geo2rdr");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Geo2rdr::orbitMethod - Need at least 4 state vectors for using "
+                << "SCH interpolation."
+                << pyre::journal::endl;
+        }
+    } else if (method == isce::core::LEGENDRE_METHOD) {
+        if (_orbit.nVectors < 9) {
+            pyre::journal::error_t error("isce.geometry.Geo2rdr");
+            error
+                << pyre::journal::at(__HERE__)
+                << "Error in Geo2rdr::orbitMethod - Need at least 9 state vectors for using "
+                << "legendre polynomial interpolation."
+                << pyre::journal::endl;
+        }
+    } else {
+        pyre::journal::error_t error("isce.geometry.Geo2rdr");
+        error
+            << pyre::journal::at(__HERE__)
+            << "Error in Geo2rdr::orbitMethod - Undefined orbit interpolation method."
+            << pyre::journal::endl;
+    }
+
+    // Save
+    _orbitMethod = method;
+}
+

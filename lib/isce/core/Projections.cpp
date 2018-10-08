@@ -10,36 +10,37 @@
 #include <vector>
 #include <iostream>
 #include "Projections.h"
+using isce::core::CEA;
+using isce::core::Geocent;
+using isce::core::LonLat;
+using isce::core::PolarStereo;
+using isce::core::ProjectionBase;
+using isce::core::UTM;
+using isce::core::cartesian_t;
+using std::cout;
+using std::endl;
+using std::invalid_argument;
+using std::string;
+using std::to_string;
+using std::vector;
 
 /* * * * * * * * * * * * * * * * * * * * Geocent Projection * * * * * * * * * * * * * * * * * * * */
-int
-isce::core::Geocent::
-forward(const std::vector<double> &llh, std::vector<double>& xyz) const {
+int Geocent::forward(const cartesian_t &llh, cartesian_t& xyz) const {
     /*
-     * This is to transform LLH to Geocent, which is just a pass-through to latLonToXyz.
+     * This is to transform LLH to Geocent, which is just a pass-through to lonLatToXyz.
      *
-     * There's a discrepancy between ISCE's and proj4's ordering of LLH in that ISCE treats it as
-     * Lat-Lon-Height, and proj4 as Lon-Lat-Height. To resolve this without altering the isce::core
-     * objects, we pass a temporary input vector to latLonToXyz that contains the first two elements
-     * swapped (resolving the discrepancy and preserving the inputs).
      */
 
-    std::vector<double> llh_swapped = {llh[1], llh[0], llh[2]};
-    ellipse.latLonToXyz(llh_swapped, xyz);
+    ellipse.lonLatToXyz(llh, xyz);
     return 0;
 }
 
-int
-isce::core::Geocent::
-inverse(const std::vector<double> &xyz, std::vector<double>& llh) const {
+int Geocent::inverse(const cartesian_t &xyz, cartesian_t& llh) const {
     /*
-     * This is to transform Geocent to LLH, which is just a pass-through to xyzToLatLon. As with
-     * ::forward, there's an issue with internal LLH ordering (lat/lon vs lon/lat), so we swap the
-     * first two elements of the output llh vector before returning.
+     * This is to transform Geocent to LonLatHeight, which is just a pass-through to xyzToLonLat.
      */
 
-    ellipse.xyzToLatLon(xyz, llh);
-    llh = {llh[1], llh[0], llh[2]};
+    ellipse.xyzToLonLat(xyz, llh);
     return 0;
 }
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -89,8 +90,7 @@ double clenS(const double *a, int size, double real, double imag, double &R, dou
     return R;
 }
 
-isce::core::UTM::
-UTM(int code) : isce::core::ProjectionBase(code) {
+UTM::UTM(int code) : ProjectionBase(code) {
     /*
      * Value constructor, delegates to base constructor before continuing with UTM-specific setup
      * code (previously contained in a private _setup() method but moved given that _setup() was
@@ -103,16 +103,16 @@ UTM(int code) : isce::core::ProjectionBase(code) {
         zone = _epsgcode - 32700;
         isnorth = false;
     } else {
-        std::string errstr = "In UTM::UTM - Invalid EPSG Code for UTM Projection. Received ";
-        errstr += std::to_string(_epsgcode);
+        string errstr = "In UTM::UTM - Invalid EPSG Code for UTM Projection. Received ";
+        errstr += to_string(_epsgcode);
         errstr += ", expected in ranges (32600,32660] or (32700,32760].";
-        throw std::invalid_argument(errstr);
+        throw invalid_argument(errstr);
     }
 
     lon0 = ((zone - 0.5) * (M_PI / 30.)) - M_PI;
 
     // Ellipsoid flattening
-    double f = ellipse.e2 / (1. + sqrt(1 - ellipse.e2));
+    double f = ellipse.e2() / (1. + sqrt(1 - ellipse.e2()));
     // Third flattening
     double n = f / (2. - f);
 
@@ -170,9 +170,7 @@ UTM(int code) : isce::core::ProjectionBase(code) {
     Zb = -Qn * (Z + clens(gtu, 6, 2*Z));
 }
 
-int
-isce::core::UTM::
-forward(const std::vector<double> &llh, std::vector<double> &utm) const {
+int UTM::forward(const cartesian_t &llh, cartesian_t &utm) const {
     /*
      * Transform from LLH to UTM.
      */
@@ -192,8 +190,8 @@ forward(const std::vector<double> &llh, std::vector<double> &utm) const {
     Ce += dCe;
 
     if (fabs(Ce) <= 2.623395162778) {
-        utm[0] = (Qn * Ce * ellipse.a) + 500000.;
-        utm[1] = (((Qn * Cn) + Zb) * ellipse.a) + (isnorth ? 0. : 10000000.);
+        utm[0] = (Qn * Ce * ellipse.a()) + 500000.;
+        utm[1] = (((Qn * Cn) + Zb) * ellipse.a()) + (isnorth ? 0. : 10000000.);
         // UTM is lateral projection only, height is pass through.
         utm[2] = llh[2];
         return 0;
@@ -202,14 +200,12 @@ forward(const std::vector<double> &llh, std::vector<double> &utm) const {
     }
 }
 
-int
-isce::core::UTM::
-inverse(const std::vector<double> &utm, std::vector<double> &llh) const {
+int UTM::inverse(const cartesian_t &utm, cartesian_t &llh) const {
     /*
      * Transform from UTM to LLH.
      */
-    double Cn = (utm[1] - (isnorth ? 0. : 10000000.)) /  ellipse.a;
-    double Ce = (utm[0] - 500000.) /  ellipse.a;
+    double Cn = (utm[1] - (isnorth ? 0. : 10000000.)) /  ellipse.a();
+    double Ce = (utm[0] - 500000.) /  ellipse.a();
 
     //Normalize N,E to Spherical N,E
     Cn = (Cn - Zb) / Qn;
@@ -248,8 +244,7 @@ double pj_tsfn(double phi, double sinphi, double e) {
     return tan(.5 * ((.5*M_PI) - phi)) / pow((1. - sinphi) / (1. + sinphi), .5*e);
 }
 
-isce::core::PolarStereo::
-PolarStereo(int code) : isce::core::ProjectionBase(code) {
+PolarStereo::PolarStereo(int code) : ProjectionBase(code) {
     /*
      * Set up various parameters for polar stereographic projection. Currently only EPSG:3031
      * (Antarctic) and EPSG:3413 (Greenland) are supported.
@@ -266,21 +261,19 @@ PolarStereo(int code) : isce::core::ProjectionBase(code) {
         lat_ts = 70. * (M_PI / 180.);
         lon0 = -45. * (M_PI / 180.);
     } else {
-        std::string errstr = "In PolarStereo::PolarStereo - Invalid EPSG Code for Polar Stereographic ";
+        string errstr = "In PolarStereo::PolarStereo - Invalid EPSG Code for Polar Stereographic ";
         errstr += "projection. Received ";
-        errstr += std::to_string(_epsgcode);
+        errstr += to_string(_epsgcode);
         errstr += ", expected either 3031 (Antarctic) or 3413 (Greenland). [NOTE: Other codes are ";
         errstr += "currently not supported]";
-        throw std::invalid_argument(errstr);
+        throw invalid_argument(errstr);
     }
-    e = sqrt(ellipse.e2);
+    e = sqrt(ellipse.e2());
     akm1 = cos(lat_ts) / pj_tsfn(lat_ts, sin(lat_ts), e);
-    akm1 *= ellipse.a / sqrt(1. - (pow(e,2) * pow(sin(lat_ts),2)));
+    akm1 *= ellipse.a() / sqrt(1. - (pow(e,2) * pow(sin(lat_ts),2)));
 }
 
-int
-isce::core::PolarStereo::
-forward(const std::vector<double> &llh, std::vector<double> &out) const {
+int PolarStereo::forward(const cartesian_t &llh, cartesian_t &out) const {
     /*
      * Transform from LLH to Polar Stereo.
      */
@@ -296,9 +289,7 @@ forward(const std::vector<double> &llh, std::vector<double> &out) const {
     return 0;
 }
 
-int
-isce::core::PolarStereo::
-inverse(const std::vector<double> &ups, std::vector<double> &llh) const {
+int PolarStereo::inverse(const cartesian_t &ups, cartesian_t &llh) const {
     /*
      * Transform from Polar Stereo to LLH.
      */
@@ -331,41 +322,36 @@ double pj_qsfn(double sinphi, double e, double one_es) {
     return one_es * ((sinphi / (1. - pow(con,2))) - ((.5 / e) * log((1. - con) / (1. + con))));
 }
 
-isce::core::CEA::
-CEA() : isce::core::ProjectionBase(6933) {
+CEA::CEA() : ProjectionBase(6933) {
     /*
      * Set up parameters for equal area projection.
      */
     lat_ts = M_PI / 6.;
-    k0 = cos(lat_ts) / sqrt(1. - (ellipse.e2 * pow(sin(lat_ts),2)));
-    e = sqrt(ellipse.e2);
-    one_es = 1. - ellipse.e2;
-    apa[0] = ellipse.e2 * ((1./3.) + (ellipse.e2 * ((31./180.) + (ellipse.e2 * (517./5040.)))));
-    apa[1] = pow(ellipse.e2,2) * ((23./360.) + (ellipse.e2 * (251./3780.)));
-    apa[2] = pow(ellipse.e2,3) * (761./45360.);
+    k0 = cos(lat_ts) / sqrt(1. - (ellipse.e2() * pow(sin(lat_ts),2)));
+    e = sqrt(ellipse.e2());
+    one_es = 1. - ellipse.e2();
+    apa[0] = ellipse.e2() * ((1./3.) + (ellipse.e2() * ((31./180.) + (ellipse.e2() * (517./5040.)))));
+    apa[1] = pow(ellipse.e2(),2) * ((23./360.) + (ellipse.e2() * (251./3780.)));
+    apa[2] = pow(ellipse.e2(),3) * (761./45360.);
     qp = pj_qsfn(1., e, one_es);
 }
 
-int
-isce::core::CEA::
-forward(const std::vector<double> &llh, std::vector<double> &enu) const {
+int CEA::forward(const cartesian_t &llh, cartesian_t &enu) const {
     /*
      * Transform from LLH to CEA.
      */
-    enu[0] = k0 * llh[0] * ellipse.a;
-    enu[1] = (.5 * ellipse.a * pj_qsfn(sin(llh[1]), e, one_es)) / k0;
+    enu[0] = k0 * llh[0] * ellipse.a();
+    enu[1] = (.5 * ellipse.a() * pj_qsfn(sin(llh[1]), e, one_es)) / k0;
     enu[2] = llh[2];
     return 0;
 }
 
-int
-isce::core::CEA::
-inverse(const std::vector<double> &enu, std::vector<double> &llh) const {
+int CEA::inverse(const cartesian_t &enu, cartesian_t &llh) const {
     /*
      * Transform from LLH to CEA.
      */
-    llh[0] = enu[0] / (k0 * ellipse.a);
-    double beta = asin((2. * enu[1] * k0) / (ellipse.a * qp));
+    llh[0] = enu[0] / (k0 * ellipse.a());
+    double beta = asin((2. * enu[1] * k0) / (ellipse.a() * qp));
     llh[1] = beta + (apa[0] * sin(2. * beta)) + (apa[1] * sin(4. * beta)) +
              (apa[2] * sin(6. * beta));
     llh[2] = enu[2];
@@ -373,21 +359,50 @@ inverse(const std::vector<double> &enu, std::vector<double> &llh) const {
 }
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/* * * * * * * * * * * * * * * * * * * Projection Factory * * * * * * * * * * * * * * * * * * */
+ProjectionBase* isce::core::createProj(int epsgcode)
+{
+    //Check for Lat/Lon
+    if (epsgcode == 4326)
+    {
+        return new LonLat;
+    }
+    //Check for Geocentric
+    else if (epsgcode == 4978)
+    {
+        return new Geocent;
+    }
+    //Check if UTM
+    else if (epsgcode > 32600 && epsgcode < 32800)
+    {
+        return new UTM{epsgcode};
+    }
+    //Check if Polar Stereo
+    else if (epsgcode == 3031  || epsgcode == 3413)
+    {
+        return new PolarStereo{epsgcode};
+    }
+    //EASE2 grid
+    else if (epsgcode == 6933)
+    {
+        return new CEA;
+    }
+    else
+    {
+        throw "Unknown EPSG code in factory";
+    }
+}
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 /* * * * * * * * * * * * * * * * * * * Projection Transformer * * * * * * * * * * * * * * * * * * */
-int projTransform(isce::core::ProjectionBase &in, isce::core::ProjectionBase &out,
-                  const std::vector<double> &inpts, std::vector<double> &outpts) {
+int projTransform(ProjectionBase &in, ProjectionBase &out, const cartesian_t &inpts,
+                  cartesian_t &outpts) {
     if (in._epsgcode == out._epsgcode) {
         // If input/output projections are the same don't even bother processing
         outpts = inpts;
         return 0;
-    } else if (in._epsgcode == 4326) {
-        // Consider case where input is Lat/Lon
-        return out.forward(inpts, outpts);
-    } else if (out._epsgcode == 4326) {
-        // Consider case where output is Lat/Lon
-        return -out.inverse(inpts, outpts);
     } else {
-        std::vector<double> temp(3);
+        cartesian_t temp;
         if (in.inverse(inpts, temp) != 0) return -2;
         if (out.forward(temp, outpts) != 0) return 2;
     }

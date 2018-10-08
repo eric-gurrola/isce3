@@ -9,8 +9,7 @@
 #include <pyre/journal.h>
 #include "Poly1d.h"
 
-double
-isce::core::Poly1d::
+double isce::core::Poly1d::
 eval(double xin) const {
     /*
      * Evaluate the polynomial at a given position.
@@ -31,28 +30,19 @@ eval(double xin) const {
 
     double val = 0.;
     double scalex = 1.;
-    double xmod = (xin - isce::core::Poly1d::mean) / isce::core::Poly1d::norm;
+    double xmod = (xin - mean) / norm;
     for (int i=0; i<=order; i++,scalex*=xmod) val += scalex * coeffs[i];
     return val;
 }
 
-void
-isce::core::Poly1d::
+void isce::core::Poly1d::
 printPoly() const {
-    // make a channel
-    pyre::journal::debug_t channel("isce.core.debug");
-    // print information
-    channel
-        << pyre::journal::at(__HERE__)
-        << "Polynomial Order: "
-        << isce::core::Poly1d::order
-        << pyre::journal::newline;
-    for (int i=0; i<=order; i++) channel << isce::core::Poly1d::getCoeff(i) << " ";
-    channel << pyre::journal::endl;
+    std::cout << "Polynomial Order: " << order << std::endl;
+    for (int i=0; i<=order; i++) std::cout << getCoeff(i) << " ";
+    std::cout << std::endl;
 }
 
-isce::core::Poly1d
-isce::core::Poly1d::
+isce::core::Poly1d isce::core::Poly1d::
 derivative() const {
     /*
      * Helper function to adjust the mean.
@@ -60,12 +50,12 @@ derivative() const {
      */
     // If the input polynomial is a constant, return 0
     if (order == 0) {
-        isce::core::Poly1d newP(0, 0., 1.);
+        Poly1d newP(0, 0., 1.);
         newP.setCoeff(0, 0.);
         return newP;
     } else {
         // Initialize polynomial of same size
-        isce::core::Poly1d newP(isce::core::Poly1d::order-1, isce::core::Poly1d::mean, isce::core::Poly1d::norm);
+        Poly1d newP(order-1, mean, norm);
         for (int ii=0; ii<order; ii++) {
             double coeff = getCoeff(ii+1);
             newP.setCoeff(ii, ((ii + 1.) * coeff) / norm);
@@ -73,3 +63,5 @@ derivative() const {
         return newP;
     }
 }
+
+// end of file

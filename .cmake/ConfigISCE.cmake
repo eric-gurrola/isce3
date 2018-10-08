@@ -13,11 +13,11 @@ function(AssureOutOfSourceBuilds)
 endfunction()
 
 
-##Check that C++14 is available and CXX 5 or greated is installed
+##Check that C++17 is available and CXX 5 or greated is installed
 function(CheckCXX)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  add_compile_options(-std=c++14)
+  add_compile_options(-std=c++17)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
     message(FATAL_ERROR "Insufficient GCC version. Version 5.0 or greater is required.")
   endif()
@@ -26,8 +26,8 @@ endfunction()
 
 ##Make sure that a reasonable version of Python is installed
 function(CheckISCEPython)
-    FIND_PACKAGE(PythonInterp 3.5)
-    FIND_PACKAGE(PythonInterp 3.5)
+    FIND_PACKAGE(PythonInterp 3.6)
+    FIND_PACKAGE(PythonLibs 3.6)
 endfunction()
 
 
@@ -53,33 +53,32 @@ function(CheckGDAL)
     endif()
 endfunction()
 
+##Check for HDF5 installation
+function(CheckHDF5)
+    FIND_PACKAGE(HDF5 REQUIRED COMPONENTS CXX)
+    message(STATUS "Found HDF5: ${HDF5_VERSION} ${HDF5_CXX_LIBRARIES}")
+    # Create space separated list of libraries
+    #string(REPLACE ";" " " TEMP_ITEM "${HDF5_CXX_LIBRARIES}")
+    # Use more standard names to propagate variables
+    set(HDF5_INCLUDE_DIR ${HDF5_INCLUDE_DIRS} CACHE PATH "HDF5 include directory")
+    set(HDF5_LIBRARY "${HDF5_CXX_LIBRARIES}" CACHE STRING "HDF5 libraries")
+endfunction()
+
 ##Check for Armadillo installation
 function(CheckArmadillo)
     FIND_PACKAGE(Armadillo REQUIRED)
     message (STATUS "Found Armadillo:  ${ARMADILLO_VERSION_STRING}")
 endfunction()
 
-
-##Check for CUDA installation
-set(USE_CUDA TRUE CACHE BOOL "Build CUDA")
-function(CheckCUDA)
-    if (USE_CUDA)
-        FIND_PACKAGE(CUDA)
-        if (CUDA_FOUND)
-            if ((CUDA_VERSION VERSION_GREATER 8.0) OR (CUDA_VERSION VERSION_EQUAL 8.0))
-                message (STATUS "Found CUDA: ${CUDA_VERSION}")
-                #set (CUDA_PROPAGATE_HOST_FLAGS ON)
-            else()
-                message (STATUS "Did not find a suitable CUDA version >= 8.0")
-                set(CUDA_FOUND FALSE)
-            endif()
-        else()
-            message (STATUS "CUDA not found. Continuing ... ")
-        endif()
-    endif()
+#Check for OpenMP
+function(CheckOpenMP)
+    FIND_PACKAGE(OpenMP)
 endfunction()
 
-
+#Check for nosetests
+function(CheckNosetests)
+    FIND_PACKAGE(Nosetests)
+endfunction()
 
 function(InitInstallDirLayout)
     ###install/bin
@@ -94,8 +93,10 @@ function(InitInstallDirLayout)
 
     ###install/lib
     if (NOT ISCE_LIBDIR)
-        set (ISCE_LIBDIR lib CACHE STRING "isce/lib") 
+        set (ISCE_LIBDIR lib CACHE STRING "isce/lib")
     endif(NOT ISCE_LIBDIR)
+
+    ###build/lib
 
     ###install/include
     if (NOT ISCE_INCLUDEDIR)
@@ -127,5 +128,8 @@ function(InitInstallDirLayout)
         set (ISCE_TEMPLATESDIR templates CACHE STRING "isce/templates")
     endif(NOT ISCE_TEMPLATESDIR)
 
+    ###install/doc
+    if (NOT ISCE_DOCDIR)
+        set (ISCE_DOCDIR "doc" CACHE STRING "isce/doc")
+    endif(NOT ISCE_DOCDIR)
 endfunction()
-

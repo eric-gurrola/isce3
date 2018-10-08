@@ -9,6 +9,18 @@
 #include <pyre/journal.h>
 #include <gtest/gtest.h>
 #include <isce/core.h>
+#include "isce/core/Constants.h"
+#include "isce/core/Orbit.h"
+#include "gtest/gtest.h"
+using isce::core::orbitInterpMethod;
+using isce::core::HERMITE_METHOD;
+using isce::core::LEGENDRE_METHOD;
+using isce::core::SCH_METHOD;
+using isce::core::Orbit;
+using isce::core::cartesian_t;
+using std::cout;
+using std::endl;
+using std::vector;
 
 struct OrbitTest : public ::testing::Test {
     virtual void SetUp() {
@@ -35,8 +47,8 @@ struct OrbitTest : public ::testing::Test {
     EXPECT_EQ(a[2], b[2]);
 
 
-void makeLinearSV(double dt, std::vector<double> &opos, std::vector<double> &ovel,
-                  std::vector<double> &pos, std::vector<double> &vel) {
+void makeLinearSV(double dt, cartesian_t &opos, cartesian_t &ovel, cartesian_t &pos,
+                  cartesian_t &vel) {
     pos = {opos[0] + (dt * ovel[0]), opos[1] + (dt * ovel[1]), opos[2] + (dt * ovel[2])};
     vel = ovel;
 }
@@ -46,12 +58,12 @@ TEST_F(OrbitTest,Reverse) {
      * Test linear orbit.
      */
 
-    isce::core::Orbit orb(1,11);
+    Orbit orb(11);
     double t = 1000.;
     double t1;
-    std::vector<double> opos = {0., 0., 0.};
-    std::vector<double> ovel = {4000., -1000., 4500.};
-    std::vector<double> pos(3), vel(3);
+    cartesian_t opos = {0., 0., 0.};
+    cartesian_t ovel = {4000., -1000., 4500.};
+    cartesian_t pos, vel;
 
     // Create straight-line orbit with 11 state vectors, each 10 s apart
     for (int i=0; i<11; i++) {
@@ -60,7 +72,7 @@ TEST_F(OrbitTest,Reverse) {
     }
 
 
-    isce::core::Orbit newOrb(1,0);
+    Orbit newOrb(0);
 
     for(int i=10; i>=0; i--)
     {
@@ -87,12 +99,12 @@ TEST_F(OrbitTest,OutOfOrder) {
      * Test linear orbit.
      */
 
-    isce::core::Orbit orb(1,11);
+    Orbit orb(11);
     double t = 1000.;
     double t1;
-    std::vector<double> opos = {0., 0., 0.};
-    std::vector<double> ovel = {4000., -1000., 4500.};
-    std::vector<double> pos(3), vel(3);
+    cartesian_t opos = {0., 0., 0.};
+    cartesian_t ovel = {4000., -1000., 4500.};
+    cartesian_t pos, vel;
 
     // Create straight-line orbit with 11 state vectors, each 10 s apart
     for (int i=0; i<11; i++) {
@@ -101,7 +113,7 @@ TEST_F(OrbitTest,OutOfOrder) {
     }
 
 
-    isce::core::Orbit newOrb(1,0);
+    Orbit newOrb(0);
 
     for(int i=10; i>=0; i-=2)
     {

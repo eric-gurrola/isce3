@@ -5,14 +5,21 @@
 
 #include <cmath>
 #include <iostream>
-#include <vector>
 #include <portinfo>
 #include <pyre/journal.h>
 #include <gtest/gtest.h>
 #include <isce/core.h>
+#include "gtest/gtest.h"
+using isce::core::PolarStereo;
+using isce::core::cartesian_t;
+using std::cout;
+using std::endl;
 
-isce::core::PolarStereo North(3413);
-isce::core::PolarStereo South(3031);
+PolarStereo North(3413);
+PolarStereo South(3031);
+
+PolarStereo North(3413);
+PolarStereo South(3031);
 
 struct PolarTest : public ::testing::Test {
     virtual void SetUp() {
@@ -35,9 +42,9 @@ struct PolarTest : public ::testing::Test {
 
 #define polarTest(hemi,name,p,q,r,x,y,z)       \
     TEST_F(PolarTest, name) {       \
-        std::vector<double> ref_llh({p,q,r});    \
-        std::vector<double> ref_xyz({x,y,z});    \
-        std::vector<double> xyz(3), llh(3);  \
+        cartesian_t ref_llh = {p,q,r};    \
+        cartesian_t ref_xyz = {x,y,z};    \
+        cartesian_t xyz, llh;  \
         llh = ref_llh;                  \
         hemi.forward(llh, xyz);    \
         EXPECT_NEAR(xyz[0], ref_xyz[0], 1.0e-6);\

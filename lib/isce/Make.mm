@@ -7,10 +7,35 @@
 
 # project defaults
 include isce.def
+
 # my subdirectories
 RECURSE_DIRS = \
+    $(PACKAGES)
+
+# the ones that are always available
+PACKAGES = \
+    io \
+    radar \
+    product \
     core \
-    srtm \
+    image \
+    geometry \
+
+# the products
+PROJ_DLL = $(BLD_LIBDIR)/lib$(PROJECT).$(PROJECT_MAJOR).$(PROJECT_MINOR).$(EXT_SO)
+# the private build space
+PROJ_TMPDIR = $(BLD_TMPDIR)/$(PROJECT)-$(PROJECT_MAJOR).$(PROJECT_MINOR)/lib/$(PROJECT)
+# what to clean
+PROJ_CLEAN += $(EXPORT_LIBS) $(EXPORT_INCDIR)
+#LIBRARIES = $(EXTERNAL_LIBS)
+
+# the sources
+PROJ_SRCS = \
+    version.cc \
+
+# what to export
+# the library
+EXPORT_LIBS = $(PROJ_DLL)
 
 PACKAGE = isce
 
@@ -56,6 +81,10 @@ all: export
 # filter-out info at: https://www.gnu.org/software/make/manual/html_node/index.html
 PROJ_TIDY := ${filter-out core, $(PROJ_TIDY)}
 
+export:: version.cc $(PROJ_DLL) export-headers export-package-headers export-libraries
+	BLD_ACTION="export" $(MM) recurse
+	@$(RM) version.cc
+
 tidy::
         BLD_ACTION="tidy" $(MM) recurse
 
@@ -65,14 +94,11 @@ clean::
 distclean::
 	BLD_ACTION="distclean" $(MM) recurse
 
-export:: version.cc $(PROJ_DLL) export-package-headers export-libraries
-	BLD_ACTION="export" $(MM) recurse
-	@$(RM) version.cc
-
 revision: version.cc $(PROJ_DLL) export-libraries
 	@$(RM) version.cc
 
 # construct my {version.cc}
+REVISION = ${strip ${shell git log --format=format:"%h" -n 1}}
 version.cc: version Make.mm
 	@sed \
           -e "s:MAJOR:$(PROJECT_MAJOR):g" \

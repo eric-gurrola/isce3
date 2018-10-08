@@ -17,6 +17,8 @@
 #include <pyre/journal.h>
 #include <isce/core.h>
 
+#include "isce/core/EulerAngles.h"
+
 std::vector<std::string> string_splitter(const std::string split_token, const std::string& content) {
     // function to split string content on a given token
     std::vector<std::string> split_content;
@@ -60,9 +62,10 @@ struct EulerTest : public ::testing::Test {
 
 
     typedef isce::core::EulerAngles EulerAngles;
+    typedef isce::core::cartmat_t cartmat_t;
 
     double yaw, pitch, roll, tol;
-    std::vector<std::vector<double>> R_ypr_ref, R_rpy_ref;
+    cartmat_t R_ypr_ref, R_rpy_ref;
     EulerAngles attitude;
 
     protected:
@@ -78,31 +81,28 @@ struct EulerTest : public ::testing::Test {
             attitude = EulerAngles(yaw, pitch, roll);
 
             // Define the reference rotation matrix (YPR)
-            R_ypr_ref = {
+            R_ypr_ref = {{
                 {0.993760669166, -0.104299329454, 0.039514330251},
                 {0.099708650872, 0.989535160981, 0.104299329454},
                 {-0.049979169271, -0.099708650872, 0.993760669166}
-            };
+            }};
 
             // Define the reference rotation matrix (RPY)
-            R_rpy_ref = {
+            R_rpy_ref = {{
                 {0.993760669166, -0.099708650872, 0.049979169271},
                 {0.094370001341, 0.990531416861, 0.099708650872},
                 {-0.059447752410, -0.094370001341, 0.993760669166}
-            };
+            }};
 
             // Set tolerance
             tol = 1.0e-9;
         }
 
-        ~EulerTest() {
-            R_ypr_ref.clear();
-            R_rpy_ref.clear();
-        }
+        ~EulerTest() {}
 };
 
 TEST_F(EulerTest, CheckYPR) {
-    std::vector<std::vector<double>> R_ypr = attitude.rotmat("ypr");
+    cartmat_t R_ypr = attitude.rotmat("ypr");
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
             ASSERT_NEAR(R_ypr_ref[i][j], R_ypr[i][j], tol);
@@ -112,7 +112,7 @@ TEST_F(EulerTest, CheckYPR) {
 }
 
 TEST_F(EulerTest, CheckRPY) {
-    std::vector<std::vector<double>> R_rpy = attitude.rotmat("rpy");
+    cartmat_t R_rpy = attitude.rotmat("rpy");
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
             ASSERT_NEAR(R_rpy_ref[i][j], R_rpy[i][j], tol);

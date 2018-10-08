@@ -1,33 +1,46 @@
 # -*- Makefile -*-
-#
-# michael a.g. aïvázis <michael.aivazis@para-sim.com>
-# (c) 2003-2018 all rights reserved
-#
 
-# project defaults
+# global project settings
 include isce.def
-# the name of the package
-PACKAGE = image
+# package isce/image
+PACKAGE = isce/image
 
-# the sources
-PROJ_SRCS =
+# the list of sources
+PROJ_SRCS = \
+    ResampSlc.cpp \
 
-# the private build space
-PROJ_TMPDIR = $(BLD_TMPDIR)/${PROJECT}/lib/$(PROJECT)
-# what to clean
-PROJ_CLEAN += $(EXPORT_INCDIR)/$(PACKAGE)
+# products
+# the library
+PROJ_DLL = $(BLD_LIBDIR)/lib$(PROJECT).$(PROJECT_MAJOR).$(PROJECT_MINOR).$(EXT_SO)
+# the private build location
+PROJ_TMPDIR = $(BLD_TMPDIR)/$(PROJECT)-$(PROJECT_MAJOR).$(PROJECT_MINOR)/lib
 
 # what to export
-# the package headers
+EXPORT_LIBS = $(PROJ_DLL)
+# the headers
 EXPORT_PKG_HEADERS = \
-    DirectImage.h DirectImage.icc \
-    Image.h Image.icc \
-    public.h
+    Constants.h \
+    ResampSlc.h \
+    ResampSlc.icc \
+    Tile.h \
+    Tile.icc \
 
+# build
+PROJ_CXX_INCLUDES += $(EXPORT_ROOT)/include/$(PROJECT)-$(PROJECT_MAJOR).$(PROJECT_MINOR)
 
-# the standard targets
+# standard targets
 all: export
 
-export:: export-package-headers
+export:: $(PROJ_DLL) export-package-headers export-libraries
 
-# end of file
+live:: live-headers live-package-headers live-libraries
+	BLD_ACTION="live" $(MM) recurse
+
+# configuration
+# the extension of the c++ sources
+EXT_CXX = cpp
+
+
+
+
+# end-of-file

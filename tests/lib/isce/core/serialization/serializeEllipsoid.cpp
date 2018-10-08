@@ -11,7 +11,9 @@
 #include <portinfo>
 #include <pyre/journal.h>
 #include <isce/core.h>
-
+#include <isce/core/Ellipsoid.h>
+#include <isce/core/Serialization.h>
+#include <isce/io/IH5.h>
 
 struct SerializeTest : public ::testing::Test {
     virtual void SetUp() {
@@ -31,6 +33,8 @@ struct SerializeTest : public ::testing::Test {
     unsigned fails;
 };
 
+
+
 TEST(EllipsoidTest, CheckArchive) {
     // Make an ellipsoid
     isce::core::Ellipsoid ellipsoid;
@@ -48,16 +52,19 @@ TEST(EllipsoidTest, CheckArchive) {
             << pyre::journal::endl;
     }
 
-    // Create cereal archive and load
-    {
-    cereal::XMLInputArchive archive(xmlfid);
-    archive(cereal::make_nvp("Ellipsoid", ellipsoid));
-    }
+    // Check validity of product file
+    std::string h5file("../../data/envisat.h5");
+    ASSERT_TRUE(isce::io::IH5File::isHdf5(h5file));
+
+    // Open the file
+    isce::io::IH5File file(h5file);
+
+    // Deserialize the ellipsoid
+    isce::core::load(file, ellipsoid);
 
     // Check values
-    ASSERT_NEAR(ellipsoid.a, 6378137.0, 1.0e-9);
-    ASSERT_NEAR(ellipsoid.e2, 0.0066943799, 1.0e-9);
-
+    ASSERT_NEAR(ellipsoid.a(), 6378137.0, 1.0e-9);
+    ASSERT_NEAR(ellipsoid.e2(), 0.0066943799, 1.0e-9);
 }
 
 int main(int argc, char * argv[]) {

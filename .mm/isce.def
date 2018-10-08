@@ -10,14 +10,15 @@
 include shared/target.def
 # pull in pyre support
 include pyre/default.def
-# pull in fftw support
-include fftw/default.def
-# pull in MPI support
-include MPI/default.def
-# pull in HDF5 support
+
+# pull in gdal support
+include gdal/default.def
+
+# pull in hdf5 C++ support
 include HDF5/default.def
 
-# global options for isce
+# global options for spisce
+
 PROJECT = isce
 
 # version info
