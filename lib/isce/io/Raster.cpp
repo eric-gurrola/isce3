@@ -12,12 +12,16 @@
 #include <string>
 #include <vector>
 #include "Raster.h"
+    
 
 
-
-// Construct a Raster object referring to existing file
+/** 
+ * @param[in] fname Existing filename
+ * @param[in] access GDAL access mode
+ *
+ * Files are opened with GDALOpenShared*/
 isce::io::Raster::Raster(const std::string &fname,   // filename
-                         GDALAccess access) {        // GA_ReadOnly or GA_Update
+			   GDALAccess access) {        // GA_ReadOnly or GA_Update
 
   GDALAllRegister();  // GDAL checks internally if drivers are already loaded
   dataset( static_cast<GDALDataset*>(GDALOpenShared(fname.c_str(), access)) );
@@ -25,129 +29,163 @@ isce::io::Raster::Raster(const std::string &fname,   // filename
 
 
 
-// Construct a Raster object referring to existing file
+/**
+ * @param[in] fname Existing filename to be opened in ReadOnly mode*/
 isce::io::Raster::Raster(const std::string &fname) :
   isce::io::Raster(fname, GA_ReadOnly) {}
 
 
+/**
+ * @param[in] inputDataset Pointer to an existing dataset*/
+isce::io::Raster::Raster(GDALDataset * inputDataset) {
+  GDALAllRegister();
+  dataset(inputDataset);
+} 
 
-// Construct a Raster object referring to new file
-isce::io::Raster::Raster(const std::string &fname,          // filename
-                           size_t width,                      // number of columns
-                           size_t length,                     // number of lines
-                           size_t numBands,                   // number of bands
-                           GDALDataType dtype,                // band datatype
-                           const std::string & driverName) {  // GDAL raster format
+
+/**
+ * @param[in] fname Filename to create
+ * @param[in] width Width of raster image
+ * @param[in] length Length of raster image
+ * @param[in] numBands Number of bands in raster image
+ * @param[in] dtype GDALDataType associated with dataset
+ * @param[in] driverName GDAL Driver to use
+ *
+ * In general, GDAL is used to create dataset. When VRT driver is used, the 
+ * dataset is interpreted in a special manner - it is assumed that the user 
+ * expects a flat binary file with a VRT pointing to the data using VRTRawRasterBand*/
+isce::io::Raster::Raster(const std::string &fname,          // filename 
+			   size_t width,                      // number of columns
+			   size_t length,                     // number of lines
+			   size_t numBands,                   // number of bands
+			   GDALDataType dtype,                // band datatype
+			   const std::string & driverName) {  // GDAL raster format
 
   GDALAllRegister();
   GDALDriver * outputDriver = GetGDALDriverManager()->GetDriverByName(driverName.c_str());
-
+  
   if (driverName == "VRT") {   // if VRT, create empty dataset and add a band, then update.
                                // Number of bands is forced to 1 for now (numBands is ignored).
-                               // Multi-band VRT can be created by adding band after creation
+                               // Multi-band VRT can be created by adding band after creation 
     dataset( outputDriver->Create (fname.c_str(), width, length, 0, dtype, NULL) );
     addRawBandToVRT( fname, dtype );
     GDALClose( dataset() );
     dataset( static_cast<GDALDataset*>(GDALOpenShared( fname.c_str(), GA_Update )) ); ;
   }
 
-  else                         // if non-VRT, create dataset using user-defined driver
+  else                         // if non-VRT, create dataset using user-defined driver    
     dataset( outputDriver->Create (fname.c_str(), width, length, numBands, dtype, NULL) );
-
+  
 }
 
 
-// Construct a Raster object referring to new file assuming default GDAL driver.
+
+/** 
+ * @param[in] fname File name to create
+ * @param[in] width Width of raster image
+ * @param[in] length Length of raster image
+ * @param[in] numBands Number of bands in raster image
+ * @param[in] dtype GDAL Datatype associated with dataset*/
 isce::io::Raster::Raster(const std::string &fname, size_t width, size_t length, size_t numBands, GDALDataType dtype) :
   isce::io::Raster(fname, width, length, numBands, dtype, isce::io::defaultGDALDriver) {}
 
 
 
-// Construct a Raster object referring to new file assuming default GDAL driver and dataype.
+/**
+ * @param[in] fname File name to create
+ * @param[in] width Width of raster image
+ * @param[in] length Length of raster image
+ * @param[in] numBands Number of bands in raster image*/
 isce::io::Raster::Raster(const std::string &fname, size_t width, size_t length, size_t numBands) :
   isce::io::Raster(fname, width, length, numBands, isce::io::defaultGDALDataType) {}
 
 
 
-// Construct a Raster object referring to new file assuming default GDAL driver and band.
+/**
+ * @param[in] fname File name to create
+ * @param[in] width Width of raster image
+ * @param[in] length Length of raster image
+ * @param[in] dtype GDALDataType associated with dataset*/
 isce::io::Raster::Raster(const std::string &fname, size_t width, size_t length, GDALDataType dtype) :
   isce::io::Raster(fname, width, length, 1, dtype, isce::io::defaultGDALDriver) {}
 
 
-
-// Construct a Raster object referring to new file assuming default GDAL driver, dataype and band.
+/** 
+ * @param[in] fname File name to create
+ * @param[in] width Width of raster image
+ * @param[in] length Length of raster image*/
 isce::io::Raster::Raster(const std::string &fname, size_t width, size_t length) :
   isce::io::Raster(fname, width, length, 1) {}
 
 
 
-// Construct a Raster object referring to new file assuming default GDAL driver, dataype and band.
+/**
+ * @param[in] fname File name to create
+ * @param[in] rast Reference raster object*/
 isce::io::Raster::Raster(const std::string &fname, const Raster &rast) :
   isce::io::Raster(fname, rast.width(), rast.length(), rast.numBands(), rast.dtype()) {}
 
 
 
-// Copy constructor. It increments GDAL's reference counter after weak-copying the pointer
+/** 
+ * @param[in] rast Source raster.
+ *
+ * It increments GDAL's reference counter after weak-copying the pointer */
 isce::io::Raster::Raster(const Raster &rast) {
   dataset( rast._dataset );
   dataset()->Reference();
 }
 
-// Constructor
-isce::io::Raster::Raster(GDALDataset * ds) {
-  dataset( ds );                // assign dataset
-  dataset()->Reference();       // increment GDALDataset reference counter
-}
 
 
-
-// Construct a Raster object referring to a VRT dataset with multiple bands from a vector
-// of Raster objects. Input rasters with multiple bands are unfolded within the output raster
-isce::io::Raster::Raster(const std::string& fname, const std::vector<Raster>& rastVec) {
+/** 
+ * @param[in] fname Output VRT filename to create
+ * @param[in] rastVec std::vector of Raster objects*/
+isce::io::Raster::Raster(const std::string& fname, const std::vector<Raster>& rastVec) {  
   GDALAllRegister();
   GDALDriver * outputDriver = GetGDALDriverManager()->GetDriverByName("VRT");
   dataset( outputDriver->Create (fname.c_str(),
-                                 rastVec.front().width(),
-                                 rastVec.front().length(),
-                                 0,    // bands are added below
-                                 rastVec.front().dtype(),
-                                 NULL) );
+				 rastVec.front().width(),
+				 rastVec.front().length(),
+				 0,    // bands are added below
+				 rastVec.front().dtype(),
+				 NULL) );  
 
   for ( auto r : rastVec)     // for each input Raster object in rastVec
     addRasterToVRT( r );
 }
 
-
-//Auto-identify EPSG code for input raster file
-//We will delegation auto-discovery to GDAL
+/** Uses GDAL's inbuilt OSRFindMatches to determine the EPSG code
+ * from the WKT representation of the projection system. This is 
+ * designed to work with GDAL 2.3+*/
 int isce::io::Raster::getEPSG()
 {
     int epsgcode = -9999;
 
     //Extract WKT string corresponding to the dataset
     const char* pszProjection = GDALGetProjectionRef(_dataset);
-
-
+    
+    
     //If WKT string is not empty
     if ((pszProjection != nullptr) && strlen(pszProjection)>0)
     {
         //Create a spatial reference object
         OGRSpatialReference hSRS(nullptr);
 
-        //These two lines can be deleted if we enforce GDAL >= 2.3
-        char* pszProjectionTmp = new char[strlen(pszProjection)];
-        strncpy(pszProjectionTmp, pszProjection, strlen(pszProjection));
-
+	//These two lines can be deleted if we enforce GDAL >= 2.3 
+	char* pszProjectionTmp = new char[strlen(pszProjection)];
+	strncpy(pszProjectionTmp, pszProjection, strlen(pszProjection));
+	
         //Try to import WKT discovered from dataset
-        //if ( hSRS.importFromWkt(&pszProjection) == 0 )  // use char* if we enforce GDAL >= 2.3
+	//if ( hSRS.importFromWkt(&pszProjection) == 0 )  // use char* if we enforce GDAL >= 2.3
         if ( hSRS.importFromWkt( & pszProjectionTmp ) == 0 )
         {
 
             //This part of the code is for features below GDAL 2.3
             //We are forced to use AutoIdentifyEPSG which is not complete
-
+            
 #if GDAL_VERSION_MINOR < 3
-            if (hSRS.AutoIdentifyEPSG() == 0)
+            if (hSRS.AutoIdentifyEPSG() == 0) 
             {
                 std::string authorityName, authorityCode;
 
@@ -186,8 +224,8 @@ int isce::io::Raster::getEPSG()
             }
 #else
             //GDAL 2.3 provides OSRFindMatches which is more robust and thorough.
-            //Auto-discovery is only bound to get better.
-            //GDAL 2.3 (May 2018) is still relatively new.
+            //Auto-discovery is only bound to get better. 
+            //GDAL 2.3 (May 2018) is still relatively new. 
             //In about a year's time we will be able
             //to deprecate the above part.
             int nEntries = 0;
@@ -236,10 +274,14 @@ int isce::io::Raster::getEPSG()
         }
     }
 
-    return epsgcode;
+    return epsgcode; 
 }
 
-//Set projection system for raster based on EPSG code
+/** 
+ * @param[in] epsgcode EPSG code corresponding to projection system
+ *
+ * GDAL relies on GDAL_DATA environment variable to interpret these codes.
+ * Make sure that these are set. */
 int isce::io::Raster::setEPSG(int epsgcode)
 {
     int status = 1;
@@ -247,7 +289,7 @@ int isce::io::Raster::setEPSG(int epsgcode)
     //Create a spatial reference object
     OGRSpatialReference hSRS(nullptr);
 
-    //Try importing from EPSGcode
+    //Try importing from EPSGcode 
     if (hSRS.importFromEPSG(epsgcode) == 0)
     {
         char *pszOutput = nullptr;
