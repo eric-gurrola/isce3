@@ -44,9 +44,6 @@ PROJ_SAR = $(BLD_LIBDIR)/lib$(PROJECT).$(PROJECT_MAJOR).$(PROJECT_MINOR).$(EXT_S
 PROJ_DLL = $(BLD_LIBDIR)/lib$(PROJECT).$(PROJECT_MAJOR).$(PROJECT_MINOR).$(EXT_SO)
 # the private build space
 PROJ_TMPDIR = $(BLD_TMPDIR)/${PROJECT}/lib/$(PROJECT)
-# the sources
-PROJ_SRCS = \
-    version.cc \
 
 # what to clean
 PROJ_CLEAN += $(EXPORT_LIBS) $(EXPORT_INCDIR)
@@ -55,7 +52,7 @@ PROJ_CLEAN += $(EXPORT_LIBS) $(EXPORT_INCDIR)
 # the library
 EXPORT_LIBS = $(PROJ_DLL)
 # the top level headers
-EXPORT_PKG_HEADERS = \
+EXPORT_HEADERS = \
     core.h \
     image.h \
     isce.h \
@@ -98,12 +95,14 @@ revision: version.cc $(PROJ_DLL) export-libraries
 	@$(RM) version.cc
 
 # construct my {version.cc}
+#          -e "s|TODAY|$(TODAY)|g"  #
+
 REVISION = ${strip ${shell git log --format=format:"%h" -n 1}}
 version.cc: version Make.mm
 	@sed \
           -e "s:MAJOR:$(PROJECT_MAJOR):g" \
           -e "s:MINOR:$(PROJECT_MINOR):g" \
-          -e "s:REVISION:$(REVISION):g" \
+          -e "s:REVISION:'$(REVISION)':g" \
           -e "s|TODAY|$(TODAY)|g" \
           version > version.cc
 

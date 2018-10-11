@@ -1,7 +1,10 @@
 // -*- C++ -*-
+// -*- coding: utf-8 -*-
 //
-// michael a.g. aïvázis <michael.aivazis@para-sim.com>
+// eric m. gurrola <eric.m.gurrola@jpl.nasa.gov>
+// jet propulsion laboratory/caltech
 // (c) 2003-2018 all rights reserved
+//
 //
 
 // code guard
@@ -9,12 +12,13 @@
 #define isce_iversion_h
 
 // support
-#include <array>
+#include <tuple>
+#include <string>
 
 // my declarations
 namespace isce {
-    // my version is an array of three integers
-    typedef std::array<int, 3> version_t;
+    // my version is an array of two integers and the git hash
+    using version_t = std::tuple<int, int, std::string>;
 
     // access to the version number of the {isce} library
     version_t version();

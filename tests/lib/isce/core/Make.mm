@@ -12,7 +12,7 @@ include isce.def
 RECURSE_DIRS = \
     $(PACKAGES)
 
-# the ones that are always available
+# the packages
 PACKAGES = \
     attitude \
     datetime \
