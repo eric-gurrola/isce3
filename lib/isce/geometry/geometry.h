@@ -1,7 +1,7 @@
 // -*- C++ -*-
 // -*- coding: utf-8 -*-
 //
-// Author: Bryan Riel
+// Author: Bryan Riel, Marco Lavalle
 // Copyright 2017-2018
 //
 
@@ -46,6 +46,7 @@ namespace isce {
                     double, int, double, int, int,
                     isce::core::orbitInterpMethod);
 
+        // radar->geo
         int rdr2geo(const isce::core::Pixel &,
                     const isce::core::Basis &,
                     const isce::core::StateVector &,
@@ -63,29 +64,29 @@ namespace isce {
                     double &, double &,
                     double, int, double);
 
-
-      // geo->radar with output satpos (ml 2018/05/16)
+        // geo->radar with output satpos and satvel 
         int geo2rdr(const cartesian_t &,
                     const isce::core::Ellipsoid &,
                     const isce::core::Orbit &,
                     const isce::core::Poly2d &,
-                    const isce::core::Metadata &,
+                    const isce::product::ImageMode &,
                     double &, double &,
-                    double, int, double,
-                    cartesian_t &);
+                    isce::core::cartesian_t &, isce::core::cartesian_t &,
+                    double, int, double);
 
-      // baseline (ml 2018/05/16)
-      int baseline(const cartesian_t &,
-                   const isce::core::Ellipsoid &,
-                   const isce::core::Ellipsoid &,
-                   const isce::core::Orbit &,
-                   const isce::core::Orbit &,
-                   const isce::core::Poly2d &,
-                   const isce::core::Poly2d &,
-                   const isce::core::Metadata &,
-                   const isce::core::Metadata &,
-                   double &, double &,
-                   double, int, double, double &, double &);
+        // baseline
+        int baseline(const cartesian_t &,
+                     const isce::core::Ellipsoid &,
+                     const isce::core::Ellipsoid &,
+                     const isce::core::Orbit &,
+                     const isce::core::Orbit &,
+                     const isce::core::Poly2d &,
+                     const isce::core::Poly2d &,
+                     const isce::core::ImageMode &,
+                     const isce::core::ImageMode &,
+                     double &, double &,
+                     double, int, double, double &, double &);
+
         // Utility function to compute geocentric TCN basis from state vector
         void geocentricTCN(isce::core::StateVector &,
                            isce::core::Basis &);

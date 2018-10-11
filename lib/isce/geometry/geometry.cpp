@@ -1,7 +1,7 @@
 // -*- C++ -*-
 // -*- coding: utf-8 -*-
 //
-// Author: Bryan V. Riel
+// Author: Bryan V. Riel, Marco Lavalle
 // Copyright 2017-2018
 //
 
@@ -19,7 +19,6 @@
 using isce::core::Basis;
 using isce::core::LinAlg;
 using isce::core::Ellipsoid;
-using isce::core::Metadata;
 using isce::core::Orbit;
 using isce::core::Pegtrans;
 using isce::core::Pixel;
@@ -198,14 +197,14 @@ rdr2geo(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
     return converged;
 }
 
-
-
+// geo->radar
 int isce::geometry::
 geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit & orbit,
-        const Poly2d & doppler, const Metadata & meta, double & aztime, double & slantRange,
-        double threshold, int maxIter, double deltaRange, cartesian_t & satpos) {
+        const Poly2d & doppler, const ImageMode & mode, double & aztime, double & slantRange,
+        cartesian_t & satpos, cartesian_t & satvel,
+        double threshold, int maxIter, double deltaRange) {
 
-    cartesian_t satvel, inputXYZ, dr;
+    cartesian_t inputXYZ, dr;
 
     // Convert LLH to XYZ
     ellipsoid.lonLatToXyz(inputLLH, inputXYZ);
@@ -295,56 +294,56 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
     return converged;
 }
 
-
-
+// Slightly higher-level interface that doesn't return final satellite state
 int isce::geometry::
 geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit & orbit,
-        const Poly2d & doppler, const Metadata & meta, double & aztime, double & slantRange,
+        const Poly2d & doppler, const ImageMode & mode, double & aztime, double & slantRange,
         double threshold, int maxIter, double deltaRange) {
 
-  cartesian_t satpos;
-  geo2rdr(inputLLH, ellipsoid, orbit, doppler, meta,
-          aztime, slantRange, threshold, maxIter, 1.0e-8, satpos);
+    // Cartesian arrays for storing satellite position and velocity (not returned)
+    cartesian_t satpos, satvel;
 
+    // Call geo2rdr 
+    geo2rdr(inputLLH, ellipsoid, orbit, doppler, mode, aztime, slantRange,
+            satpos, satvel, threshold, maxIter, 1.0e-8);
 }
 
-
-
-// Baseline
+// Baseline for two orbits for a given observation point on the ground
 int isce::geometry::
 baseline(const cartesian_t & inputLLH,
          const Ellipsoid & ellipsoidMaster, const Ellipsoid & ellipsoidSlave,
          const Orbit & orbitMaster, const Orbit & orbitSlave,
          const Poly2d & dopplerMaster, const Poly2d & dopplerSlave,
-         const Metadata & metaMaster, const Metadata & metaSlave,
-         double & aztime, double & slantRange, double threshold, int maxIter, double deltaRange, double & basPerp, double & basTot) {
+         const ImageMode & modeMaster, const ImageMode & modeSlave,
+         double & aztime, double & slantRange,
+         double threshold, int maxIter, double deltaRange, double & basPerp, double & basTot) {
 
-  cartesian_t satposMaster, satposSlave, targetVec, lookVec, basVec;
+    // Cartesian arrays
+    cartesian_t satposMaster, satposSlave, targetVec, lookVec, basVec;
 
-  int geostatSlave = isce::geometry::geo2rdr(
-                                             inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
-                                             metaSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
-                                             satposSlave
-                                             );
+    // Call geo->radar for slave track
+    int geostatSlave = isce::geometry::geo2rdr(
+        inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
+        modeSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
+        satposSlave
+    );
 
+    // Call geo->radar for master track
+    int geostatMaster = isce::geometry::geo2rdr(
+        inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
+        modeMaster, aztime, slantRange, threshold, maxIter, 1.0e-8,
+        satposMaster
+    );
+  
+    // Baseline in two components
+    LinAlg::linComb(1, satposMaster, -1, satposSlave, basVec);
+    ellipsoidMaster.lonLatToXyz(inputLLH, targetVec);
+    LinAlg::linComb(1.0, satposMaster, -1.0, targetVec, lookVec);
+    basTot = LinAlg::norm(basVec);
+    basPerp = LinAlg::dot(basVec, lookVec) / LinAlg::norm(lookVec);
 
-  int geostatMaster = isce::geometry::geo2rdr(
-                                              inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
-                                              metaMaster, aztime, slantRange, threshold, maxIter, 1.0e-8,
-                                              satposMaster
-                                              );
-
-  //std::cout << "Master (" << geostatMaster <<"): " << satposMaster[0] << " " << satposMaster[1] << " " << satposMaster[2] << std::endl;
-  //std::cout << "Slave  (" << geostatSlave << "): " << satposSlave[0] << " " << satposSlave[1] << " " << satposSlave[2] << std::endl;
-
-  // Baseline
-  isce::core::LinAlg::linComb(1, satposMaster, -1, satposSlave, basVec);
-  ellipsoidMaster.lonLatToXyz(inputLLH, targetVec);
-  LinAlg::linComb(1.0, satposMaster, -1.0, targetVec, lookVec);
-  basTot  = isce::core::LinAlg::norm(basVec);
-  basPerp = isce::core::LinAlg::dot(basVec, lookVec) / isce::core::LinAlg::norm(lookVec);
-
-  return geostatMaster;
+    // Done
+    return geostatMaster;
 }
 
 // Utility function to compute geocentric TCN basis from state vector
@@ -363,6 +362,5 @@ geocentricTCN(isce::core::StateVector & state, isce::core::Basis & basis) {
     basis.x1(chat);
     basis.x2(nhat);
 }
-
 
 // end of file

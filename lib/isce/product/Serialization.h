@@ -88,6 +88,49 @@ namespace isce {
             meta.identification(id);
         }
 
+        /** Load ImageMode data from VRT.
+         * @param[in] archive           Cereal-compatible archive object.
+         * @param[in] mode              ImageMode object to be configured. */
+        template <class Archive>
+        inline void load(Archive & archive, ImageMode & mode) {
+
+            // Temp scalars to read in data
+            double prf, pulseDuration, chirpSlope, wavelength, startingRange, rangePixelSpacing;
+            size_t numberAzimuthLooks, numberRangeLooks, width, length;
+            std::string sensingStartStr;
+
+            // Read from archive 
+            archive(cereal::make_nvp("width", width),
+                    cereal::make_nvp("length", length),
+                    cereal::make_nvp("numberRangeLooks", numberRangeLooks),
+                    cereal::make_nvp("numberAzimuthLooks", numberAzimuthLooks),
+                    cereal::make_nvp("slantRangePixelSpacing", rangePixelSpacing),
+                    cereal::make_nvp("rangeFirstSample", startingRange),
+                    cereal::make_nvp("prf", prf),
+                    cereal::make_nvp("radarWavelength", wavelength),
+                    cereal::make_nvp("chirpSlope", chirpSlope),
+                    cereal::make_nvp("pulseDuration", pulseDuration),
+                    cereal::make_nvp("sensingStart", sensingStartStr));
+
+            // Convert sensing start string to DateTime
+            isce::core::DateTime sensingStart(sensingStartStr);
+            // Compute sensing stop
+            isce::core::DateTime sensingStop = sensingStart + (length - 1) / prf;
+
+            // Save data to ImageMode
+            mode.modeType("primary");
+            std::array<size_t, 2> arrayDims{length, width};
+            mode.dataDimensions(arrayDims);
+            mode.numberRangeLooks(numberRangeLooks);
+            mode.numberAzimuthLooks(numberAzimuthLooks);
+            mode.rangePixelSpacing(rangePixelSpacing);
+            mode.startingRange(startingRange);
+            mode.prf(prf);
+            mode.wavelength(wavelength);
+            mode.startAzTime(sensingStart);
+            mode.endAzTime(sensingStop);
+        }
+
         /** Load ImageMode data from HDF5.
          *
          * @param[in] file          HDF5 file object.

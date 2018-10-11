@@ -74,12 +74,12 @@ class isce::geometry::Baseline {
         // isce::core objects
         isce::core::Ellipsoid _ellipsoidMaster;
         isce::core::Orbit _orbitMaster;
-        isce::core::Metadata _metaMaster;
+        isce::core::ImageMode _modeMaster;
         isce::core::DateTime _refEpochMaster;
 
         isce::core::Ellipsoid _ellipsoidSlave;
         isce::core::Orbit _orbitSlave;
-        isce::core::Metadata _metaSlave;
+        isce::core::ImageMode _modeSlave;
         isce::core::DateTime _refEpochSlave;
 
         // Projection related data

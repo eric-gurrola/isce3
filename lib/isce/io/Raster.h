@@ -19,6 +19,7 @@
 #include <valarray>
 #include "gdal_priv.h"
 #include "gdal_vrt.h"
+#include "gdal_utils.h"
 #include "ogr_spatialref.h"
 #include "Constants.h"
 
