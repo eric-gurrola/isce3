@@ -64,23 +64,23 @@ computeBaseline(isce::io::Raster & topoRaster,
                            GDT_Float32, "ENVI");
 
   // Cache sensing start (pasted from geo2rdr)
-  double t0 = _modeMaster.sensingStart.secondsSinceEpoch(_refEpochMaster);
+  double t0 = _modeMaster.startAzTime().secondsSinceEpoch(_refEpochMaster);
   // Adjust for const azimuth shift
-  t0 -= (azshift - 0.5 * (_modeMaster.numberAzimuthLooks - 1)) / _modeMaster.prf;
+  t0 -= (azshift - 0.5 * (_modeMaster.numberAzimuthLooks() - 1)) / _modeMaster.prf();
 
   // Cache starting range
-  double r0 = _modeMaster.rangeFirstSample;
+  double r0 = _modeMaster.startingRange();
   // Adjust for constant range shift
-  r0 -= (rgshift - 0.5 * (_modeMaster.numberRangeLooks - 1)) * _modeMaster.slantRangePixelSpacing;
+  r0 -= (rgshift - 0.5 * (_modeMaster.numberRangeLooks() - 1)) * _modeMaster.rangePixelSpacing();
 
   // Compute azimuth time extents
-  double dtaz = _modeMaster.numberAzimuthLooks / _modeMaster.prf;
-  const double tend = t0 + ((_modeMaster.length - 1) * dtaz);
+  double dtaz = _modeMaster.numberAzimuthLooks() / _modeMaster.prf();
+  const double tend = t0 + ((_modeMaster.length() - 1) * dtaz);
   const double tmid = 0.5 * (t0 + tend);
 
   // Compute range extents
-  const double dmrg = _modeMaster.numberRangeLooks * _modeMaster.slantRangePixelSpacing;
-  const double rngend = r0 + ((_modeMaster.width - 1) * dmrg);
+  const double dmrg = _modeMaster.numberRangeLooks() * _modeMaster.rangePixelSpacing();
+  const double rngend = r0 + ((_modeMaster.width() - 1) * dmrg);
 
   // Print out extents
   _printExtents(info, t0, tend, dtaz, r0, rngend, dmrg, demWidth, demLength);
@@ -99,13 +99,13 @@ computeBaseline(isce::io::Raster & topoRaster,
                 << "Processing line: " << line << " " << pyre::journal::newline
                 << "Dopplers near mid far (master): "
                 << dopplerMaster.eval(0, 0) << " "
-                << dopplerMaster.eval(0, (_modeMaster.width / 2) - 1) << " "
-                << dopplerMaster.eval(0, _modeMaster.width - 1) << " "
+                << dopplerMaster.eval(0, (_modeMaster.width() / 2) - 1) << " "
+                << dopplerMaster.eval(0, _modeMaster.width() - 1) << " "
                 << pyre::journal::newline
                 << "Dopplers near mid far (slave): "
                 << dopplerSlave.eval(0, 0) << " "
-                << dopplerSlave.eval(0, (_modeSlave.width / 2) - 1) << " "
-                << dopplerSlave.eval(0, _modeSlave.width - 1) << " "
+                << dopplerSlave.eval(0, (_modeSlave.width() / 2) - 1) << " "
+                << dopplerSlave.eval(0, _modeSlave.width() - 1) << " "
                 << pyre::journal::endl;
         }
 
@@ -196,8 +196,8 @@ _printExtents(pyre::journal::info_t & info, double t0, double tend, double dtaz,
          << "Azimuth line spacing in seconds: " << dtaz << pyre::journal::newline
          << "Near range (m): " << r0 << pyre::journal::newline
          << "Far range (m): " << rngend << pyre::journal::newline
-         << "Radar image length: " << _modeMaster.length << pyre::journal::newline
-         << "Radar image width: " << _metaMaster.width << pyre::journal::newline
+         << "Radar image length: " << _modeMaster.length() << pyre::journal::newline
+         << "Radar image width: " << _modeMaster.width() << pyre::journal::newline
          << "Geocoded lines: " << demLength << pyre::journal::newline
          << "Geocoded samples: " << demWidth << pyre::journal::newline;
 }

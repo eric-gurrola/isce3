@@ -358,20 +358,21 @@ baseline(const cartesian_t & inputLLH,
          double threshold, int maxIter, double deltaRange, double & basPerp, double & basTot) {
 
     // Cartesian arrays
-    cartesian_t satposMaster, satposSlave, targetVec, lookVec, basVec;
+    cartesian_t satposMaster, satposSlave, satvelMaster, satvelSlave,
+                targetVec, lookVec, basVec;
 
     // Call geo->radar for slave track
     int geostatSlave = isce::geometry::geo2rdr(
         inputLLH, ellipsoidSlave, orbitSlave, dopplerSlave,
-        modeSlave, aztime, slantRange, threshold, maxIter, 1.0e-8,
-        satposSlave
+        modeSlave, aztime, slantRange, satposMaster, satvelMaster,
+        threshold, maxIter, 1.0e-8
     );
 
     // Call geo->radar for master track
     int geostatMaster = isce::geometry::geo2rdr(
         inputLLH, ellipsoidMaster, orbitMaster, dopplerMaster,
-        modeMaster, aztime, slantRange, threshold, maxIter, 1.0e-8,
-        satposMaster
+        modeMaster, aztime, slantRange, satposSlave, satvelSlave,
+        threshold, maxIter, 1.0e-8
     );
   
     // Baseline in two components

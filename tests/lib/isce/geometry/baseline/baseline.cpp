@@ -14,8 +14,13 @@
 
 // isce::core
 #include "isce/core/Constants.h"
-#include "isce/core/Raster.h"
 #include "isce/core/Serialization.h"
+
+// isce::io
+#include "isce/io/Raster.h"
+
+// isce::product
+#include "isce/product/ImageMode.h"
 
 // isce::geometry
 #include "isce/geometry/Serialization.h"
@@ -30,14 +35,13 @@ TEST(BaselineTest, RunBaseline) {
     isce::core::Poly2d dopplerMaster;
     isce::core::Orbit orbitMaster;
     isce::core::Ellipsoid ellipsoidMaster;
-    isce::core::Metadata metaMaster;
+    isce::product::ImageMode modeMaster;
 
     // Instantiate isce::core objects
     isce::core::Poly2d dopplerSlave;
     isce::core::Orbit orbitSlave;
     isce::core::Ellipsoid ellipsoidSlave;
-    isce::core::Metadata metaSlave;
-
+    isce::product::ImageMode modeSlave;
 
     // Load metadata
     std::stringstream metastreamMaster = streamFromVRT("/home/mlavalle/dat/uavsar/lope2/lopenp_14043_16015_001_160308/lope.vrt");
@@ -46,7 +50,7 @@ TEST(BaselineTest, RunBaseline) {
     archive(cereal::make_nvp("Orbit", orbitMaster),
             cereal::make_nvp("SkewDoppler", dopplerMaster),
             cereal::make_nvp("Ellipsoid", ellipsoidMaster),
-            cereal::make_nvp("Radar", metaMaster));
+            cereal::make_nvp("Radar", modeMaster));
     }
 
     std::stringstream metastreamSlave = streamFromVRT("/home/mlavalle/dat/uavsar/lope2/fortym_14045_16008_004_160225/forty.vrt");
@@ -55,12 +59,13 @@ TEST(BaselineTest, RunBaseline) {
     archive(cereal::make_nvp("Orbit", orbitSlave),
             cereal::make_nvp("SkewDoppler", dopplerSlave),
             cereal::make_nvp("Ellipsoid", ellipsoidSlave),
-            cereal::make_nvp("Radar", metaSlave));
+            cereal::make_nvp("Radar", modeSlave));
     }
 
 
     // Create geo2rdr isntance
-    isce::geometry::Baseline bas(ellipsoidMaster, orbitMaster, metaMaster, ellipsoidSlave, orbitSlave, metaSlave);
+    isce::geometry::Baseline bas(ellipsoidMaster, orbitMaster, modeMaster,
+                                 ellipsoidSlave, orbitSlave, modeSlave);
 
     // Load topo processing parameters to finish configuration
     std::ifstream xmlfid("../../data/topo.xml", std::ios::in);
@@ -70,9 +75,9 @@ TEST(BaselineTest, RunBaseline) {
     }
 
     // Open lat raster
-    isce::core::Raster latRaster("/home/mlavalle/dat/uavsar/lope2/topo/lat.rdr");
-    isce::core::Raster lonRaster("/home/mlavalle/dat/uavsar/lope2/topo/lon.rdr");
-    isce::core::Raster hgtRaster("/home/mlavalle/dat/uavsar/lope2/topo/z.rdr");
+    isce::io::Raster latRaster("/home/mlavalle/dat/uavsar/lope2/topo/lat.rdr");
+    isce::io::Raster lonRaster("/home/mlavalle/dat/uavsar/lope2/topo/lon.rdr");
+    isce::io::Raster hgtRaster("/home/mlavalle/dat/uavsar/lope2/topo/z.rdr");
 
     // Run geo2rdr
     bas.computeBaseline(latRaster, lonRaster, hgtRaster, dopplerMaster, dopplerSlave, ".");

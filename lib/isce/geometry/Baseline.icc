@@ -12,18 +12,18 @@
 isce::geometry::Baseline::
 Baseline(isce::core::Ellipsoid ellipsoidMaster,
          isce::core::Orbit orbitMaster,
-         isce::core::Metadata metaMaster,
+         isce::product::ImageMode modeMaster,
          isce::core::Ellipsoid ellipsoidSlave,
          isce::core::Orbit orbitSlave,
-         isce::core::Metadata metaSlave) {
+         isce::product::ImageMode modeSlave) {
 
   // Copy objects
   _ellipsoidMaster = ellipsoidMaster;
   _orbitMaster = orbitMaster;
-  _metaMaster = metaMaster;
+  _modeMaster = modeMaster;
   // For numerical precision purposes, set reference epoch 2 days prior
-  _refEpochMaster._init(_metaMaster.sensingStart.year, _metaMaster.sensingStart.months,
-                        _metaMaster.sensingStart.days - 2, 0, 0, 0, 0.0);
+  _refEpochMaster._init(_modeMaster.startAzTime().year, _modeMaster.startAzTime().months,
+                        _modeMaster.startAzTime().days - 2, 0, 0, 0, 0.0);
   // Reformat orbit using this epoch
   _orbitMaster.updateUTCTimes(_refEpochMaster);
 
@@ -31,10 +31,10 @@ Baseline(isce::core::Ellipsoid ellipsoidMaster,
   // Copy objects
   _ellipsoidSlave = ellipsoidSlave;
   _orbitSlave = orbitSlave;
-  _metaSlave = metaSlave;
+  _modeSlave = modeSlave;
   // For numerical precision purposes, set reference epoch 2 days prior
-  _refEpochSlave._init(_metaSlave.sensingStart.year, _metaSlave.sensingStart.months,
-                       _metaSlave.sensingStart.days - 2, 0, 0, 0, 0.0);
+  _refEpochSlave._init(_modeSlave.startAzTime().year, _modeSlave.startAzTime().months,
+                       _modeSlave.startAzTime().days - 2, 0, 0, 0, 0.0);
   // Reformat orbit using this epoch
   _orbitSlave.updateUTCTimes(_refEpochSlave);
 }

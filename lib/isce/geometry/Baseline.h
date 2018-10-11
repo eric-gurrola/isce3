@@ -12,12 +12,12 @@
 #include <pyre/journal.h>
 
 // isce::core
-#include <isce/core/Metadata.h>
 #include <isce/core/Orbit.h>
 #include <isce/core/Poly2d.h>
 #include <isce/core/Ellipsoid.h>
 #include <isce/core/Peg.h>
 #include <isce/core/Pegtrans.h>
+#include <isce/product/ImageMode.h>
 #include <isce/io/Raster.h>
 
 // Declaration
@@ -34,10 +34,10 @@ class isce::geometry::Baseline {
         // Constructor: must have Ellipsoid, Orbit, and Metadata
         Baseline(isce::core::Ellipsoid,
                  isce::core::Orbit,
-                 isce::core::Metadata,
+                 isce::product::ImageMode,
                  isce::core::Ellipsoid,
                  isce::core::Orbit,
-                 isce::core::Metadata);
+                 isce::product::ImageMode);
 
         // Set options
         inline void threshold(double);
@@ -74,12 +74,12 @@ class isce::geometry::Baseline {
         // isce::core objects
         isce::core::Ellipsoid _ellipsoidMaster;
         isce::core::Orbit _orbitMaster;
-        isce::core::ImageMode _modeMaster;
+        isce::product::ImageMode _modeMaster;
         isce::core::DateTime _refEpochMaster;
 
         isce::core::Ellipsoid _ellipsoidSlave;
         isce::core::Orbit _orbitSlave;
-        isce::core::ImageMode _modeSlave;
+        isce::product::ImageMode _modeSlave;
         isce::core::DateTime _refEpochSlave;
 
         // Projection related data

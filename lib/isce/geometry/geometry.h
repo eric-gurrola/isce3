@@ -87,8 +87,8 @@ namespace isce {
                      const isce::core::Orbit &,
                      const isce::core::Poly2d &,
                      const isce::core::Poly2d &,
-                     const isce::core::ImageMode &,
-                     const isce::core::ImageMode &,
+                     const isce::product::ImageMode &,
+                     const isce::product::ImageMode &,
                      double &, double &,
                      double, int, double, double &, double &);
 
