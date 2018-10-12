@@ -75,12 +75,10 @@ TEST(BaselineTest, RunBaseline) {
     }
 
     // Open lat raster
-    isce::io::Raster latRaster("/home/mlavalle/dat/uavsar/lope2/topo/lat.rdr");
-    isce::io::Raster lonRaster("/home/mlavalle/dat/uavsar/lope2/topo/lon.rdr");
-    isce::io::Raster hgtRaster("/home/mlavalle/dat/uavsar/lope2/topo/z.rdr");
+    isce::io::Raster topoRaster("../../data/topo.vrt");
 
     // Run geo2rdr
-    bas.computeBaseline(latRaster, lonRaster, hgtRaster, dopplerMaster, dopplerSlave, ".");
+    bas.computeBaseline(topoRaster, dopplerMaster, dopplerSlave, ".");
 
 }
 
