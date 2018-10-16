@@ -15,7 +15,7 @@ include pyre/default.def
 include gdal/default.def
 
 # pull in hdf5 C++ support
-include HDF5/default.def
+include HDF5++/default.def
 
 # global options for spisce
 
@@ -54,10 +54,5 @@ PROJ_F90_MODULES = $(PROJ_INCDIR)
 PROJ_F77_FLAGS = \
   $(COMPILER_F77_LONGLINES) $(COMPILER_F77_NORANGECHECK) \
   $(F77_MODULE_PLACEMENT_FLAG)$(PROJ_INCDIR)
-
-$(GDAL_DIR) ?=
-ifneq ($(GDAL_DIR),)
-include gdal/default.def
-endif
 
 # end of file
