@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+from isce.extensions import isceextension
 
 class LinearOrbit():
     '''
@@ -11,7 +12,7 @@ class LinearOrbit():
         self.t0 = 1000.
         self.dt = 10.
         self.nVec = 11
-    
+
         self.opos = np.zeros(3)
         self.ovel = np.array([4000., -1000., 4500.])
 
@@ -94,7 +95,7 @@ class PolynomialOrbit:
         self.vzpoly = np.polyder(self.zpoly)
 
     def makeStateVector(self, tdiff):
-        t = self.t0 + tdiff 
+        t = self.t0 + tdiff
 
         pos = np.zeros(3)
         pos[0] = np.polyval(self.xpoly, tdiff)
@@ -141,13 +142,13 @@ def test_OutOfBounds():
 
 def test_Edges():
     import numpy.testing as npt
-    
+
     orb = linorb.makeOrbit()
     test_t = [0., (linorb.nVec-1) * linorb.dt]
     for tt in test_t:
         tinp = linorb.t0 + tt
         tref, refpos, refvel = linorb.makeStateVector(tt)
-            
+
         for method in ['hermite', 'sch', 'legendre']:
             stat, pos, vel = orb.interpolate(tinp, method='hermite')
             assert (stat == 0)
@@ -156,7 +157,7 @@ def test_Edges():
 
             npt.assert_array_almost_equal(vel, refvel, decimal=6, err_msg="Failed in edge test for {0}".format(method))
 
-            
+
 def test_Reverse():
     import numpy.testing as npt
     from isceextension import pyOrbit
@@ -168,7 +169,7 @@ def test_Reverse():
         t, pos, vel = linorb.makeStateVector(ii * linorb.dt)
         neworb.addStateVector(t, pos, vel)
 
-    
+
     for ii in range(linorb.nVec):
         t, pos, vel = neworb.getStateVector(ii)
         tref, posref, velref = orb.getStateVector(ii)
@@ -192,7 +193,7 @@ def test_OutOfOrder():
         t, pos, vel = linorb.makeStateVector(ii * linorb.dt)
         neworb.addStateVector(t, pos, vel)
 
-    
+
     for ii in range(linorb.nVec):
         t, pos, vel = neworb.getStateVector(ii)
         tref, posref, velref = orb.getStateVector(ii)
@@ -268,7 +269,7 @@ def test_Hermite_numpy():
 
     test_tt = [23.3, 36.7, 54.5, 89.3]
     orb = polyorb.makeOrbit()
-    
+
     posref = []
     velref = []
     tinp = []
@@ -277,7 +278,7 @@ def test_Hermite_numpy():
         posref.append(pos)
         velref.append(vel)
         tinp.append(polyorb.t0 + tt)
-    
+
     ts, poss, vels = orb.interpolate(tinp, method='hermite')
 
     npt.assert_array_equal(np.array(posref), poss)
@@ -292,7 +293,7 @@ def test_Hermite_numpy():
         posref.append(pos)
         velref.append(vel)
         tinp.append(polyorb.t0 + tt)
-    
+
     ts, poss, vels = orb.interpolateWGS84Orbit(tinp)
 
     npt.assert_array_equal(np.array(posref), poss)
@@ -304,7 +305,7 @@ def test_Legendre_numpy():
 
     test_tt = [23.3, 36.7, 54.5, 89.3]
     orb = polyorb.makeOrbit()
-    
+
     posref = []
     velref = []
     tinp = []
@@ -313,7 +314,7 @@ def test_Legendre_numpy():
         posref.append(pos)
         velref.append(vel)
         tinp.append(polyorb.t0 + tt)
-    
+
     ts, poss, vels = orb.interpolate(tinp, method='legendre')
 
     npt.assert_array_equal(np.array(posref), poss)
@@ -328,7 +329,7 @@ def test_Legendre_numpy():
         posref.append(pos)
         velref.append(vel)
         tinp.append(polyorb.t0 + tt)
-    
+
     ts, poss, vels = orb.interpolateLegendreOrbit(tinp)
 
     npt.assert_array_equal(np.array(posref), poss)
@@ -340,7 +341,7 @@ def test_SCH_numpy():
 
     test_tt = [23.3, 36.7, 54.5, 89.3]
     orb = polyorb.makeOrbit()
-    
+
     posref = []
     velref = []
     tinp = []
@@ -349,7 +350,7 @@ def test_SCH_numpy():
         posref.append(pos)
         velref.append(vel)
         tinp.append(polyorb.t0 + tt)
-    
+
     ts, poss, vels = orb.interpolate(tinp, method='sch')
 
     npt.assert_array_equal(np.array(posref), poss)
@@ -364,7 +365,7 @@ def test_SCH_numpy():
         posref.append(pos)
         velref.append(vel)
         tinp.append(polyorb.t0 + tt)
-    
+
     ts, poss, vels = orb.interpolateSCHOrbit(tinp)
 
     npt.assert_array_equal(np.array(posref), poss)

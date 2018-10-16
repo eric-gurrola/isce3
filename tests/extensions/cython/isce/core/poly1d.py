@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+from isce.extensions import isceextension
+
 def test_CythonInterface():
     from isceextension import pyPoly1d
     import numpy.testing as npt
-        
+
     refpoly = pyPoly1d(order=5,
                        mean=0.,
                        norm=1.)

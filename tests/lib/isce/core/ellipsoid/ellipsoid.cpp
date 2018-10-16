@@ -18,10 +18,10 @@
 #include <gtest/gtest.h>
 #include <isce/core.h>
 
-using isce::core::Ellipsoid
+using isce::core::Ellipsoid;
 using std::cout;
 using std::endl;
-using::vector;
+using std::vector;
 
 //Some commonly used values
 Ellipsoid wgs84(6378137.0, 0.0066943799901);
@@ -92,7 +92,6 @@ struct EllipsoidTest : public ::testing::Test {
         isce::core::cartesian_t ref_llh{p,q,r};    \
         isce::core::cartesian_t ref_xyz = {x,y,z};    \
         isce::core::cartesian_t xyz, llh;  \
-
         llh = ref_llh;                  \
         wgs84.lonLatToXyz(llh, xyz);    \
         EXPECT_NEAR(xyz[0], ref_xyz[0], 1.0e-6);\

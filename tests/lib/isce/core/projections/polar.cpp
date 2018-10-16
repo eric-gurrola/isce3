@@ -18,9 +18,6 @@ using std::endl;
 PolarStereo North(3413);
 PolarStereo South(3031);
 
-PolarStereo North(3413);
-PolarStereo South(3031);
-
 struct PolarTest : public ::testing::Test {
     virtual void SetUp() {
         fails = 0;

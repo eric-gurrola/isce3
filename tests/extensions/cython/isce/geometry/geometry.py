@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import isceextension
+from isce.extensions import isceextension
 
 def test_geo2rdr():
     """
@@ -24,13 +24,13 @@ def test_geo2rdr():
     orbit = isceextension.pyOrbit()
     doppler = isceextension.pyPoly2d()
     mode = isceextension.pyImageMode()
-    
-    # Configure objects using metadata 
+
+    # Configure objects using metadata
     isceextension.deserialize(idGroup, ellps)
     isceextension.deserialize(orbGroup, orbit)
     isceextension.deserialize(dopGroup, doppler)
     isceextension.deserialize(modeGroup, mode)
-    
+
     # Call geo2rdr
     llh = [np.radians(-115.6), np.radians(35.1), 55.0]
     aztime, slantrange = isceextension.py_geo2rdr(llh, ellps, orbit, doppler, mode,

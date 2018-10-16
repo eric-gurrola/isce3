@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import numpy as np
+from isce.extensions import isceextension
+
 a = 6378137.0
 b = np.sqrt(1.0 - 0.0066943799901) * a
 

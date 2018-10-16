@@ -2,6 +2,8 @@
 
 from osgeo import gdal
 gdal.UseExceptions()
+import isce
+from isce.extensions import isceextension
 
 class commonClass:
     def __init__(self):
@@ -32,7 +34,7 @@ def test_createGeoTiffFloat():
     assert( os.path.exists(cmn.latFilename))
     assert( raster.width == cmn.nc )
     assert( raster.length == cmn.nl )
-    
+
     assert( raster.numBands == 1)
     assert( raster.getDatatype() == gdal.GDT_Float32)
     del raster
@@ -96,7 +98,7 @@ def test_createTwoBandEnvi():
     assert( os.path.exists(cmn.incFilename))
     assert( raster.width == cmn.nc )
     assert( raster.length == cmn.nl )
-    
+
     assert( raster.numBands == 2)
     assert( raster.getDatatype() == gdal.GDT_Int16)
     del raster
@@ -133,7 +135,7 @@ def test_createNumpyDataset():
 
     ny, nx = 200, 100
     data = np.random.randn(ny, nx).astype(np.float32)
-    
+
     dset = gdal_array.OpenArray(data)
     raster = pyRaster('', dataset=dset)
 
@@ -143,5 +145,3 @@ def test_createNumpyDataset():
 
     dset = None
     del raster
-
-
