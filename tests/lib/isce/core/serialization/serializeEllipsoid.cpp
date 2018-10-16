@@ -59,9 +59,11 @@ TEST(EllipsoidTest, CheckArchive) {
     // Open the file
     isce::io::IH5File file(h5file);
 
-    // Deserialize the ellipsoid
-    isce::core::load(file, ellipsoid);
+    // Open group containing ellipsoid
+    isce::io::IGroup group = file.openGroup("/science/metadata/identification");
 
+    // Deserialize the ellipsoid
+    isce::core::loadFromH5(group, ellipsoid);
     // Check values
     ASSERT_NEAR(ellipsoid.a(), 6378137.0, 1.0e-9);
     ASSERT_NEAR(ellipsoid.e2(), 0.0066943799, 1.0e-9);

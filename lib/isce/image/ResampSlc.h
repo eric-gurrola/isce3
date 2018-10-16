@@ -44,9 +44,13 @@ class isce::image::ResampSlc {
     // Meta-methods
     public:
         // Default constructor
+        inline ResampSlc();
+        // Constructor from an isce::product::Product
         inline ResampSlc(const isce::product::Product &);
+        // Constructor from isce::core::Poly2d and isce::product::ImageMode
+        inline ResampSlc(const isce::core::Poly2d &, const isce::product::ImageMode &);
         // Constructor from isce::core objects
-        inline ResampSlc(const isce::core::Poly2d, const isce::core::Metadata);
+        inline ResampSlc(const isce::core::Poly2d &, const isce::core::Metadata &);
         // Destructor
         inline ~ResampSlc();
 
@@ -76,7 +80,12 @@ class isce::image::ResampSlc {
         // Convenience functions
         inline void declare(int, int, int, int) const;
 
-        // Alternative generic resamp entry point
+        // Generic resamp entry point from externally created rasters
+        void resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
+                    isce::io::Raster & rgOffsetRaster, isce::io::Raster & azOffsetRaster,
+                    int inputBand, bool flatten=false, bool isComplex=true, int rowBuffer=40);
+
+        // Generic resamp entry point: use filenames to create rasters
         void resamp(const std::string & inputFilename, const std::string & outputFilename,
                     const std::string & rgOffsetFilename, const std::string & azOffsetFilename,
                     int inputBand, bool flatten=false, bool isComplex=true, int rowBuffer=40);
@@ -109,12 +118,22 @@ class isce::image::ResampSlc {
         // Array of sinc coefficient
         isce::core::Matrix<float> _fintp;
 
-        // Tile initialization
-        void _initializeTile(Tile_t &, isce::io::Raster &, isce::io::Raster &, int);
+        // Tile initialization for input offsets
+        void _initializeOffsetTiles(Tile_t &, isce::io::Raster &, isce::io::Raster &,
+                                    isce::image::Tile<float> &,
+                                    isce::image::Tile<float> &, int);
+
+        // Tile initialization for input SLC data
+        void _initializeTile(Tile_t &, isce::io::Raster &,
+                             const isce::image::Tile<float> &,
+                             int, int);
 
         // Tile transformation
-        void _transformTile(Tile_t &, isce::io::Raster &, isce::io::Raster &,
-                            isce::io::Raster &, int, bool, int &);
+        void _transformTile(Tile_t & tile,
+                            isce::io::Raster & outputSlc,
+                            const isce::image::Tile<float> & rgOffTile,
+                            const isce::image::Tile<float> & azOffTile,
+                            int inLength, bool flatten);
 
         // Convenience functions
         inline int _computeNumberOfTiles(int, int);

@@ -8,10 +8,17 @@
 #include "DEMInterpolator.h"
 
 // Load DEM subset into memory
+/** @param[in] demRaster input DEM raster to subset
+  * @param[in] minLon Longitude of western edge of bounding box
+  * @param[in] maxLon Longitude of eastern edge of bounding box
+  * @param[in] minLat Latitude of southern edge of bounding box
+  * @param[in] maxLat Latitude of northern edge of bounding box
+  * @param[in] epsgcode EPSG code of DEM raster
+  *
+  * Loads a DEM subset given the extents of a bounding box */
 void isce::geometry::DEMInterpolator::
-loadDEM(isce::io::Raster & demRaster,
-        double minLon, double maxLon, double minLat, double maxLat,
-        isce::core::dataInterpMethod interpMethod, int epsgcode) {
+loadDEM(isce::io::Raster & demRaster, double minLon, double maxLon,
+        double minLat, double maxLat, int epsgcode) {
 
     // Initialize journal
     pyre::journal::warning_t warning("isce.core.Geometry");
@@ -90,27 +97,26 @@ loadDEM(isce::io::Raster & demRaster,
 
     // Read in the DEM
     demRaster.getBlock(_dem.data(), xstart, ystart, width, length);
-    
+
     // Indicate we have loaded a valid raster
     _haveRaster = true;
-    // Store interpolation method
-    _interpMethod = interpMethod;
 }
 
-// Load DEM subset into memory
+// Debugging output
 void isce::geometry::DEMInterpolator::
 declare() const {
     pyre::journal::info_t info("isce.core.DEMInterpolator");
-    info << pyre::journal::newline
-         << "Actual DEM bounds used:" << pyre::journal::newline
+    info << "Actual DEM bounds used:" << pyre::journal::newline
          << "Top Left: " << _xstart << " " << _ystart << pyre::journal::newline
          << "Bottom Right: " << _xstart + _deltax * (_dem.width() - 1) << " "
          << _ystart + _deltay * (_dem.length() - 1) << " " << pyre::journal::newline
          << "Spacing: " << _deltax << " " << _deltay << pyre::journal::newline
-         << "Dimensions: " << _dem.width() << " " << _dem.length() << pyre::journal::newline;
+         << "Dimensions: " << _dem.width() << " " << _dem.length() << pyre::journal::endl;
 }
 
-// Compute maximum DEM height
+/** @param[out] maxValue Maximum DEM height
+  * @param[out] meanValue Mean DEM height
+  * @param[in] info Pyre journal channel for printing info. */
 void isce::geometry::DEMInterpolator::
 computeHeightStats(float & maxValue, float & meanValue, pyre::journal::info_t & info) const {
     // Announce myself
@@ -137,13 +143,13 @@ computeHeightStats(float & maxValue, float & meanValue, pyre::journal::info_t & 
          << "Average DEM height: " << meanValue << pyre::journal::newline;
 }
 
-// Compute middle latitude and longitude
+// Compute middle latitude and longitude using reference height
 isce::core::cartesian_t
 isce::geometry::DEMInterpolator::
-midLonLat(double height) const {
+midLonLat() const {
 
     // Create coordinates for middle X/Y
-    isce::core::cartesian_t xyz{midX(), midY(), height};
+    isce::core::cartesian_t xyz{midX(), midY(), _refHeight};
 
     // Call projection inverse
     isce::core::cartesian_t llh;
@@ -153,7 +159,10 @@ midLonLat(double height) const {
     return llh;
 }
 
-// Interpolate DEM at a given longitude and latitude (in radians)
+/** @param[in] lon Longitude of interpolation point.
+  * @param[in] lat Latitude of interpolation point. 
+  *
+  * Interpolate DEM at a given longitude and latitude */
 double isce::geometry::DEMInterpolator::
 interpolateLonLat(double lon, double lat) const {
 
@@ -174,7 +183,10 @@ interpolateLonLat(double lon, double lat) const {
     return value;
 }
 
-// Interpolate DEM at native coordinates
+/** @param[in] x X-coordinate of interpolation point.
+  * @param[in] y Y-coordinate of interpolation point.
+  *
+  * Interpolate DEM at native coordinates */
 double isce::geometry::DEMInterpolator::
 interpolateXY(double x, double y) const {
 

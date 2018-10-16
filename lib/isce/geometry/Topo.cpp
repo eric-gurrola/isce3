@@ -28,17 +28,24 @@ using isce::core::LinAlg;
 using isce::core::StateVector;
 using isce::io::Raster;
 
-// Main topo driver
+// Main topo driver; internally create topo rasters
+/** @param[in] demRaster input DEM raster
+  * @param[in] outdir  directory to write outputs to
+  *
+  * This is the main topo driver. The pixel-by-pixel output file names are fixed for now
+  * <ul>
+  * <li> x.rdr - X coordinate in requested projection system (meters or degrees)
+  * <li> y.rdr - Y cooordinate in requested projection system (meters or degrees)
+  * <li> z.rdr - Height above ellipsoid (meters)
+  * <li> inc.rdr - Incidence angle (degrees) computed from vertical at target
+  * <li> hdg.rdr - Azimuth angle (degrees) computed anti-clockwise from EAST (Right hand rule)
+  * <li> localInc.rdr - Local incidence angle (degrees) at target
+  * <li> locaPsi.rdr - Local projection angle (degrees) at target
+  * <li> simamp.rdr - Simulated amplitude image.
+  * </ul>*/
 void isce::geometry::Topo::
 topo(Raster & demRaster,
      const std::string outdir) {
-
-    // Create reusable pyre::journal channels
-    pyre::journal::warning_t warning("isce.geometry.Topo");
-    pyre::journal::info_t info("isce.geometry.Topo");
-
-    // First check that variables have been initialized
-    checkInitialization(info); 
 
     { // Topo scope for creating output rasters
 
@@ -60,11 +67,58 @@ topo(Raster & demRaster,
     Raster simRaster = Raster(outdir + "/simamp.rdr", _mode.width(), _mode.length(), 1,
         GDT_Float32, "ISCE");
 
+    // Call topo with rasters
+    topo(demRaster, xRaster, yRaster, heightRaster, incRaster, hdgRaster, localIncRaster,
+         localPsiRaster, simRaster);
+
+    } // end Topo scope to release raster resources
+
+    // Write out multi-band topo VRT
+    const std::vector<Raster> rasterTopoVec = {
+        Raster(outdir + "/x.rdr" ),
+        Raster(outdir + "/y.rdr" ),
+        Raster(outdir + "/z.rdr" ),
+        Raster(outdir + "/inc.rdr" ),
+        Raster(outdir + "/hdg.rdr" ),
+        Raster(outdir + "/localInc.rdr" ),
+        Raster(outdir + "/localPsi.rdr" ),
+        Raster(outdir + "/simamp.rdr" )
+    };
+    Raster vrt = Raster(outdir + "/topo.vrt", rasterTopoVec );
+    // Set its EPSG code
+    vrt.setEPSG(_epsgOut);
+}
+
+/** @param[in] demRaster input DEM raster
+  * @param[in] xRaster output raster for X coordinate in requested projection system 
+                   (meters or degrees)
+  * @param[in] yRaster output raster for Y cooordinate in requested projection system
+                   (meters or degrees)
+  * @param[in] zRaster output raster for height above ellipsoid (meters)
+  * @param[in] incRaster output raster for incidence angle (degrees) computed from vertical 
+               at target
+  * @param[in] hdgRaster output raster for azimuth angle (degrees) computed anti-clockwise 
+               from EAST (Right hand rule)
+  * @param[in] localIncRaster output raster for local incidence angle (degrees) at target
+  * @param[in] localPsiRaster output raster for local projection angle (degrees) at target
+  * @param[in] simRaster output raster for simulated amplitude image. */
+void isce::geometry::Topo::
+topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRaster,
+     Raster & incRaster, Raster & hdgRaster, Raster & localIncRaster, Raster & localPsiRaster,
+     Raster & simRaster) {
+
+    // Create reusable pyre::journal channels
+    pyre::journal::warning_t warning("isce.geometry.Topo");
+    pyre::journal::info_t info("isce.geometry.Topo");
+
+    // First check that variables have been initialized
+    checkInitialization(info); 
+
     // Create and start a timer
     auto timerStart = std::chrono::steady_clock::now();
 
     // Create a DEM interpolator
-    DEMInterpolator demInterp(-500.0);
+    DEMInterpolator demInterp(-500.0, _demMethod);
 
     // Compute number of blocks needed to process image
     size_t nBlocks = _mode.length() / _linesPerBlock;
@@ -95,11 +149,13 @@ topo(Raster & demRaster,
              << pyre::journal::endl;
 
         // Load DEM subset for SLC image block
-        _computeDEMBounds(demRaster, demInterp, lineStart, blockLength);
+        computeDEMBounds(demRaster, demInterp, lineStart, blockLength);
 
         // Compute max and mean DEM height for the subset
         float demmax, dem_avg;
         demInterp.computeHeightStats(demmax, dem_avg, info);
+        // Reset reference height for DEMInterpolator
+        demInterp.refHeight(dem_avg);
 
         // Output layers for block
         TopoLayers layers(blockLength, _mode.width());
@@ -133,7 +189,7 @@ topo(Raster & demRaster,
                 Pixel pixel(rng, dopfact, rbin);
 
                 // Initialize LLH to middle of input DEM and average height
-                cartesian_t llh = demInterp.midLonLat(dem_avg);
+                cartesian_t llh = demInterp.midLonLat();
 
                 // Perform rdr->geo iterations
                 int geostat = rdr2geo(
@@ -170,27 +226,13 @@ topo(Raster & demRaster,
         timerEnd - timerStart).count();
     info << "Elapsed processing time: " << elapsed << " sec"
          << pyre::journal::newline;
-
-    } // end Topo scope to release raster resources
-
-    // Write out multi-band topo VRT
-    const std::vector<Raster> rasterTopoVec = {
-        Raster(outdir + "/x.rdr" ),
-        Raster(outdir + "/y.rdr" ),
-        Raster(outdir + "/z.rdr" ),
-        Raster(outdir + "/inc.rdr" ),
-        Raster(outdir + "/hdg.rdr" ),
-        Raster(outdir + "/localInc.rdr" ),
-        Raster(outdir + "/localPsi.rdr" ),
-        Raster(outdir + "/simamp.rdr" )
-    };
-    Raster vrt = Raster(outdir + "/topo.vrt", rasterTopoVec );
-    // Set its EPSG code
-    vrt.setEPSG(_epsgOut);
-
 }
 
-// Perform data initialization for a given azimuth line
+/** @param[in] line line number of input radar geometry product
+ * @param[out] state store state variables needed for processing the line
+ * @param[out] TCNbasis TCN basis corresponding to the state
+ *
+ * The module is optimized to work with range doppler coordinates. This section would need to be changed to work with data in PFA coordinates (not currently supported). */
 void isce::geometry::Topo::
 _initAzimuthLine(size_t line, StateVector & state, Basis & TCNbasis) {
 
@@ -222,15 +264,11 @@ _initAzimuthLine(size_t line, StateVector & state, Basis & TCNbasis) {
 
 // Get DEM bounds using first/last azimuth line and slant range bin
 void isce::geometry::Topo::
-_computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOffset,
-                  size_t blockLength) {
+computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOffset,
+                 size_t blockLength) {
 
     // Initialize journal
     pyre::journal::warning_t warning("isce.core.Topo");
-
-    cartesian_t llh, satLLH;
-    StateVector state;
-    Basis TCNbasis;
 
     // Initialize geographic bounds
     double min_lat = 10000.0;
@@ -238,52 +276,85 @@ _computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOf
     double min_lon = 10000.0;
     double max_lon = -10000.0;
 
-    // Loop over first and last azimuth line rel
-    for (int line = 0; line < 2; line++) {
+    // Skip factors along azimuth and range
+    const int askip = std::max((int) blockLength / 10, 1);
+    const int rskip = _mode.width() / 10;
 
-        // Get global azimuth line index
-        int lineIndex = lineOffset + line * _mode.numberAzimuthLooks() * (blockLength - 1);
+    // Construct vectors of range/azimuth indices traversing the perimeter of the radar frame
 
-        // Initialize orbit data for this azimuth line
+    // Top edge
+    std::vector<int> azInd, rgInd;
+    for (int j = 0; j < _mode.width(); j += rskip) {
+        azInd.push_back(0);
+        rgInd.push_back(j);
+    }
+
+    // Right edge
+    for (int i = 0; i < blockLength; i += askip) {
+        azInd.push_back(i);
+        rgInd.push_back(_mode.width());
+    }
+
+    // Bottom edge
+    for (int j = _mode.width(); j > 0; j -= rskip) {
+        azInd.push_back(blockLength - 1);
+        rgInd.push_back(j);
+    }
+
+    // Left edge
+    for (int i = blockLength; i > 0; i -= askip) {
+        azInd.push_back(i);
+        rgInd.push_back(0);
+    }
+
+    // Loop over the indices
+    for (size_t i = 0; i < rgInd.size(); ++i) {
+
+        // Convert az index to absolute line index
+        size_t lineIndex = lineOffset + azInd[i] * _mode.numberAzimuthLooks();
+
+         // Initialize orbit data for this azimuth line
+        StateVector state;
+        Basis TCNbasis;
         _initAzimuthLine(lineIndex, state, TCNbasis);
 
         // Compute satellite velocity and height
+        cartesian_t satLLH;
         const double satVmag = LinAlg::norm(state.velocity());
         _ellipsoid.xyzToLonLat(state.position(), satLLH);
 
-        // Loop over starting and ending slant range
-        for (int ind = 0; ind < 2; ++ind) {
+        // Get proper slant range and Doppler factor
+        const size_t rbin = rgInd[i];
+        double rng = _mode.startingRange() + rbin * _mode.rangePixelSpacing();
+        double dopfact = (0.5 * _mode.wavelength() * (_doppler.eval(0, rbin)
+                        / satVmag)) * rng;
+        // Store in Pixel object
+        Pixel pixel(rng, dopfact, rbin);
 
-            // Get proper slant range bin and Doppler factor
-            int rbin = ind * (_mode.width() - 1);
-            double rng = _mode.startingRange() + rbin * _mode.rangePixelSpacing();
-            double dopfact = (0.5 * _mode.wavelength() * (_doppler.eval(0, rbin)
-                            / satVmag)) * rng;
-            // Store in Pixel object
-            Pixel pixel(rng, dopfact, rbin);
+        // Run topo for one iteration for two different heights
+        cartesian_t llh = {0, 0, 0};
+        std::array<double, 2> testHeights = {MIN_H, MAX_H};
+        for (int k = 0; k < 2; ++k) {
 
-            // Run topo for one iteration for two different heights
-            std::array<double, 2> testHeights = {MIN_H, MAX_H};
-            for (int k = 0; k < 2; ++k) {
-                // If slant range vector doesn't hit ground, pick nadir point
-                if (rng <= (satLLH[2] - testHeights[k] + 1.0)) {
-                    for (int idx = 0; idx < 3; ++idx) {
-                        llh[idx] = satLLH[idx];
-                    }
-                    warning << "Possible near nadir imaging" << pyre::journal::endl;
-                } else {
-                    // Create dummy DEM interpolator with constant height
-                    DEMInterpolator constDEM(testHeights[k]);
-                    // Run radar->geo for 1 iteration
-                    rdr2geo(pixel, TCNbasis, state, _ellipsoid, constDEM, llh,
-                            _lookSide, _threshold, 1, 0);
+            // If slant range vector doesn't hit ground, pick nadir point
+            if (rng <= (satLLH[2] - testHeights[k] + 1.0)) {
+                for (int idx = 0; idx < 3; ++idx) {
+                    llh[idx] = satLLH[idx];
                 }
-                // Update bounds
-                min_lat = std::min(min_lat, llh[1]);
-                max_lat = std::max(max_lat, llh[1]);
-                min_lon = std::min(min_lon, llh[0]);
-                max_lon = std::max(max_lon, llh[0]);
+                warning << "Possible near nadir imaging" << pyre::journal::endl;
+            } else {
+                // Create dummy DEM interpolator with constant height
+                DEMInterpolator constDEM(testHeights[k]);
+                // Run radar->geo for 1 iteration
+                rdr2geo(pixel, TCNbasis, state, _ellipsoid, constDEM, llh,
+                        _lookSide, _threshold, 1, 0);
             }
+
+            // Update bounds
+            min_lat = std::min(min_lat, llh[1]);
+            max_lat = std::max(max_lat, llh[1]);
+            min_lon = std::min(min_lon, llh[0]);
+            max_lon = std::max(max_lon, llh[0]);
         }
     }
 
@@ -294,12 +365,20 @@ _computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOf
     max_lat += MARGIN;
 
     // Extract DEM subset
-    demInterp.loadDEM(demRaster, min_lon, max_lon, min_lat, max_lat, _demMethod,
+    demInterp.loadDEM(demRaster, min_lon, max_lon, min_lat, max_lat,
                       demRaster.getEPSG());
     demInterp.declare();
 }
 
-// Generate output topo layers
+/** @param[in] llh Lon/Lat/Hae for target 
+ * @param[in] layers Object containing output layers
+ * @param[in] line line number to write to output
+ * @param[in] pixel pixel number to write to output
+ * @param[in] state state for the line under consideration
+ * @param[in] TCNbasis basis for the line under consideration
+ * @param[in] demInterp DEM interpolator object used to compute local slope
+ *
+ * Currently, local slopes are computed by simple numerical differencing. In the future, we should accommodate possibility of reading in this as an external layer*/
 void isce::geometry::Topo::
 _setOutputTopoLayers(cartesian_t & targetLLH, TopoLayers & layers, size_t line,
                      Pixel & pixel, StateVector & state, Basis & TCNbasis,
