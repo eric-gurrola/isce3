@@ -59,7 +59,7 @@ class isce::product::ImageMode {
 
         /** Get length of image data. */
         inline size_t length() const { return _imageDims[0]; }
-        
+
         /** Get width of image data. */
         inline size_t width() const { return _imageDims[1]; }
 
@@ -112,6 +112,9 @@ class isce::product::ImageMode {
         inline isce::core::DateTime endAzTime() const { return _endAzTime; }
         /** Set zero-doppler starting azimuth time. */
         inline void endAzTime(const isce::core::DateTime & dtime) { _endAzTime = dtime; }
+
+        /** Crop the ImageMode. */
+        inline void crop(size_t, size_t, size_t, size_t);
 
     private:
         // Mode designation

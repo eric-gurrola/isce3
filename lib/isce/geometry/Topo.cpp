@@ -90,14 +90,14 @@ topo(Raster & demRaster,
 }
 
 /** @param[in] demRaster input DEM raster
-  * @param[in] xRaster output raster for X coordinate in requested projection system 
+  * @param[in] xRaster output raster for X coordinate in requested projection system
                    (meters or degrees)
   * @param[in] yRaster output raster for Y cooordinate in requested projection system
                    (meters or degrees)
   * @param[in] zRaster output raster for height above ellipsoid (meters)
-  * @param[in] incRaster output raster for incidence angle (degrees) computed from vertical 
+  * @param[in] incRaster output raster for incidence angle (degrees) computed from vertical
                at target
-  * @param[in] hdgRaster output raster for azimuth angle (degrees) computed anti-clockwise 
+  * @param[in] hdgRaster output raster for azimuth angle (degrees) computed anti-clockwise
                from EAST (Right hand rule)
   * @param[in] localIncRaster output raster for local incidence angle (degrees) at target
   * @param[in] localPsiRaster output raster for local projection angle (degrees) at target
@@ -112,7 +112,7 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
     pyre::journal::info_t info("isce.geometry.Topo");
 
     // First check that variables have been initialized
-    checkInitialization(info); 
+    checkInitialization(info);
 
     // Create and start a timer
     auto timerStart = std::chrono::steady_clock::now();
@@ -259,7 +259,7 @@ _initAzimuthLine(size_t line, StateVector & state, Basis & TCNbasis) {
 
     // Get geocentric TCN basis using satellite basis
     geocentricTCN(state, TCNbasis);
-    
+
 }
 
 // Get DEM bounds using first/last azimuth line and slant range bin
@@ -367,10 +367,11 @@ computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOff
     // Extract DEM subset
     demInterp.loadDEM(demRaster, min_lon, max_lon, min_lat, max_lat,
                       demRaster.getEPSG());
+
     demInterp.declare();
 }
 
-/** @param[in] llh Lon/Lat/Hae for target 
+/** @param[in] llh Lon/Lat/Hae for target
  * @param[in] layers Object containing output layers
  * @param[in] line line number to write to output
  * @param[in] pixel pixel number to write to output
@@ -416,7 +417,7 @@ _setOutputTopoLayers(cartesian_t & targetLLH, TopoLayers & layers, size_t line,
     LinAlg::tranMat(enumat, xyz2enu);
     LinAlg::matVec(xyz2enu, satToGround, enu);
     const double cosalpha = std::abs(enu[2]) / LinAlg::norm(enu);
-    
+
     // LOS vectors
     layers.inc(line, bin, std::acos(cosalpha) * degrees);
     layers.hdg(line, bin, (std::atan2(-enu[1], -enu[0]) - (0.5*M_PI)) * degrees);

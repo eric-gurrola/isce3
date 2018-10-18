@@ -119,7 +119,7 @@ declare(int inLength, int inWidth,
             << "Resample one image to another image coordinates >>"
             << pyre::journal::newline << pyre::journal::newline;
     channel << "Input Image Dimensions:  " << inLength << " lines, "
-            << inWidth << " pixels" 
+            << inWidth << " pixels"
             << pyre::journal::newline;
     channel << "Output Image Dimensions: " << outLength << " lines, "
             << outWidth << " pixels"
@@ -169,7 +169,7 @@ _computeNumberOfTiles(int outLength, int linesPerTile) {
 // Prepare sinc interpolation methods and internal data
 void isce::image::ResampSlc::
 _prepareInterpMethods(int method) {
-    // Compute filter coefficients    
+    // Compute filter coefficients
     if (method == isce::core::SINC_METHOD) {
 
         // Initialize sinc coefficients

@@ -25,7 +25,8 @@ class isce::product::ComplexImagery {
         inline ComplexImagery() {}
 
         /** Get a copy of the auxiliary mode. */
-        inline ImageMode auxMode() const { return _auxMode; }
+        inline ImageMode auxMode() const  { return _auxMode; }
+
         /** Set auxiliary mode. */
         inline void auxMode(const ImageMode & mode) { _auxMode = mode; }
 
@@ -34,11 +35,19 @@ class isce::product::ComplexImagery {
         /** Set primary mode. */
         inline void primaryMode(const ImageMode & mode) { _primaryMode = mode; }
 
-    private:
+        /** Crop the ComplexImagery. */
+        inline void crop(size_t, size_t, size_t, size_t);
+
+   private:
         // ImageMode data
         ImageMode _auxMode;
         ImageMode _primaryMode;
 };
+
+// Get inline implementations for ImageMode
+#define ISCE_PRODUCT_COMPLEXIMAGERY_ICC
+#include "ComplexImagery.icc"
+#undef ISCE_PRODUCT_COMPLEXIMAGERY_ICC
 
 #endif
 

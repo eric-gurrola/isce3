@@ -13,11 +13,66 @@ Product(isce::io::IH5File & file) {
     // Configure complex imagery
     loadFromH5(imGroup, _complexImagery);
     // Get metadata group
-    isce::io::IGroup metaGroup = file.openGroup("/science/metadata"); 
+    isce::io::IGroup metaGroup = file.openGroup("/science/metadata");
     // Configure metadata
     loadFromH5(metaGroup, _metadata);
     // Save the filename
     _filename = file.filename();
+}
+
+/** @param[in]              Path of isce::core VRT file. */
+isce::product::Product::
+Product(std::string vrtFile, int numBand) {
+
+  // Instantiate isce::core objects in VRT
+  isce::core::Poly2d skwDop, cntDop;
+  isce::core::Orbit orbit, tvp;
+  isce::core::Ellipsoid ellipsoid;
+  isce::core::Metadata coreMtd;
+  isce::product::ImageMode mode;
+
+  // Create Raster Object
+  isce::io::Raster vrtRaster(vrtFile);
+
+  // Read the metadata (band 1 for now)
+  char **metadata_str = vrtRaster.dataset()->GetRasterBand(numBand)->GetMetadata("xml:isce");
+
+  // The cereal-relevant XML is the first element in the list
+  std::string meta{metadata_str[0]};
+
+  // Convert to stream
+  std::stringstream metastream;
+  metastream << meta;
+
+  cereal::XMLInputArchive archive(metastream);
+
+  archive(cereal::make_nvp("Orbit", orbit),
+          //cereal::make_nvp("TVP", tvp),
+          cereal::make_nvp("SkewDoppler", skwDop),
+          cereal::make_nvp("ContentDoppler", cntDop),
+          cereal::make_nvp("Ellipsoid", ellipsoid),
+          cereal::make_nvp("Radar", coreMtd),
+          cereal::make_nvp("Radar", mode));
+
+  // Configure product
+  ComplexImagery cmplxImg;
+  cmplxImg.primaryMode(mode);
+
+  Metadata mtd;
+  Identification id;
+  isce::radar::Radar rdr(skwDop, cntDop);
+  id.ellipsoid(ellipsoid);
+  id.lookDirection(coreMtd.lookSide);
+  mtd.orbitNOE(orbit);
+  mtd.orbitPOE(orbit);
+  mtd.instrument(rdr);
+  mtd.identification(id);
+
+  _complexImagery = cmplxImg;
+  _metadata = mtd;
+
+  // Save the filename
+  _filename = vrtFile;
 }
 
 /** @param[in]              ComplexImagery object.
@@ -25,5 +80,20 @@ Product(isce::io::IH5File & file) {
 isce::product::Product::
 Product(const ComplexImagery & imagery, const Metadata & meta) :
     _complexImagery(imagery), _metadata(meta) {}
+
+
+/**
+ * @param[in] xoff Starting x of sub-window
+ * @param[in] yoff Starting y of sub-window
+ * @param[in] xsize Number of pixels in sub-window
+ * @param[in] ysize Number of lines in sub-window  */
+inline void
+isce::product::Product::crop(size_t xoff, size_t yoff, size_t xsize, size_t ysize) {
+
+  _complexImagery.crop(xoff, yoff, xsize, ysize);
+
+  //TODO: Add cropping of Raster object here after incorporating Raster in Product
+
+}
 
 // end of file

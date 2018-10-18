@@ -34,8 +34,28 @@ TEST(ProductTest, FromHDF5) {
     ASSERT_NEAR(mode.prf(), 1652.415691672402, 1.0e-10);
     ASSERT_NEAR(mode.wavelength(), 0.05623564240544047, 1.0e-10);
     ASSERT_NEAR(mode.rangeBandwidth(), 1.6e7, 0.1);
-
 }
+
+
+TEST(ProductTest, ReadImageModeFromVRT) {
+
+    // Open the file
+    std::string vrtFile("../../data/uavsar_master.vrt");
+
+    // Instantiate and load a product
+    isce::product::Product product(vrtFile);
+
+    // Get the ImageMode
+    isce::product::ImageMode mode = product.complexImagery().primaryMode();
+
+    // Check values
+    ASSERT_NEAR(mode.rangePixelSpacing(), 1.66551366, 1.0e-10);
+    ASSERT_NEAR(mode.startingRange(), 13148.724100000001, 1.0e-10);
+    ASSERT_EQ(mode.startAzTime().isoformat(), "2016-03-08T10:10:09.868556000");
+    ASSERT_NEAR(mode.prf(), 392.719926094194, 1.0e-10);
+    ASSERT_NEAR(mode.wavelength(), 0.238403545, 1.0e-10);
+}
+
 
 int main(int argc, char * argv[]) {
     testing::InitGoogleTest(&argc, argv);

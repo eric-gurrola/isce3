@@ -87,7 +87,7 @@ modeType(const std::string & mtype) {
     }
     // Now set
     _modeType = mtype;
-} 
+}
 
 /** @param[in]              Polarization. */
 std::string
@@ -114,5 +114,40 @@ dataDimensions(const std::array<size_t, 2> & dims) {
     _imageDims[1] = dims[1];
 }
 
-            
+
+/**
+ * @param[in] xoff Starting x of sub-window
+ * @param[in] yoff Starting y of sub-window
+ * @param[in] xsize Number of pixels in sub-window
+ * @param[in] ysize Number of lines in sub-window  */
+inline void
+isce::product::ImageMode::crop(size_t xoff, size_t yoff, size_t xsize, size_t ysize) {
+
+  pyre::journal::error_t error("isce.product.ImageMode.crop");
+
+  // Check if requested sub-window falls inside image boundary
+  if (xsize <= _imageDims[1] &&
+      ysize <= _imageDims[0] &&
+      xsize > 0 &&
+      ysize > 0 &&
+      xoff < _imageDims[1] &&
+      yoff < _imageDims[0] &&
+      xoff >= 0 &&
+      yoff >= 0) {
+
+    // Crop ImageMode parameters
+    _imageDims[0]  = ysize;
+    _imageDims[1]  = xsize;
+    _startingRange = _startingRange + xoff * _rangePixelSpacing;
+    _startAzTime   = _startAzTime + (double) yoff/_prf;
+    _endAzTime     = _startAzTime + (double) ysize/_prf;
+  }
+  else
+    error
+      << pyre::journal::at(__HERE__)
+      << "Requested sub-window falls outside image."
+      << pyre::journal::endl;
+}
+
+
 // end of file

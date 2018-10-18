@@ -1,0 +1,21 @@
+//-*- C++ -*-
+//-*- coding: utf-8 -*-
+
+#if !defined(ISCE_PRODUCT_COMPLEXIMAGERY_ICC)
+#error "ComplexImagery.icc is an implementation detail of class ImageMode."
+#endif
+
+
+/**
+ * @param[in] xoff Starting x of sub-window
+ * @param[in] yoff Starting y of sub-window
+ * @param[in] xsize Number of pixels in sub-window
+ * @param[in] ysize Number of lines in sub-window  */
+inline void isce::product::ComplexImagery::
+crop(size_t xoff, size_t yoff, size_t xsize, size_t ysize) {
+
+  _primaryMode.crop(xoff, yoff, xsize, ysize);
+  //_auxMode.crop(xoff, yoff, xsize, ysize);
+}
+
+// end of file
