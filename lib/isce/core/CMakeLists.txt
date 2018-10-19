@@ -31,7 +31,7 @@ foreach(CPPFILE ${LOCAL_SRCS})
 endforeach()
 
 #####Library headers
-set(${PACKAGENAME}_EXPORT_HEADERS   Attitude.h 
+set(${PACKAGENAME}_EXPORT_HEADERS   Attitude.h
                                     Baseline.h
                                     Basis.h
                                     Constants.h
@@ -52,6 +52,7 @@ set(${PACKAGENAME}_EXPORT_HEADERS   Attitude.h
                                     Poly2d.h
                                     Position.h
                                     Projections.h
+                                    public.h
                                     Quaternion.h
                                     Quaternion.icc
                                     Serialization.h
@@ -79,7 +80,7 @@ include_directories(${${PACKAGENAME}_DLL}
         ${GDAL_INCLUDE_DIR}
         ${ISCE_BUILDINCLUDEDIR}
         ${CEREAL_SRC_INCLUDEDIR}
-) 
+)
 
 #Install headers as files
 ###This may be changed in future to install from build/include

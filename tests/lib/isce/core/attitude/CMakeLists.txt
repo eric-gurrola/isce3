@@ -12,7 +12,7 @@ foreach (TESTNAME euler)
         ${HDF5_LIBRARY}
         gtest
     )
-    target_include_directories(${TESTNAME} PUBLIC ${ISCE_BUILDINCLUDEDIR} ${GDAL_INCLUDE_DIR})
+    target_include_directories(${TESTNAME} PUBLIC ${ISCE_BUILDINCLUDEDIR} ${TARGET_INCLUDEDIR} ${GDAL_INCLUDE_DIR} ${PYRE_INCLUDE_DIR} ${HDF5_INCLUDE_DIR})
     add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
 endforeach ()
 

@@ -10,6 +10,7 @@ foreach (TESTNAME ih5)
         ${ISCE_BUILDINCLUDEDIR}
         ${GDAL_INCLUDE_DIR}
         ${PYTHON_INCLUDE_DIR}
+        ${HDF5_INCLUDE_DIR}
     )
     add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
 endforeach ()

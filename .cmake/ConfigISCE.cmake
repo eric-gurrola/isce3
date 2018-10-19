@@ -60,8 +60,17 @@ function(CheckHDF5)
     # Create space separated list of libraries
     #string(REPLACE ";" " " TEMP_ITEM "${HDF5_CXX_LIBRARIES}")
     # Use more standard names to propagate variables
-    set(HDF5_INCLUDE_DIR ${HDF5_INCLUDE_DIRS} CACHE PATH "HDF5 include directory")
-    set(HDF5_LIBRARY "${HDF5_CXX_LIBRARIES}" CACHE STRING "HDF5 libraries")
+    if ((HDF5_IS_PARALLEL))
+        message(STATUS "Found MPI: ${MPI_MPICXX_FOUND}")
+        message("MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS} ${HDF5_INCLUDE_DIRS}")
+        FIND_PACKAGE(MPI COMPONENTS CXX)
+        list(APPEND HDF5_INCLUDE_DIRS ${MPI_CXX_INCLUDE_DIRS})
+        list(APPEND HDF5_CXX_LIBRARIES ${MPI_CXX_LIBRARIES})
+        message("HDF5INCLUDE_DIRS ${HDF5_INCLUDE_DIRS}")
+    endif()
+    set(HDF5_INCLUDE_DIR ${HDF5_INCLUDE_DIRS} CACHE INTERNAL "HDF5 include directory")
+    set(HDF5_LIBRARY "${HDF5_CXX_LIBRARIES}" CACHE INTERNAL "HDF5 libraries")
+    message("HDF5INCLUDE_DIR ${HDF5_INCLUDE_DIR}")
 endfunction()
 
 ##Check for Armadillo installation
@@ -88,7 +97,7 @@ function(InitInstallDirLayout)
 
     ###install/packages
     if (NOT ISCE_PACKAGESDIR)
-        set (ISCE_PACKAGESDIR packages CACHE STRING "isce/packages")
+        set (ISCE_PACKAGESDIR packages CACHE STRING "isce/packages/isce")
     endif(NOT ISCE_PACKAGESDIR)
 
     ###install/lib

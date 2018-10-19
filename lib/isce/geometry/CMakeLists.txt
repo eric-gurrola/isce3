@@ -3,7 +3,7 @@ set(PACKAGENAME geometry)
 string(TOLOWER ${PROJECT_NAME} LOCALPROJ)
 
 ####List the source files
-set(LOCAL_SRCS 
+set(LOCAL_SRCS
     DEMInterpolator.cpp
     Geo2rdr.cpp
     geometry.cpp
@@ -40,14 +40,14 @@ foreach(HFILE ${${PACKAGENAME}_EXPORT_HEADERS})
 endforeach()
 
 #Pyre stuff is needed for logging
-#Gdal is needed for Raster IO 
+#Gdal is needed for Raster IO
 include_directories(${${PACKAGENAME}_DLL}
     PUBLIC
     ${PYRE_INCLUDE_DIR}
     ${ISCE_BUILDINCLUDEDIR}
     ${GDAL_INCLUDE_DIR}
     ${CEREAL_SRC_INCLUDEDIR}
-) 
+)
 
 #Install headers as files
 ###This may be changed in future to install from build/include

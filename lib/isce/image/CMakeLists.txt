@@ -5,7 +5,7 @@ string(TOLOWER ${PROJECT_NAME} LOCALPROJ)
 ####Set the source files
 set(LOCAL_SRCS
     ResampSlc.cpp)
-              
+
 ####Append current path to every source file
 set(${PACKAGENAME}_SRCS "")
 foreach(CPPFILE ${LOCAL_SRCS})
@@ -17,7 +17,8 @@ set(${PACKAGENAME}_EXPORT_HEADERS   Constants.h
                                     ResampSlc.h
                                     ResampSlc.icc
                                     Tile.h
-                                    Tile.icc)
+                                    Tile.icc
+                                    public.h)
 
 ###Install headers into build/include
 ###This is where regex can be used on the header files if needed
@@ -39,7 +40,7 @@ include_directories(${${PACKAGENAME}_DLL}
         ${GDAL_INCLUDE_DIR}
         ${ISCE_BUILDINCLUDEDIR}
         ${CEREAL_SRC_INCLUDEDIR}
-) 
+)
 
 #Install headers as files
 ###This may be changed in future to install from build/include

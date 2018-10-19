@@ -6,10 +6,11 @@ foreach (TESTNAME topo)
     add_dependencies(${TESTNAME} geom_test_data)
     target_link_libraries(${TESTNAME} PUBLIC ${LISCE} gtest)
     target_include_directories(${TESTNAME} PUBLIC ${ISCE_BUILDINCLUDEDIR})
-    target_include_directories(${TESTNAME} PUBLIC 
+    target_include_directories(${TESTNAME} PUBLIC
         ${GDAL_INCLUDE_DIR}
         ${PYRE_INCLUDE_DIR}
         ${PYTHON_INCLUDE_DIR}
+        ${HDF5_INCLUDE_DIR}
         ${ISCE_SOURCE_DIR}/contrib/cereal/include)
     add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
 endforeach ()

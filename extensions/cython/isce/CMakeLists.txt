@@ -25,6 +25,7 @@ target_include_directories(
         ${GDAL_INCLUDE_DIR}
         ${CMAKE_SOURCE_DIR}/contrib/cereal/include
         ${PYRE_INCLUDE_DIR}
+        ${HDF5_INCLUDE_DIR}
 )
 
 # Add necessary library links

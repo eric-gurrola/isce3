@@ -7,6 +7,25 @@
 # project defaults
 include isce.def
 
+PROJ_CLEAN += \
+    hdg.rdr \
+    hdg.rdr.xml \
+    inc.rdr \
+    inc.rdr.xml \
+    localInc.rdr \
+    localInc.rdr.xml \
+    localPsi.rdr \
+    localPsi.rdr.xml \
+    simamp.rdr \
+    simamp.rdr.xml \
+#    x.rdr \
+#    x.rdr.xml \
+#    y.rdr \
+#    y.rdr.xml \
+#    z.rdr \
+#    z.rdr.xml \
+#    topo.vrt
+
 # the pile of tests
 TESTS = \
     topo \

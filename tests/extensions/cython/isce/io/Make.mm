@@ -7,6 +7,14 @@
 # project defaults
 include isce.def
 
+PROJ_CLEAN += \
+    inc.bin \
+    inc.hdr \
+    lat.tif \
+    lon \
+    lon.vrt \
+    topo.vrt
+
 # the pile of tests
 TESTS = \
     raster \

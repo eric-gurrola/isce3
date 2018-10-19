@@ -4,11 +4,12 @@ foreach (TESTNAME serializeEllipsoid serializeOrbit serializeMetadata serializeD
     add_executable(${TESTNAME} ${TESTNAME}.cpp)
     target_link_libraries(${TESTNAME} PUBLIC ${LISCE} gtest)
     target_include_directories(
-        ${TESTNAME} PUBLIC 
+        ${TESTNAME} PUBLIC
         ${ISCE_BUILDINCLUDEDIR}
         ${GDAL_INCLUDE_DIR}
         ${PYRE_INCLUDE_DIR}
         ${ISCE_SOURCE_DIR}/contrib/cereal/include
+        ${HDF5_INCLUDE_DIR}
     )
     add_test(NAME ${TESTNAME} COMMAND ${TESTNAME})
 endforeach ()
