@@ -19,8 +19,7 @@ PACKAGES = \
     geo2rdr \
 
 # the standard targets
-all:
-	BLD_ACTION="all" $(MM) recurse
+all: test clean
 
 tidy::
 	BLD_ACTION="tidy" $(MM) recurse
@@ -28,15 +27,15 @@ tidy::
 clean::
 	BLD_ACTION="clean" $(MM) recurse
 
+
 distclean::
 	BLD_ACTION="distclean" $(MM) recurse
 
 live:
 	BLD_ACTION="live" $(MM) recurse
 
-# archiving support
-zipit:
-	cd $(EXPORT_ROOT); zip -r $(PYRE_ZIP) ${addprefix packages/, $(PACKAGES) --include \*.py}
+test:
+	BLD_ACTION="test" $(MM) recurse
 
 # shortcuts for building specific subdirectories
 .PHONY: $(RECURSE_DIRS)

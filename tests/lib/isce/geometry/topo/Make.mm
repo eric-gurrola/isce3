@@ -18,13 +18,13 @@ PROJ_CLEAN += \
     localPsi.rdr.xml \
     simamp.rdr \
     simamp.rdr.xml \
-#    x.rdr \
-#    x.rdr.xml \
-#    y.rdr \
-#    y.rdr.xml \
-#    z.rdr \
-#    z.rdr.xml \
-#    topo.vrt
+    x.rdr \
+    x.rdr.xml \
+    y.rdr \
+    y.rdr.xml \
+    z.rdr \
+    z.rdr.xml \
+    topo.vrt
 
 # the pile of tests
 TESTS = \

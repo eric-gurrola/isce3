@@ -37,6 +37,9 @@ distclean::
 live:
 	BLD_ACTION="live" $(MM) recurse
 
+test:
+	BLD_ACTION="test" $(MM) recurse
+
 # archiving support
 zipit:
 	cd $(EXPORT_ROOT); zip -r $(PYRE_ZIP) ${addprefix packages/, $(PACKAGES) --include \*.py}

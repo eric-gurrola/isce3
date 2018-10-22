@@ -22,8 +22,7 @@ PROJ_TIDY := ${filter-out core, $(PROJ_TIDY)}
 
 # the standard targets
 
-all:
-	BLD_ACTION="all" $(MM) recurse
+all: test clean
 
 tidy::
 	BLD_ACTION="tidy" $(MM) recurse
@@ -36,6 +35,9 @@ distclean::
 
 live:
 	BLD_ACTION="live" $(MM) recurse
+
+test:
+	BLD_ACTION="test" $(MM) recurse
 
 # archiving support
 zipit:

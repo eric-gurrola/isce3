@@ -19,7 +19,7 @@ PROJ_CLEAN += \
 TESTS = \
     raster \
 
-all: test
+all: test clean
 
 test: raster
 

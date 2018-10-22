@@ -28,8 +28,10 @@ PACKAGES = \
 #    doppler \
 
 # the standard targets
-all:
-	BLD_ACTION="all" $(MM) recurse
+all: test clean
+
+test::
+	BLD_ACTION="test" $(MM) recurse
 
 tidy::
 	BLD_ACTION="tidy" $(MM) recurse

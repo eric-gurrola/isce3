@@ -16,14 +16,17 @@ RECURSE_DIRS = \
 #--------------------------------------------------------------------------
 # the recursive targets
 
-all:
-	BLD_ACTION="all" $(MM) recurse
+all: test clean
 
-tidy::
-	BLD_ACTION="tidy" $(MM) recurse
+test:
+	BLD_ACTION="test" $(MM) recurse
 
 clean::
 	BLD_ACTION="clean" $(MM) recurse
+
+
+tidy::
+	BLD_ACTION="tidy" $(MM) recurse
 
 distclean::
 	BLD_ACTION="distclean" $(MM) recurse

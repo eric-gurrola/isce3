@@ -19,8 +19,7 @@ RECURSE_DIRS = \
 #--------------------------------------------------------------------------
 # the recursive targets
 
-all:
-	BLD_ACTION="all" $(MM) recurse
+all: test clean
 
 tidy::
 	BLD_ACTION="tidy" $(MM) recurse
@@ -36,6 +35,9 @@ export::
 
 release::
 	BLD_ACTION="release" $(MM) recurse
+
+test:
+	BLD_ACTION="test" $(MM) recurse
 
 #--------------------------------------------------------------------------
 #  shortcuts to building in subdirectories
