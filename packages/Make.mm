@@ -10,7 +10,7 @@
 include isce.def
 # the list of directories to visit
 RECURSE_DIRS = \
-#    isce \
+    isce \
 
 #--------------------------------------------------------------------------
 # the recursive targets

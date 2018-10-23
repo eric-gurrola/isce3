@@ -41,7 +41,7 @@ from . import (
     extensions,     # my extension module
 
     # support
-    sensors,        # instruments
+#    sensors,        # instruments
     topography,     # digital elevation models
 
     # user interfaces
@@ -50,7 +50,7 @@ from . import (
 
 # my protocols
 dem = topography.dem
-sensor = sensors.sensor
+#sensor = sensors.sensor
 
 # administrative
 def copyright():

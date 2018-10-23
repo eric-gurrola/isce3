@@ -7,14 +7,14 @@
 
 # access to the toppography downloading library (needs to be integrated in the current project)
 # publish my parts
-try:
-    from . import isce as libisce
-except ImportError:
-    print("unable to import libisce (dem downloader)")
+#try:
+#    from . import isce as libisce
+#except ImportError:
+#    print("unable to import libisce (dem downloader)")
 
 # access to iscecore library
 try:
-    from . import iscecore as libiscecore
+    from . import isceextension as libiscecore
 except ImportError:
     print("unable to import libiscecore")
 else:
