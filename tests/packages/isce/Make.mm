@@ -16,7 +16,7 @@ all: \
 
 # the list of directories to visit
 RECURSE_DIRS = \
-#    topography \
+    srtm \
 
 #--------------------------------------------------------------------------
 # the recursive targets
