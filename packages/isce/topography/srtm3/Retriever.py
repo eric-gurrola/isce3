@@ -33,6 +33,7 @@ class Retriever(Crew):
         tile = task
         # sign in
         channel.log("{.pid}: fetching tile {.name}".format(self, tile))
+        print("{.pid}: fetching tile {.name}".format(self, tile))
         # alias the task availability enum
         codes = self.tilecodes
         # grab the availability map

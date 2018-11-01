@@ -1,0 +1,35 @@
+; -*- coding: utf-8 -*-
+;
+; michael a.g. aïvázis <michael.aivazis@para-sim.com>
+; (c) 2015-2016 all rights reserved
+;
+
+
+; configure the actions
+isce.actions:
+
+  ; elevation models
+  dem:
+    ; the region of interest
+    ; region = (0, 0), ; this tile is not present in the datastore
+    ; region = (0, 6), ; this one is
+    ; region = (39.4214, 23.1542), ; home
+    region = {regions.LA}
+
+  ; management of the SRTM local store
+  srtm:
+    ; the region of interest
+    region = {regions.LA}
+
+
+isce.topography.srtm:
+  ; the tile resolution
+  resolution = 1 ; pixels per arcsecond
+
+; region aliases
+regions:
+  LA = (33.3,-118.4), (35.7,-116.8)
+  greece = (41,26), (39,19), (34,24), (36,29)
+
+
+; end of file

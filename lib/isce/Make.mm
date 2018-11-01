@@ -15,8 +15,9 @@ RECURSE_DIRS = \
     radar \
     product \
     core \
-    image \
     geometry \
+    image \
+    srtm
 
 # the products
 PROJ_SAR = $(BLD_LIBDIR)/lib$(PROJECT).$(PROJECT_MAJOR).$(PROJECT_MINOR).$(EXT_SAR)

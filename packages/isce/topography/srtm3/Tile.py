@@ -97,6 +97,11 @@ class Tile:
                 return b''
             # let other errors flow through; someone else's problem
             raise
+        except urllib.error.URLError:
+            # make a report
+            msg = "please provide your Earthdata credentials"
+            # and complain
+            raise self.AuthenticationError(reason=msg)
 
         # if the uri opened successfully, grab the bytes
         contents = response.read()

@@ -218,7 +218,7 @@ class SRTM(isce.component,
         # attach it
         team.crew = functools.partial(Retriever, map=availability, cache=cache)
         # assemble the work plan
-        team.execute(workplan=set(mosaic))
+        team.assemble(workplan=set(mosaic))
         # and fetch the tiles
         team.run()
         # all done

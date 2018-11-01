@@ -7,7 +7,7 @@
 
 
 # support
-import isce.extensions.isce as libisce
+from isce.extensions import libisce
 
 
 # declaration
