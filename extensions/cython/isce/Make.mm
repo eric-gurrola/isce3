@@ -7,6 +7,7 @@
 
 # project global settings
 include isce.def
+include numpy/default.def
 
 # the package
 PACKAGE = extensions

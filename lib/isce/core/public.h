@@ -42,7 +42,7 @@ namespace isce {
         struct DateTime;
         struct Doppler;
         struct Ellipsoid;
-        struct Interpolator;
+        template <typename T> struct Interpolator;
         template <typename T> struct LUT2d;
         struct LinAlg;
         struct Metadata;
