@@ -6,6 +6,7 @@ string(TOLOWER ${PROJECT_NAME} LOCALPROJ)
 #####Library headers
 set(${PACKAGENAME}_EXPORT_HEADERS
     ComplexImagery.h
+    ComplexImagery.icc
     Identification.h
     Identification.icc
     ImageMode.h
@@ -30,8 +31,8 @@ foreach(HFILE ${${PACKAGENAME}_EXPORT_HEADERS})
 endforeach()
 
 #Pyre stuff is needed for logging
-#Gdal is needed for Raster IO 
-include_directories(${${PACKAGENAME}_DLL} PUBLIC ${PYRE_INCLUDE_DIR} ${ISCE_BUILDINCLUDEDIR} ${GDAL_INCLUDE_DIR}) 
+#Gdal is needed for Raster IO
+include_directories(${${PACKAGENAME}_DLL} PUBLIC ${PYRE_INCLUDE_DIR} ${ISCE_BUILDINCLUDEDIR} ${GDAL_INCLUDE_DIR})
 
 #Install headers as files
 ###This may be changed in future to install from build/include
