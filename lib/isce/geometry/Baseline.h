@@ -18,7 +18,14 @@
 #include <isce/core/Peg.h>
 #include <isce/core/Pegtrans.h>
 #include <isce/product/ImageMode.h>
+
+// isce::io
 #include <isce/io/Raster.h>
+
+
+// isce::product
+#include <isce/product/Product.h>
+
 
 // Declaration
 namespace isce {
@@ -31,31 +38,28 @@ namespace isce {
 class isce::geometry::Baseline {
 
     public:
-        // Constructor: must have Ellipsoid, Orbit, and Metadata
+        /** Constructor from product */
+        Baseline(isce::product::Product &, isce::product::Product &);
+
+        /** Construct from core object */
         Baseline(isce::core::Ellipsoid,
-                 isce::core::Orbit,
-                 isce::product::ImageMode,
-                 isce::core::Ellipsoid,
-                 isce::core::Orbit,
-                 isce::product::ImageMode);
+                        isce::core::Orbit,
+                        isce::product::ImageMode,
+                        isce::core::Ellipsoid,
+                        isce::core::Orbit,
+                        isce::product::ImageMode);
 
         // Set options
         inline void threshold(double);
         inline void numiter(int);
         inline void orbitMethod(isce::core::orbitInterpMethod);
 
-        // Run geo2rdr - main entrypoint
-        void computeBaseline(isce::io::Raster &,
-                             isce::core::Poly2d &,
-                             isce::core::Poly2d &,
-                             const std::string &,
-                             double, double);
 
-        // Alternative: run geo2rdr with no constant offsets
-        void computeBaseline(isce::io::Raster &,
-                             isce::core::Poly2d &,
-                             isce::core::Poly2d &,
-                             const std::string &);
+        /** Run geo2rdr with constant offsets and internally created offset rasters */
+        void computeBaseline(isce::io::Raster & topoRaster,
+                             const std::string & outdir,
+                             double azshift=0.0, double rgshift=0.0);
+
 
         // Value for null pixels
         const double NULL_VALUE = -1.0e6;
@@ -74,13 +78,19 @@ class isce::geometry::Baseline {
         // isce::core objects
         isce::core::Ellipsoid _ellipsoidMaster;
         isce::core::Orbit _orbitMaster;
-        isce::product::ImageMode _modeMaster;
+        isce::core::Poly2d _dopplerMaster;
         isce::core::DateTime _refEpochMaster;
+        isce::core::DateTime _sensingStartMaster;
 
         isce::core::Ellipsoid _ellipsoidSlave;
         isce::core::Orbit _orbitSlave;
-        isce::product::ImageMode _modeSlave;
+        isce::core::Poly2d _dopplerSlave;
         isce::core::DateTime _refEpochSlave;
+        isce::core::DateTime _sensingStartSlave;
+
+        // isce::product objects
+        isce::product::ImageMode _modeMaster;
+        isce::product::ImageMode _modeSlave;
 
         // Projection related data
         isce::core::ProjectionBase * _projTopo;

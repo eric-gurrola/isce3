@@ -25,20 +25,10 @@ using isce::io::Raster;
 using isce::core::Poly2d;
 using isce::core::LinAlg;
 
-// Run geo2rdr with no offsets
-void isce::geometry::Baseline::
-computeBaseline(isce::io::Raster & topoRaster,
-                isce::core::Poly2d & dopplerMaster,
-                isce::core::Poly2d & dopplerSlave,
-                const std::string & outdir) {
-  computeBaseline(topoRaster, dopplerMaster, dopplerSlave, outdir, 0.0, 0.0);
-}
 
 // Run Baseline - main entrypoint
 void isce::geometry::Baseline::
 computeBaseline(isce::io::Raster & topoRaster,
-                isce::core::Poly2d & dopplerMaster,
-                isce::core::Poly2d & dopplerSlave,
                 const std::string & outdir,
                 double azshift, double rgshift) {
 
@@ -53,8 +43,9 @@ computeBaseline(isce::io::Raster & topoRaster,
   // Initialize projection for topo results
   _projTopo = isce::core::createProj(topoRaster.getEPSG());
 
+
   // Valarrays to hold line of results
-  std::valarray<double> x(demWidth), y(demWidth), hgt(demWidth);
+  std::valarray<double> x(demWidth), y(demWidth), hgt(demWidth), inc(demWidth);
   std::valarray<float> bperp(demWidth), kz(demWidth);
 
   // Create output rasters
@@ -88,31 +79,33 @@ computeBaseline(isce::io::Raster & topoRaster,
   // Interpolate orbit to middle of the scene as a test
   _checkOrbitInterpolation(tmid);
 
-
     // Loop over DEM lines
     int converged = 0;
     for (size_t line = 0; line < demLength; ++line) {    // ml - REMOVE 100 when DONE debugging
 
       // Periodic diagnostic printing
       if ((line % 1000) == 0) {     //ml - change 100 to 1000
+
             info
                 << "Processing line: " << line << " " << pyre::journal::newline
                 << "Dopplers near mid far (master): "
-                << dopplerMaster.eval(0, 0) << " "
-                << dopplerMaster.eval(0, (_modeMaster.width() / 2) - 1) << " "
-                << dopplerMaster.eval(0, _modeMaster.width() - 1) << " "
+                << _dopplerMaster.eval(0, 0) << " "
+                << _dopplerMaster.eval(0, (_modeMaster.width() / 2) - 1) << " "
+                << _dopplerMaster.eval(0, _modeMaster.width() - 1) << " "
                 << pyre::journal::newline
                 << "Dopplers near mid far (slave): "
-                << dopplerSlave.eval(0, 0) << " "
-                << dopplerSlave.eval(0, (_modeSlave.width() / 2) - 1) << " "
-                << dopplerSlave.eval(0, _modeSlave.width() - 1) << " "
+                << _dopplerSlave.eval(0, 0) << " "
+                << _dopplerSlave.eval(0, (_modeSlave.width() / 2) - 1) << " "
+                << _dopplerSlave.eval(0, _modeSlave.width() - 1) << " "
                 << pyre::journal::endl;
         }
+
 
       // Read line of data
       topoRaster.getLine(x, line, 1);
       topoRaster.getLine(y, line, 2);
       topoRaster.getLine(hgt, line, 3);
+      topoRaster.getLine(inc, line, 6);
 
       // Loop over DEM pixels
       #pragma omp parallel for reduction(+:converged)
@@ -128,11 +121,16 @@ computeBaseline(isce::io::Raster & topoRaster,
         cartesian_t satposMaster, satposSlave;
         int geostat = isce::geometry::baseline(llh, _ellipsoidMaster, _ellipsoidSlave,
                                                _orbitMaster, _orbitSlave,
-                                               dopplerMaster, dopplerSlave,
+                                               _dopplerMaster, _dopplerSlave,
                                                _modeMaster, _modeSlave,
                                                aztime, slantRange, _threshold, _numiter, 1.0e-8,
                                                bperpSample, kzSample
                                                );
+
+        //>>>> TEMPORARY HACK
+        double wvl = _modeMaster.wavelength();
+        kzSample = 4*M_PI / wvl * bperpSample / (slantRange*sin(inc[pixel]*M_PI/180.));
+        //<<<<<
 
         if ((line % 1000) == 0) {
           if ((pixel % 3000) == 0) {     //ml - change 100 to 1000
@@ -145,8 +143,8 @@ computeBaseline(isce::io::Raster & topoRaster,
               << "Perpendicular baseline: "
               << kzSample
               << pyre::journal::newline
-              << "aztime: "
-              << aztime
+              << "wavelength: "
+              << wvl
               << pyre::journal::newline
               << "slantrange: "
               << slantRange

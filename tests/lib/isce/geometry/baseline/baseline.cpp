@@ -78,7 +78,7 @@ TEST(BaselineTest, RunBaseline) {
     isce::io::Raster topoRaster("../../data/topo.vrt");
 
     // Run geo2rdr
-    bas.computeBaseline(topoRaster, dopplerMaster, dopplerSlave, ".");
+    bas.computeBaseline(topoRaster, ".");
 
 }
 

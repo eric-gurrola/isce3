@@ -13,11 +13,11 @@ option(WITH_CUDA "Set ON|OFF (default=ON) to build CUDA library" OFF)
 if (WITH_CUDA)
     project(ISCE
             VERSION 3.0
-	        LANGUAGES C CXX CUDA)
+                LANGUAGES C CXX CUDA)
 else ()
     project(ISCE
             VERSION 3.0
-	        LANGUAGES C CXX)
+                LANGUAGES C CXX)
 endif()
 
 ###Options for documentation
@@ -82,6 +82,9 @@ add_subdirectory(extensions)
 ###Setup tests
 add_subdirectory(tests)
 
+###Setup tests
+add_subdirectory(app)
+
 ###Setup doc
 if (WITH_DOC)
 
@@ -97,8 +100,8 @@ if (WITH_DOC)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Generating documentation using Doxygen"
             VERBATIM )
-        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html 
-            DESTINATION ${ISCE_DOCDIR}) 
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html
+            DESTINATION ${ISCE_DOCDIR})
         message("Doxygen found. Generating C++ doc ....")
     else()
         message("Doxygen not found. Skipping C++ doc ....")
