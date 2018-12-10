@@ -202,7 +202,7 @@ _initializeTile(Tile_t & tile, Raster & inputSlc, const isce::image::Tile<float>
             // Get azimuth offset for pixel
             const double azOff = azOffTile(i,j);
             // Skip null values
-            if (azOff < -5.0e5) {
+            if (azOff < -5.0e5 || std::isnan(azOff)) {
                 continue;
             } else {
                 haveOffsets = true;
@@ -227,8 +227,9 @@ _initializeTile(Tile_t & tile, Raster & inputSlc, const isce::image::Tile<float>
         for (int j = 0; j < outWidth; ++j) {
             // Get azimuth offset for pixel
             const double azOff = azOffTile(i,j);
+
             // Skip null values
-            if (azOff < -5.0e5) {
+            if (azOff < -5.0e5 || std::isnan(azOff)) {
                 continue;
             } else {
                 haveOffsets = true;
