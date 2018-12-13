@@ -29,7 +29,9 @@ class isce::geometry::TopoLayers {
             _localInc.resize(length*width);
             _localPsi.resize(length*width);
             _sim.resize(length*width);
-        }   
+            _alpha.resize(length*width);
+            _beta.resize(length*width);
+        }
 
         // Get sizes
         inline size_t length() const { return _length; }
@@ -44,40 +46,50 @@ class isce::geometry::TopoLayers {
         std::valarray<float> & localInc() { return _localInc; }
         std::valarray<float> & localPsi() { return _localPsi; }
         std::valarray<float> & sim() { return _sim; }
-        
+        std::valarray<float> & alpha() { return _alpha; }
+        std::valarray<float> & beta() { return _beta; }
+
         // Set values for a single index
         void x(size_t row, size_t col, double value) {
             _x[row*_width+col] = value;
         }
-        
+
         void y(size_t row, size_t col, double value) {
             _y[row*_width + col] = value;
         }
-        
+
         void z(size_t row, size_t col, double value) {
             _z[row*_width + col] = value;
         }
-        
+
         void inc(size_t row, size_t col, float value) {
             _inc[row*_width + col] = value;
         }
-        
+
         void hdg(size_t row, size_t col, float value) {
             _hdg[row*_width + col] = value;
         }
-        
+
         void localInc(size_t row, size_t col, float value) {
             _localInc[row*_width + col] = value;
         }
-        
+
         void localPsi(size_t row, size_t col, float value) {
             _localPsi[row*_width + col] = value;
         }
-    
+
         void sim(size_t row, size_t col, float value) {
             _sim[row*_width + col] = value;
         }
-        
+
+        void alpha(size_t row, size_t col, float value) {
+            _alpha[row*_width + col] = value;
+        }
+
+        void beta(size_t row, size_t col, float value) {
+            _beta[row*_width + col] = value;
+        }
+
     private:
         // The valarrays for the actual data
         std::valarray<double> _x;
@@ -88,11 +100,13 @@ class isce::geometry::TopoLayers {
         std::valarray<float> _localInc;
         std::valarray<float> _localPsi;
         std::valarray<float> _sim;
+        std::valarray<float> _alpha;
+        std::valarray<float> _beta;
 
         // Dimensions
         size_t _length, _width;
 };
-    
+
 #endif
 
 // end of file

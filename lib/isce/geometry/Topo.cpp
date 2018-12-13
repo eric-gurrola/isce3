@@ -66,10 +66,14 @@ topo(Raster & demRaster,
         GDT_Float32, "ISCE");
     Raster simRaster = Raster(outdir + "/simamp.rdr", _mode.width(), _mode.length(), 1,
         GDT_Float32, "ISCE");
+    Raster alphaRaster = Raster(outdir + "/alpha.rdr", _mode.width(), _mode.length(), 1,
+        GDT_Float32, "ISCE");
+    Raster betaRaster = Raster(outdir + "/beta.rdr", _mode.width(), _mode.length(), 1,
+        GDT_Float32, "ISCE");
 
     // Call topo with rasters
     topo(demRaster, xRaster, yRaster, heightRaster, incRaster, hdgRaster, localIncRaster,
-         localPsiRaster, simRaster);
+         localPsiRaster, simRaster, alphaRaster, betaRaster);
 
     } // end Topo scope to release raster resources
 
@@ -82,7 +86,9 @@ topo(Raster & demRaster,
         Raster(outdir + "/hdg.rdr" ),
         Raster(outdir + "/localInc.rdr" ),
         Raster(outdir + "/localPsi.rdr" ),
-        Raster(outdir + "/simamp.rdr" )
+        Raster(outdir + "/simamp.rdr" ),
+        Raster(outdir + "/alpha.rdr" ),
+        Raster(outdir + "/beta.rdr" )
     };
     Raster vrt = Raster(outdir + "/topo.vrt", rasterTopoVec );
     // Set its EPSG code
@@ -101,11 +107,13 @@ topo(Raster & demRaster,
                from EAST (Right hand rule)
   * @param[in] localIncRaster output raster for local incidence angle (degrees) at target
   * @param[in] localPsiRaster output raster for local projection angle (degrees) at target
-  * @param[in] simRaster output raster for simulated amplitude image. */
+  * @param[in] simRaster output raster for simulated amplitude image.
+  * @param[in] alphaRaster output raster for DEM slope along X at target.
+  * @param[in] betaRaster output raster for DEM slope along Y at target. */
 void isce::geometry::Topo::
 topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRaster,
      Raster & incRaster, Raster & hdgRaster, Raster & localIncRaster, Raster & localPsiRaster,
-     Raster & simRaster) {
+     Raster & simRaster, Raster & alphaRaster, Raster & betaRaster) {
 
     // Create reusable pyre::journal channels
     pyre::journal::warning_t warning("isce.geometry.Topo");
@@ -213,6 +221,8 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
         localIncRaster.setBlock(layers.localInc(), 0, lineStart, _mode.width(), blockLength);
         localPsiRaster.setBlock(layers.localPsi(), 0, lineStart, _mode.width(), blockLength);
         simRaster.setBlock(layers.sim(), 0, lineStart, _mode.width(), blockLength);
+        alphaRaster.setBlock(layers.alpha(), 0, lineStart, _mode.width(), blockLength);
+        betaRaster.setBlock(layers.beta(), 0, lineStart, _mode.width(), blockLength);
 
     } // end for loop blocks
 
@@ -367,7 +377,6 @@ computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOff
     // Extract DEM subset
     demInterp.loadDEM(demRaster, min_lon, max_lon, min_lat, max_lat,
                       demRaster.getEPSG());
-
     demInterp.declare();
 }
 
@@ -446,6 +455,10 @@ _setOutputTopoLayers(cartesian_t & targetLLH, TopoLayers & layers, size_t line,
     double sintheta = std::sqrt(1.0 - (costheta * costheta));
     bb = sintheta + 0.1 * costheta;
     layers.sim(line, bin, std::log10(std::abs(0.01 * costheta / (bb * bb * bb))));
+
+    // Store alpha and beta
+    layers.alpha(line, bin, alpha);
+    layers.beta(line, bin, beta);
 
     // Calculate psi angle between image plane and local slope
     cartesian_t n_img, n_imghat, n_img_enu;

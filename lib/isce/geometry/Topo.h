@@ -46,7 +46,7 @@ class isce::geometry::Topo {
                     isce::core::Orbit,
                     isce::core::Poly2d,
                     isce::core::Metadata);
-        
+
         /** Set initialization flag*/
         inline void initialized(bool);
         /** Set convergence threshold */
@@ -92,7 +92,8 @@ class isce::geometry::Topo {
                   isce::io::Raster & yRaster, isce::io::Raster & heightRaster,
                   isce::io::Raster & incRaster, isce::io::Raster & hdgRaster,
                   isce::io::Raster & localIncRaster, isce::io::Raster & localPsiRaster,
-                  isce::io::Raster & simRaster);
+                  isce::io::Raster & simRaster,
+                  isce::io::Raster & alphaRaster, isce::io::Raster & betaRaster);
 
         // Getters for isce objects
 
@@ -132,7 +133,7 @@ class isce::geometry::Topo {
 
         // isce::product objects
         isce::product::ImageMode _mode;
-    
+
         // Optimization options
         double _threshold;
         int _numiter, _extraiter;

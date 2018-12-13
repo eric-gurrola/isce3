@@ -22,13 +22,13 @@ cdef extern from "isce/geometry/Topo.h" namespace "isce::geometry":
 
         # Constructor
         Topo(Product &) except +
-        
+
         # Main topo entrypoint; internal construction of topo rasters
         void topo(Raster &, const string)
 
         # Run topo with externally created topo rasters
         void topo(Raster &, Raster &, Raster &, Raster &, Raster &,
-                  Raster &, Raster &, Raster &, Raster &)
+                  Raster &, Raster &, Raster &, Raster &, Raster &, Raster &)
 
         # Setting processing options
         void initialized(bool)
@@ -38,5 +38,5 @@ cdef extern from "isce/geometry/Topo.h" namespace "isce::geometry":
         void orbitMethod(orbitInterpMethod)
         void demMethod(dataInterpMethod)
         void epsgOut(int)
-        
+
 # end of file

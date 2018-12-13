@@ -77,10 +77,11 @@ cdef class pyTopo:
     def topo(self, pyRaster demRaster, pyRaster xRaster=None, pyRaster yRaster=None,
              pyRaster heightRaster=None, pyRaster incRaster=None, pyRaster hdgRaster=None,
              pyRaster localIncRaster=None, pyRaster localPsiRaster=None,
-             pyRaster simRaster=None, outputDir=None):
+             pyRaster simRaster=None, pyRaster alphaRaster=None,
+             pyRaster betaRaster=None, outputDir=None):
         """
         Run topo.
-        
+
         Args:
             demRaster (pyRaster):               Raster for input DEM.
             xRaster (Optional[str]):            Raster for output X coordinate.
@@ -91,20 +92,23 @@ cdef class pyTopo:
             localIncRaster (Optional[str]):     Raster for output local incidence angle.
             localPsiRaster (Optional[str]):     Raster for output local projection angle.
             simRaster (Optional[str]):          Raster for output simulated amplitude image.
+            alphaRaster (Optional[str]):        Raster for output alpha image.
+            betaRaster (Optional[str]):         Raster for output beta image.
             outputDir (Optional[str]):          String for output directory for internal rasters.
 
         Return:
             None
         """
         cdef string outdir
-        
+
         if xRaster is not None and yRaster is not None and heightRaster is not None:
             # Run topo directly
             self.c_topo.topo(deref(demRaster.c_raster), deref(xRaster.c_raster),
                              deref(yRaster.c_raster), deref(heightRaster.c_raster),
                              deref(incRaster.c_raster), deref(hdgRaster.c_raster),
                              deref(localIncRaster.c_raster), deref(localPsiRaster.c_raster),
-                             deref(simRaster.c_raster))
+                             deref(simRaster.c_raster),
+                             deref(alphaRaster.c_raster), deref(betaRaster.c_raster))
 
         elif outputDir is not None:
             # Convert output directory to C++ string
@@ -115,5 +119,5 @@ cdef class pyTopo:
         else:
             assert False, 'No rasters or output directory specified for topo'
 
-        
+
 # end of file
