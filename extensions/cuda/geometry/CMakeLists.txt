@@ -15,7 +15,6 @@ set(LOCAL_SRCS
         gpuDEMInterpolator.cu
         gpuGeometry.cu 
         gpuTopo.cu
-        gpuTopoLayers.cu
         gpuGeo2rdr.cu
         utilities.cu
         Topo.cpp

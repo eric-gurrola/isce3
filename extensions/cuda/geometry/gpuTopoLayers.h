@@ -17,6 +17,7 @@
 #endif
 
 #include <iostream>
+#include "isce/cuda/helper_cuda.h"
 
 // isce::geometry
 #include "isce/geometry/TopoLayers.h"
@@ -35,7 +36,22 @@ class isce::cuda::geometry::gpuTopoLayers {
 
     public:
         // Constructor for host only - allocate memory on device
-        CUDA_HOST gpuTopoLayers(const isce::geometry::TopoLayers & layers);
+        CUDA_HOST inline gpuTopoLayers(const isce::geometry::TopoLayers & layers) : 
+            _length(layers.length()), _width(layers.width()), _owner(true) {
+
+            // Allocate memory
+            _nbytes_double = _length * _width * sizeof(double);
+            _nbytes_float = _length * _width * sizeof(float);
+            checkCudaErrors(cudaMalloc((double **) &_x, _nbytes_double));
+            checkCudaErrors(cudaMalloc((double **) &_y, _nbytes_double));
+            checkCudaErrors(cudaMalloc((double **) &_z, _nbytes_double));
+            checkCudaErrors(cudaMalloc((float **) &_inc, _nbytes_float));
+            checkCudaErrors(cudaMalloc((float **) &_hdg, _nbytes_float));
+            checkCudaErrors(cudaMalloc((float **) &_localInc, _nbytes_float));
+            checkCudaErrors(cudaMalloc((float **) &_localPsi, _nbytes_float));
+            checkCudaErrors(cudaMalloc((float **) &_sim, _nbytes_float));
+            checkCudaErrors(cudaMalloc((double **) &_crossTrack, _nbytes_double));
+        }
     
         // Copy constructor on device (these should nominally be CUDA_HOSTDEV)
         CUDA_HOSTDEV inline gpuTopoLayers(gpuTopoLayers & layers) :
@@ -46,7 +62,19 @@ class isce::cuda::geometry::gpuTopoLayers {
             _nbytes_float(layers.nbytes_float()), _owner(false) {}
 
         // Destructor
-        CUDA_HOST ~gpuTopoLayers();
+        inline ~gpuTopoLayers() {
+            if (_owner) {
+                checkCudaErrors(cudaFree(_x));
+                checkCudaErrors(cudaFree(_y));
+                checkCudaErrors(cudaFree(_z));
+                checkCudaErrors(cudaFree(_inc));
+                checkCudaErrors(cudaFree(_hdg)); 
+                checkCudaErrors(cudaFree(_localInc));
+                checkCudaErrors(cudaFree(_localPsi));
+                checkCudaErrors(cudaFree(_sim));
+                checkCudaErrors(cudaFree(_crossTrack));
+            }
+        }
 
         // Set values for a single index; on GPU, all arrays are flattened
         CUDA_DEV inline void x(size_t index, double value) {
@@ -92,7 +120,26 @@ class isce::cuda::geometry::gpuTopoLayers {
         CUDA_HOSTDEV inline size_t nbytes_float() const { return _nbytes_float; }
 
         // Copy results to host TopoLayers
-        CUDA_HOST void copyToHost(isce::geometry::TopoLayers & layers);
+        CUDA_HOST inline void copyToHost(isce::geometry::TopoLayers & layers) {
+            checkCudaErrors(cudaMemcpy(&layers.x()[0], _x, _nbytes_double,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.y()[0], _y, _nbytes_double,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.z()[0], _z, _nbytes_double,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.inc()[0], _inc, _nbytes_float,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.hdg()[0], _hdg, _nbytes_float,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.localInc()[0], _localInc, _nbytes_float,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.localPsi()[0], _localPsi, _nbytes_float,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.sim()[0], _sim, _nbytes_float,
+                            cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy(&layers.crossTrack()[0], _crossTrack, _nbytes_double,
+                            cudaMemcpyDeviceToHost));
+        }
 
         // Unlike CPU version, make the data pointers public to allow for easy
         // copy construction on the device; still use the underbar convention to discourage

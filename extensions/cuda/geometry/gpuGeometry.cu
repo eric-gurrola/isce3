@@ -6,7 +6,6 @@
 // isce::cuda::core
 
 #include "gpuGeometry.h"
-#include "../helper_cuda.h"
 
 using isce::cuda::core::gpuLinAlg;
 
