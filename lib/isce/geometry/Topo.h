@@ -8,7 +8,6 @@
 #define ISCE_GEOMETRY_TOPO_H
 
 // pyre
-#include <portinfo>
 #include <pyre/journal.h>
 
 // isce::core
@@ -44,7 +43,7 @@ class isce::geometry::Topo {
         /** Constructor using core objects*/
         inline Topo(isce::core::Ellipsoid,
                     isce::core::Orbit,
-                    isce::core::Poly2d,
+                    isce::core::LUT1d<double>,
                     isce::core::Metadata);
 
         /** Set initialization flag*/
@@ -61,6 +60,8 @@ class isce::geometry::Topo {
         inline void demMethod(isce::core::dataInterpMethod);
         /** Set output coordinate system */
         inline void epsgOut(int);
+        /** Set mask computation flag */
+        inline void computeMask(bool);
 
         //Get topo processing options
         /** Get lookSide used for processing */
@@ -75,6 +76,8 @@ class isce::geometry::Topo {
         inline int epsgOut() const { return _epsgOut; }
         /** Get the DEM interpolation method used for processing */
         inline isce::core::dataInterpMethod demMethod() const { return _demMethod; }
+        /** Get mask computation flag */
+        inline bool computeMask() const { return _computeMask; }
 
         /** Check initialization of processing module*/
         inline void checkInitialization(pyre::journal::info_t &) const;
@@ -87,13 +90,28 @@ class isce::geometry::Topo {
         /** Main entry point for the module; internal creation of topo rasters */
         void topo(isce::io::Raster &, const std::string);
 
-        /** Run topo with externally created topo rasters */
+        /** Run topo with externally created topo rasters in TopoLayers object */
+        void topo(isce::io::Raster & demRaster, TopoLayers & layers);
+
+        /** Run topo with externally created topo rasters; generate mask */
+        void topo(isce::io::Raster & demRaster, isce::io::Raster & xRaster,
+                  isce::io::Raster & yRaster, isce::io::Raster & heightRaster,
+                  isce::io::Raster & incRaster, isce::io::Raster & hdgRaster,
+                  isce::io::Raster & localIncRaster, isce::io::Raster & localPsiRaster,
+                  isce::io::Raster & simRaster, isce::io::Raster & maskRaster);
+
+        /** Run topo with externally created topo rasters; generate mask */
         void topo(isce::io::Raster & demRaster, isce::io::Raster & xRaster,
                   isce::io::Raster & yRaster, isce::io::Raster & heightRaster,
                   isce::io::Raster & incRaster, isce::io::Raster & hdgRaster,
                   isce::io::Raster & localIncRaster, isce::io::Raster & localPsiRaster,
                   isce::io::Raster & simRaster,
                   isce::io::Raster & alphaRaster, isce::io::Raster & betaRaster);
+
+        /** Compute layover/shadow masks */
+        void setLayoverShadow(TopoLayers &,
+                              DEMInterpolator &,
+                              std::vector<isce::core::cartesian_t> &);
 
         // Getters for isce objects
 
@@ -102,7 +120,7 @@ class isce::geometry::Topo {
         /** Get the ellipsoid used for processing */
         inline const isce::core::Ellipsoid & ellipsoid() const { return _ellipsoid; }
         /** Get the doppler module used for processing */
-        inline const isce::core::Poly2d & doppler() const { return _doppler; }
+        inline const isce::core::LUT1d<double> & doppler() const { return _doppler; }
         /** Get the sensingStart used for processing */
         inline const isce::core::DateTime & sensingStart() const { return _sensingStart; }
         /** Get the imageMode object used for processing */
@@ -123,12 +141,12 @@ class isce::geometry::Topo {
                                   isce::core::StateVector &,
                                   isce::core::Basis &,
                                   DEMInterpolator &);
-
+        
     private:
         // isce::core objects
         isce::core::Orbit _orbit;
         isce::core::Ellipsoid _ellipsoid;
-        isce::core::Poly2d _doppler;
+        isce::core::LUT1d<double> _doppler;
         isce::core::DateTime _sensingStart, _refEpoch;
 
         // isce::product objects
@@ -139,6 +157,7 @@ class isce::geometry::Topo {
         int _numiter, _extraiter;
         int _lookSide;
         size_t _linesPerBlock = 1000;
+        bool _computeMask = true;
         isce::core::orbitInterpMethod _orbitMethod;
         isce::core::dataInterpMethod _demMethod;
 

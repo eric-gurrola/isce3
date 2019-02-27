@@ -7,8 +7,8 @@
 /** \file geometry.h
  * Collection of simple commonly used geometry functions
  *
- * There are no classes defined in this file. Its a collection of functions 
- * that are meant to be light weight versions of isce::geometry::Topo and 
+ * There are no classes defined in this file. Its a collection of functions
+ * that are meant to be light weight versions of isce::geometry::Topo and
  * isce::geometry::Geo2rdr.*/
 #ifndef ISCE_CORE_GEOMETRY_H
 #define ISCE_CORE_GEOMETRY_H
@@ -26,6 +26,7 @@
 #include <isce/core/Pegtrans.h>
 #include <isce/core/Pixel.h>
 #include <isce/core/Poly2d.h>
+#include <isce/core/LUT1d.h>
 #include <isce/core/StateVector.h>
 
 // isce::product
@@ -49,8 +50,8 @@ namespace isce {
                     const DEMInterpolator &,
                     cartesian_t &,
                     double, int, double, int, int,
-                    isce::core::orbitInterpMethod); 
-       
+                    isce::core::orbitInterpMethod);
+
         /** Radar geometry coordinates to map coordinates transformer*/
         int rdr2geo(const isce::core::Pixel &,
                     const isce::core::Basis &,
@@ -69,7 +70,7 @@ namespace isce {
                     double &, double &,
                     double, int, double);
 
-        // geo->radar with output satpos and satvel 
+        // geo->radar with output satpos and satvel
         int geo2rdr(const cartesian_t &,
                     const isce::core::Ellipsoid &,
                     const isce::core::Orbit &,
@@ -91,6 +92,14 @@ namespace isce {
                      const isce::product::ImageMode &,
                      double &, double &,
                      double, int, double, double &, double &);
+
+        int geo2rdr(const cartesian_t &,
+                    const isce::core::Ellipsoid &,
+                    const isce::core::Orbit &,
+                    const isce::core::LUT1d<double> &,
+                    const isce::product::ImageMode &,
+                    double &, double &,
+                    double, int, double);
 
         // Utility function to compute geocentric TCN basis from state vector
         void geocentricTCN(isce::core::StateVector &,

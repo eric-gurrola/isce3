@@ -8,7 +8,9 @@ set(LOCAL_SRCS
     Geo2rdr.cpp
     Baseline.cpp
     geometry.cpp
-    Topo.cpp)
+    RTC.cpp
+    Topo.cpp
+    Geocode.cpp)
 
 ####Append current path to every source file
 set(${PACKAGENAME}_SRCS "")
@@ -24,10 +26,13 @@ set(${PACKAGENAME}_EXPORT_HEADERS
     Baseline.h
     Baseline.icc
     geometry.h
+    RTC.h
     Serialization.h
     Topo.h
     Topo.icc
-    TopoLayers.h)
+    TopoLayers.h
+    Geocode.h
+    Geocode.icc)
 
 ###Install headers into build/include
 ###This is where regex can be used on the header files if needed

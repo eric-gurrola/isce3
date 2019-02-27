@@ -1,7 +1,7 @@
 #cython: language_level=3
 #
-# Author: Joshua Cohen
-# Copyright 2017
+# Author: Joshua Cohen, Tamas Gal
+# Copyright 2017-2019
 #
 
 from libcpp cimport bool
@@ -525,6 +525,30 @@ cdef class pyOrbit:
                 accview[ii,jj] = _acc[jj]
 
         return (flag, acc)
+
+    def updateUTCTimes(self, pyDateTime epoch):
+        '''
+        Update reference time to epoch and update UTC times relative to new epoch.
+
+        Args:
+            epoch (pyDateTime): Reference epoch.
+
+        Returns:
+            None
+        '''
+        self.c_orbit.updateUTCTimes(deref(epoch.c_datetime))
+        
+    def getENUHeading(self, double aztime):
+        '''
+        Computes heading at a given azimuth time using a single state vector
+        
+        Args:
+            aztime (double): Time since reference epoch in seconds
+
+        Returns:
+            double: Heading
+        '''
+        return self.c_orbit.getENUHeading(aztime)
     
     def printOrbit(self):
         '''

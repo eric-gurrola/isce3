@@ -23,6 +23,7 @@ using isce::core::Orbit;
 using isce::core::Pegtrans;
 using isce::core::Pixel;
 using isce::core::Poly2d;
+using isce::core::LUT1d;
 using isce::core::StateVector;
 using isce::product::ImageMode;
 
@@ -40,7 +41,7 @@ using isce::product::ImageMode;
  * @param[in] extraIter Number of secondary iterations
  * @param[in] orbitMethod Orbit interpolation method
  *
- * This is meant to be the light version of isce::geometry::Topo and not meant to be used for processing large number of targets of interest. Note that doppler and wavelength are meant for completeness and this method can be used with both Native and Zero Doppler geometries. For details of the algorithm, see the \ref overview_geometry "geometry overview".*/ 
+ * This is meant to be the light version of isce::geometry::Topo and not meant to be used for processing large number of targets of interest. Note that doppler and wavelength are meant for completeness and this method can be used with both Native and Zero Doppler geometries. For details of the algorithm, see the \ref overview_geometry "geometry overview".*/
 int isce::geometry::
 rdr2geo(double aztime, double slantRange, double doppler, const Orbit & orbit,
         const Ellipsoid & ellipsoid, const DEMInterpolator & demInterp, cartesian_t & targetLLH,
@@ -153,7 +154,7 @@ rdr2geo(const Pixel & pixel, const Basis & TCNbasis, const StateVector & state,
         const double costheta = 0.5 * (a / pixel.range() + pixel.range() / a
                               - (b/a) * (b/pixel.range()));
         const double sintheta = std::sqrt(1.0 - costheta*costheta);
- 
+
         // Compute TCN scale factors
         const double gamma = pixel.range() * costheta;
         const double alpha = (pixel.dopfact() - gamma * ndotv) / vdott;
@@ -342,7 +343,7 @@ geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit &
     // Cartesian arrays for storing satellite position and velocity (not returned)
     cartesian_t satpos, satvel;
 
-    // Call geo2rdr 
+    // Call geo2rdr
     geo2rdr(inputLLH, ellipsoid, orbit, doppler, mode, aztime, slantRange,
             satpos, satvel, threshold, maxIter, 1.0e-8);
 }
@@ -374,7 +375,7 @@ baseline(const cartesian_t & inputLLH,
         modeMaster, aztime, slantRange, satposSlave, satvelSlave,
         threshold, maxIter, 1.0e-8
     );
-  
+
     // Baseline in two components
     LinAlg::linComb(1, satposMaster, -1, satposSlave, basVec);
     ellipsoidMaster.lonLatToXyz(inputLLH, targetVec);
@@ -385,6 +386,74 @@ baseline(const cartesian_t & inputLLH,
     // Done
     return geostatMaster;
 }
+
+/** @param[in] inputLLH Lon/Lat/Hae of target of interest
+ * @param[in] ellipsoid Ellipsoid object
+ * @param[in] orbit Orbit object
+ * @param[in] doppler   Poly2D Doppler model
+ * @param[in] mode  ImageMode object
+ * @param[out] aztime azimuth time of inputLLH w.r.t reference epoch of the orbit
+ * @param[out] slantRange slant range to inputLLH
+ * @param[in] threshold azimuth time convergence threshold in seconds
+ * @param[in] maxIter Maximum number of Newton-Raphson iterations
+ * @param[in] deltaRange step size used for computing derivative of doppler
+ *
+ * This is the elementary transformation from map geometry to radar geometry. The transformation is applicable for a single lon/lat/h coordinate (i.e., a single point target). For algorithmic details, see \ref overview_geometry "geometry overview".*/
+int isce::geometry::
+geo2rdr(const cartesian_t & inputLLH, const Ellipsoid & ellipsoid, const Orbit & orbit,
+        const LUT1d<double> & doppler, const ImageMode & mode, double & aztime,
+        double & slantRange, double threshold, int maxIter, double deltaRange) {
+
+    cartesian_t satpos, satvel, inputXYZ, dr;
+
+    // Convert LLH to XYZ
+    ellipsoid.lonLatToXyz(inputLLH, inputXYZ);
+
+    // Pre-compute scale factor for doppler
+    const double dopscale = 0.5 * mode.wavelength();
+
+    // Use mid-orbit epoch as initial guess
+    aztime = orbit.UTCtime[orbit.nVectors / 2];
+
+    // Begin iterations
+    int converged = 0;
+    double slantRange_old = 0.0;
+    for (int i = 0; i < maxIter; ++i) {
+
+        // Interpolate the orbit to current estimate of azimuth time
+        orbit.interpolateWGS84Orbit(aztime, satpos, satvel);
+
+        // Compute slant range from satellite to ground point
+        LinAlg::linComb(1.0, inputXYZ, -1.0, satpos, dr);
+        slantRange = LinAlg::norm(dr);
+        // Check convergence
+        if (std::abs(slantRange - slantRange_old) < threshold) {
+            converged = 1;
+            return converged;
+        } else {
+            slantRange_old = slantRange;
+        }
+
+        // Compute doppler
+        const double dopfact = LinAlg::dot(dr, satvel);
+        const double fdop = doppler.eval(slantRange) * dopscale;
+        // Use forward difference to compute doppler derivative
+        const double fdopder = (doppler.eval(slantRange + deltaRange) * dopscale - fdop)
+                             / deltaRange;
+
+        // Evaluate cost function and its derivative
+        const double fn = dopfact - fdop * slantRange;
+        const double c1 = -1.0 * LinAlg::dot(satvel, satvel);
+        const double c2 = (fdop / slantRange) + fdopder;
+        const double fnprime = c1 + c2 * dopfact;
+
+        // Update guess for azimuth time
+        aztime -= fn / fnprime;
+    }
+    // If we reach this point, no convergence for specified threshold
+    return converged;
+}
+
 
 // Utility function to compute geocentric TCN basis from state vector
 void isce::geometry::

@@ -16,6 +16,7 @@ set(LOCAL_SRCS
               LUT2d.cpp
               LinAlg.cpp
               Metadata.cpp
+              NearestNeighborInterpolator.cpp
               Orbit.cpp
               Peg.cpp
               Pegtrans.cpp
@@ -43,8 +44,9 @@ set(${PACKAGENAME}_EXPORT_HEADERS   Attitude.h
                                     Doppler.h
                                     Ellipsoid.h
                                     EulerAngles.h
-                                    EulerAngles.icc
                                     Interpolator.h
+                                    LUT1d.h
+                                    LUT1d.icc
                                     LUT2d.h
                                     LinAlg.h
                                     Matrix.h
@@ -59,11 +61,11 @@ set(${PACKAGENAME}_EXPORT_HEADERS   Attitude.h
                                     Position.h
                                     Projections.h
                                     Quaternion.h
-                                    Quaternion.icc
                                     Serialization.h
                                     Serialization.h
                                     StateVector.h
-                                    TimeDelta.h)
+                                    TimeDelta.h
+                                    Utilities.h)
 
 ###Install headers into build/include
 ###This is where regex can be used on the header files if needed

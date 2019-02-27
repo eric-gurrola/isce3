@@ -10,12 +10,14 @@
 #include <chrono>
 #include <fstream>
 #include <future>
+#include <vector>
 #include <valarray>
 #include <algorithm>
 
 // isce::core
 #include <isce/core/Constants.h>
 #include <isce/core/LinAlg.h>
+#include <isce/core/Utilities.h>
 
 // isce::geometry
 #include "Topo.h"
@@ -23,7 +25,6 @@
 // pull in some isce::core namespaces
 using isce::core::Basis;
 using isce::core::Pixel;
-using isce::core::Poly2d;
 using isce::core::LinAlg;
 using isce::core::StateVector;
 using isce::io::Raster;
@@ -49,6 +50,7 @@ topo(Raster & demRaster,
 
     { // Topo scope for creating output rasters
 
+<<<<<<< HEAD
     // Create rasters for individual layers
     Raster xRaster = Raster(outdir + "/x.rdr", _mode.width(), _mode.length(), 1,
         GDT_Float64, "ISCE");
@@ -74,11 +76,21 @@ topo(Raster & demRaster,
     // Call topo with rasters
     topo(demRaster, xRaster, yRaster, heightRaster, incRaster, hdgRaster, localIncRaster,
          localPsiRaster, simRaster, alphaRaster, betaRaster);
+=======
+    // Initialize a TopoLayers object to handle block data and raster data
+    TopoLayers layers;
+
+    // Create rasters for individual layers (provide output raster sizes)
+    layers.initRasters(outdir, _mode.width(), _mode.length(), _computeMask);
+
+    // Call topo with layers
+    topo(demRaster, layers);
+>>>>>>> develop
 
     } // end Topo scope to release raster resources
 
     // Write out multi-band topo VRT
-    const std::vector<Raster> rasterTopoVec = {
+    std::vector<Raster> rasterTopoVec = {
         Raster(outdir + "/x.rdr" ),
         Raster(outdir + "/y.rdr" ),
         Raster(outdir + "/z.rdr" ),
@@ -90,6 +102,12 @@ topo(Raster & demRaster,
         Raster(outdir + "/alpha.rdr" ),
         Raster(outdir + "/beta.rdr" )
     };
+
+    // Add optional mask raster
+    if (_computeMask) {
+        rasterTopoVec.push_back(Raster(outdir + "/mask.rdr" ));
+    };
+
     Raster vrt = Raster(outdir + "/topo.vrt", rasterTopoVec );
     // Set its EPSG code
     vrt.setEPSG(_epsgOut);
@@ -107,13 +125,68 @@ topo(Raster & demRaster,
                from EAST (Right hand rule)
   * @param[in] localIncRaster output raster for local incidence angle (degrees) at target
   * @param[in] localPsiRaster output raster for local projection angle (degrees) at target
+<<<<<<< HEAD
   * @param[in] simRaster output raster for simulated amplitude image.
   * @param[in] alphaRaster output raster for DEM slope along X at target.
   * @param[in] betaRaster output raster for DEM slope along Y at target. */
+=======
+  * @param[in] simRaster output raster for simulated amplitude image. 
+  * @param[in] maskRaster output raster for layover/shadow mask. */
+void isce::geometry::Topo::
+topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRaster,
+     Raster & incRaster, Raster & hdgRaster, Raster & localIncRaster, Raster & localPsiRaster,
+     Raster & simRaster, Raster & maskRaster) {
+
+    // Initialize a TopoLayers object to handle block data and raster data
+    TopoLayers layers;
+
+    // Create rasters for individual layers (provide output raster sizes)
+    layers.setRasters(xRaster, yRaster, heightRaster, incRaster, hdgRaster, localIncRaster,
+                      localPsiRaster, simRaster, maskRaster);
+    // Indicate a mask raster has been provided for writing
+    computeMask(true);
+
+    // Call topo with layers
+    topo(demRaster, layers);
+}
+
+/** @param[in] demRaster input DEM raster
+  * @param[in] xRaster output raster for X coordinate in requested projection system 
+                   (meters or degrees)
+  * @param[in] yRaster output raster for Y cooordinate in requested projection system
+                   (meters or degrees)
+  * @param[in] zRaster output raster for height above ellipsoid (meters)
+  * @param[in] incRaster output raster for incidence angle (degrees) computed from vertical 
+               at target
+  * @param[in] hdgRaster output raster for azimuth angle (degrees) computed anti-clockwise 
+               from EAST (Right hand rule)
+  * @param[in] localIncRaster output raster for local incidence angle (degrees) at target
+  * @param[in] localPsiRaster output raster for local projection angle (degrees) at target
+  * @param[in] simRaster output raster for simulated amplitude image. */
+>>>>>>> develop
 void isce::geometry::Topo::
 topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRaster,
      Raster & incRaster, Raster & hdgRaster, Raster & localIncRaster, Raster & localPsiRaster,
      Raster & simRaster, Raster & alphaRaster, Raster & betaRaster) {
+
+    // Initialize a TopoLayers object to handle block data and raster data
+    TopoLayers layers;
+
+    // Create rasters for individual layers (provide output raster sizes)
+    layers.setRasters(xRaster, yRaster, heightRaster, incRaster, hdgRaster, localIncRaster,
+                      localPsiRaster, simRaster);
+    // Indicate no mask raster has been provided for writing
+    computeMask(false);
+
+    // Call topo with layers
+    topo(demRaster, layers);
+}
+
+/** @param[in] demRaster input DEM raster
+  * @param[in] layers TopoLayers object for storing and writing results
+  */
+void isce::geometry::Topo::
+topo(Raster & demRaster, TopoLayers & layers) {
 
     // Create reusable pyre::journal channels
     pyre::journal::warning_t warning("isce.geometry.Topo");
@@ -151,9 +224,9 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
              << "  - line start: " << lineStart << pyre::journal::newline
              << "  - line end  : " << lineStart + blockLength << pyre::journal::newline
              << "  - dopplers near mid far: "
-             << _doppler.eval(0, 0) << " "
-             << _doppler.eval(0, (_mode.width() / 2) - 1) << " "
-             << _doppler.eval(0, _mode.width() - 1) << " "
+             << _doppler.values()[0] << " "
+             << _doppler.values()[_doppler.size() / 2] << " " 
+             << _doppler.values()[_doppler.size() - 1] << " "
              << pyre::journal::endl;
 
         // Load DEM subset for SLC image block
@@ -165,8 +238,11 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
         // Reset reference height for DEMInterpolator
         demInterp.refHeight(dem_avg);
 
-        // Output layers for block
-        TopoLayers layers(blockLength, _mode.width());
+        // Set output block sizes in layers
+        layers.setBlockSize(blockLength, _mode.width());
+
+        // Allocate vector for storing satellite position for each line
+        std::vector<cartesian_t> satPosition(blockLength);
 
         // For each line in block
         for (size_t blockLine = 0; blockLine < blockLength; ++blockLine) {
@@ -178,6 +254,7 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
             Basis TCNbasis;
             StateVector state;
             _initAzimuthLine(line, state, TCNbasis);
+            satPosition[blockLine] = state.position();
 
             // Compute velocity magnitude
             const double satVmag = LinAlg::norm(state.velocity());
@@ -191,7 +268,7 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
 
                 // Get current Doppler value
                 const double dopfact = (0.5 * _mode.wavelength()
-                                     * (_doppler.eval(0, rbin) / satVmag)) * rng;
+                                     * (_doppler.eval(rng) / satVmag)) * rng;
 
                 // Store slant range bin data in Pixel
                 Pixel pixel(rng, dopfact, rbin);
@@ -212,6 +289,7 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
             } // end OMP for loop pixels in block
         } // end for loop lines in block
 
+<<<<<<< HEAD
         // Write out block of data for every product
         xRaster.setBlock(layers.x(), 0, lineStart, _mode.width(), blockLength);
         yRaster.setBlock(layers.y(), 0, lineStart, _mode.width(), blockLength);
@@ -223,7 +301,16 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
         simRaster.setBlock(layers.sim(), 0, lineStart, _mode.width(), blockLength);
         alphaRaster.setBlock(layers.alpha(), 0, lineStart, _mode.width(), blockLength);
         betaRaster.setBlock(layers.beta(), 0, lineStart, _mode.width(), blockLength);
+=======
+        // Compute layover/shadow masks for the block
+        if (_computeMask) {
+            setLayoverShadow(layers, demInterp, satPosition);
+        }
+>>>>>>> develop
 
+        // Write out block of data for all topo layers
+        layers.writeData(0, lineStart);    
+        
     } // end for loop blocks
 
     // Print out convergence statistics
@@ -336,7 +423,7 @@ computeDEMBounds(Raster & demRaster, DEMInterpolator & demInterp, size_t lineOff
         // Get proper slant range and Doppler factor
         const size_t rbin = rgInd[i];
         double rng = _mode.startingRange() + rbin * _mode.rangePixelSpacing();
-        double dopfact = (0.5 * _mode.wavelength() * (_doppler.eval(0, rbin)
+        double dopfact = (0.5 * _mode.wavelength() * (_doppler.eval(rng)
                         / satVmag)) * rng;
         // Store in Pixel object
         Pixel pixel(rng, dopfact, rbin);
@@ -418,6 +505,9 @@ _setOutputTopoLayers(cartesian_t & targetLLH, TopoLayers & layers, size_t line,
     // Compute vector from satellite to ground point
     LinAlg::linComb(1.0, targetXYZ, -1.0, state.position(), satToGround);
 
+    // Compute cross-track range
+    layers.crossTrack(line, bin, -1.0 * _lookSide * LinAlg::dot(satToGround, TCNbasis.x1()));
+
     // Compute unit velocity vector
     LinAlg::unitVec(state.velocity(), vhat);
 
@@ -470,6 +560,160 @@ _setOutputTopoLayers(cartesian_t & targetLLH, TopoLayers & layers, size_t line,
     const double cospsi = LinAlg::dot(n_trg_enu, n_img_enu)
           / (LinAlg::norm(n_trg_enu) * LinAlg::norm(n_img_enu));
     layers.localPsi(line, bin, std::acos(cospsi) * degrees);
+}
+
+/** @param[in] layers Object containing output layers
+ *  @param[in] demInterp DEMInterpolator object
+ *  @param[in] satPosition Vector of cartesian_t of satellite position for each line in block
+ *
+ *  Compute layer and shadow mask following the logic from ISCE 2
+ */
+void isce::geometry::Topo::
+setLayoverShadow(TopoLayers & layers, DEMInterpolator & demInterp,
+                 std::vector<cartesian_t> & satPosition) {
+
+    // Cache the width of the block
+    const int width = layers.width();
+    // Compute layover on oversampled grid
+    const int gridWidth = 2 * width;
+
+    // Allocate working valarrays
+    std::valarray<double> x(width), y(width), ctrack(width), ctrackGrid(gridWidth);
+    std::valarray<double> slantRange(width), slantRangeGrid(gridWidth);
+    std::valarray<short> maskGrid(gridWidth);
+
+    // Pre-compute slantRange grid used for all lines
+    for (int i = 0; i < width; ++i) {
+        slantRange[i] = _mode.startingRange() + i * _mode.rangePixelSpacing();
+    }
+   
+    // Initialize mask to zero for this block 
+    layers.mask() = 0;
+
+    // Loop over lines in block
+    #pragma omp parallel for firstprivate(x, y, ctrack, ctrackGrid, \
+                                          slantRangeGrid, maskGrid)
+    for (size_t line = 0; line < layers.length(); ++line) {
+
+        // Cache satellite position for this line
+        const cartesian_t xyzsat = satPosition[line];
+
+        // Copy cross-track, x, and y values for the line
+        for (int i = 0; i < width; ++i) {
+            ctrack[i] = layers.crossTrack(line, i);
+            x[i] = layers.x(line, i);
+            y[i] = layers.y(line, i);
+        }
+ 
+        // Sort ctrack, x, and y by values in ctrack
+        isce::core::insertionSort(ctrack, x, y);
+         
+        // Create regular grid for cross-track values
+        const double cmin = ctrack.min();// - demInterp.maxHeight();
+        const double cmax = ctrack.max();// + demInterp.maxHeight();
+        isce::core::linspace<double>(cmin, cmax, ctrackGrid);
+
+        // Interpolate DEM to regular cross-track grid
+        for (int i = 0; i < gridWidth; ++i) {
+
+            // Compute nearest ctrack index for current ctrackGrid value
+            const double crossTrack = ctrackGrid[i];
+            int k = isce::core::binarySearch(ctrack, crossTrack);
+            // Adjust edges if necessary
+            if (k == (width - 1)) {
+                k = width - 2;
+            } else if (k < 0) {
+                k = 0;
+            }
+
+            // Bilinear interpolation to estimate DEM x/y coordinates
+            const double c1 = ctrack[k];
+            const double c2 = ctrack[k+1];
+            const double frac1 = (c2 - crossTrack) / (c2 - c1);
+            const double frac2 = (crossTrack - c1) / (c2 - c1);
+            const double x_grid = x[k] * frac1 + x[k+1] * frac2;
+            const double y_grid = y[k] * frac1 + y[k+1] * frac2;
+
+            // Interpolate DEM at x/y
+            const float z_grid = demInterp.interpolateXY(x_grid, y_grid);
+
+            // Convert DEM XYZ to ECEF XYZ
+            cartesian_t llh, xyz, satToGround;
+            cartesian_t demXYZ{x_grid, y_grid, z_grid};
+            _proj->inverse(demXYZ, llh);
+            _ellipsoid.lonLatToXyz(llh, xyz);
+
+            // Compute and save slant range
+            LinAlg::linComb(1.0, xyz, -1.0, xyzsat, satToGround);
+            slantRangeGrid[i] = LinAlg::norm(satToGround);
+        }
+        
+        // Now sort cross-track grid in terms of slant range grid
+        isce::core::insertionSort(slantRangeGrid, ctrackGrid);
+
+        // Traverse from near range to far range on original spacing for shadow detection
+        double minIncAngle = layers.inc(line, 0);
+        for (int i = 1; i < width; ++i) {
+            const double inc = layers.inc(line, i);
+            // Test shadow
+            if (inc <= minIncAngle) {
+                layers.mask(line, i, isce::core::SHADOW_VALUE);
+            } else {
+                minIncAngle = inc;
+            }
+        }
+    
+        // Traverse from far range to near range on original spacing for shadow detection
+        double maxIncAngle = layers.inc(line, width - 1);
+        for (int i = width - 2; i >= 0; --i) {
+            const double inc = layers.inc(line, i);
+            // Test shadow
+            if (inc >= maxIncAngle) {
+                layers.mask(line, i, isce::core::SHADOW_VALUE);
+            } else {
+                maxIncAngle = inc;
+            }
+        }
+
+        // Traverse from near range to far range on grid spacing for layover detection
+        maskGrid = 0;
+        double minCrossTrack = ctrackGrid[0];
+        for (int i = 1; i < gridWidth; ++i) {
+            const double crossTrack = ctrackGrid[i];
+            // Test layover
+            if (crossTrack <= minCrossTrack) {
+                maskGrid[i] = isce::core::LAYOVER_VALUE;
+            } else {
+                minCrossTrack = crossTrack;
+            }
+        }
+
+        // Traverse from far range to near range on grid spacing for layover detection
+        double maxCrossTrack = ctrackGrid[gridWidth - 1];
+        for (int i = gridWidth - 2; i >= 0; --i) {
+            const double crossTrack = ctrackGrid[i];
+            // Test layover
+            if (crossTrack >= maxCrossTrack) {
+                maskGrid[i] = isce::core::LAYOVER_VALUE;
+            } else {
+                maxCrossTrack = crossTrack;
+            }
+        }
+
+        // Resample maskGrid to original spacing
+        for (int i = 0; i < gridWidth; ++i) {
+            if (maskGrid[i] > 0) {
+                // Find index in original grid spacing
+                int k = isce::core::binarySearch(slantRange, slantRangeGrid[i]);
+                if (k < 0 || k >= width) continue;
+                // Update it
+                const short maskval = layers.mask(line, k);
+                if (maskval < isce::core::LAYOVER_VALUE) {
+                    layers.mask(line, k, maskval + isce::core::LAYOVER_VALUE);
+                }
+            }
+        }
+    } // end loop lines
 }
 
 // end of file

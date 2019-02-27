@@ -6,7 +6,7 @@
 // isce::cuda::core
 #include "isce/cuda/core/gpuEllipsoid.h"
 #include "isce/cuda/core/gpuOrbit.h"
-#include "isce/cuda/core/gpuPoly2d.h"
+#include "isce/cuda/core/gpuLUT1d.h"
 #include "isce/cuda/core/gpuPixel.h"
 #include "isce/cuda/core/gpuBasis.h"
 #include "isce/cuda/core/gpuStateVector.h"
@@ -18,6 +18,7 @@
 #include "gpuTopoLayers.h"
 #include "gpuTopo.h"
 using isce::cuda::core::gpuLinAlg;
+#include "../helper_cuda.h"
 
 #define THRD_PER_BLOCK 96 // Number of threads per block (should always %32==0)
 
@@ -84,6 +85,9 @@ void setOutputTopoLayers(const double * targetLLH,
     // Compute vector from satellite to ground point
     gpuLinAlg::linComb(1.0, targetXYZ, -1.0, state.position, satToGround);
 
+    // Compute cross-track range
+    layers.crossTrack(index, -1*lookSide*gpuLinAlg::dot(satToGround, TCNbasis.x1));
+
     // Computation in ENU coordinates around target
     gpuLinAlg::enuBasis(targetLLH[1], targetLLH[0], enumat);
     gpuLinAlg::tranMat(enumat, xyz2enu);
@@ -137,7 +141,7 @@ void setOutputTopoLayers(const double * targetLLH,
 __global__
 void runTopoBlock(isce::cuda::core::gpuEllipsoid ellipsoid,
                   isce::cuda::core::gpuOrbit orbit,
-                  isce::cuda::core::gpuPoly2d doppler,
+                  isce::cuda::core::gpuLUT1d<double> doppler,
                   isce::cuda::product::gpuImageMode mode,
                   isce::cuda::geometry::gpuDEMInterpolator demInterp,
                   isce::cuda::core::ProjectionBase ** projOutput,
@@ -168,7 +172,7 @@ void runTopoBlock(isce::cuda::core::gpuEllipsoid ellipsoid,
         const double rng = mode.startingRange() + rbin * mode.rangePixelSpacing();
         
         // Get current Doppler value and factor
-        const double dopval = doppler.eval(0, rbin);
+        const double dopval = doppler.eval(rng);
         const double dopfact = 0.5 * mode.wavelength() * (dopval / satVmag) * rng;
 
         // Store slant range bin data in gpuPixel
@@ -197,7 +201,7 @@ void runTopoBlock(isce::cuda::core::gpuEllipsoid ellipsoid,
 void isce::cuda::geometry::
 runGPUTopo(const isce::core::Ellipsoid & ellipsoid,
            const isce::core::Orbit & orbit,
-           const isce::core::Poly2d & doppler,
+           const isce::core::LUT1d<double> & doppler,
            const isce::product::ImageMode & mode,
            isce::geometry::DEMInterpolator & demInterp,
            isce::geometry::TopoLayers & layers,
@@ -208,7 +212,7 @@ runGPUTopo(const isce::core::Ellipsoid & ellipsoid,
     // Create gpu ISCE objects
     isce::cuda::core::gpuEllipsoid gpu_ellipsoid(ellipsoid);
     isce::cuda::core::gpuOrbit gpu_orbit(orbit);
-    isce::cuda::core::gpuPoly2d gpu_doppler(doppler);
+    isce::cuda::core::gpuLUT1d<double> gpu_doppler(doppler);
     isce::cuda::product::gpuImageMode gpu_mode(mode); 
     isce::cuda::geometry::gpuDEMInterpolator gpu_demInterp(demInterp); 
     isce::cuda::geometry::gpuTopoLayers gpu_layers(layers);

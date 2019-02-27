@@ -49,7 +49,6 @@ EXPORT_PKG_HEADERS = \
     Doppler.h \
     Ellipsoid.h \
     EulerAngles.h \
-    EulerAngles.icc \
     Interpolator.h \
     LUT2d.h \
     LinAlg.h \
@@ -65,10 +64,10 @@ EXPORT_PKG_HEADERS = \
     Position.h \
     Projections.h \
     Quaternion.h \
-    Quaternion.icc \
     Serialization.h \
     StateVector.h \
     TimeDelta.h \
+    Utilities.h \
 
 # build
 PROJ_CXX_INCLUDES += $(EXPORT_ROOT)/include/$(PROJECT)-$(PROJECT_MAJOR).$(PROJECT_MINOR)

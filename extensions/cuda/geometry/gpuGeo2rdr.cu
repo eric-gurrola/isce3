@@ -6,13 +6,14 @@
 // isce::cuda::core
 #include "isce/cuda/core/gpuEllipsoid.h"
 #include "isce/cuda/core/gpuOrbit.h"
-#include "isce/cuda/core/gpuPoly2d.h"
+#include "isce/cuda/core/gpuLUT1d.h"
 // isce::cuda::product
 #include "isce/cuda/product/gpuImageMode.h"
 // isce::cuda::geometry
 #include "gpuGeometry.h"
 #include "gpuGeo2rdr.h"
 using isce::cuda::core::gpuLinAlg;
+#include "../helper_cuda.h"
 
 #define THRD_PER_BLOCK 96 // Number of threads per block (should always %32==0)
 #define NULL_VALUE -1000000.0
@@ -20,7 +21,7 @@ using isce::cuda::core::gpuLinAlg;
 __global__
 void runGeo2rdrBlock(isce::cuda::core::gpuEllipsoid ellps,
                      isce::cuda::core::gpuOrbit orbit,
-                     isce::cuda::core::gpuPoly2d doppler,
+                     isce::cuda::core::gpuLUT1d<double> doppler,
                      isce::cuda::product::gpuImageMode mode,
                      double * x, double * y, double * hgt,
                      float * azoff, float * rgoff,
@@ -86,7 +87,7 @@ void runGeo2rdrBlock(isce::cuda::core::gpuEllipsoid ellps,
 void isce::cuda::geometry::
 runGPUGeo2rdr(const isce::core::Ellipsoid & ellipsoid,
               const isce::core::Orbit & orbit,
-              const isce::core::Poly2d & doppler,
+              const isce::core::LUT1d<double> & doppler,
               const isce::product::ImageMode & mode,
               const std::valarray<double> & x,
               const std::valarray<double> & y,
@@ -100,7 +101,7 @@ runGPUGeo2rdr(const isce::core::Ellipsoid & ellipsoid,
     // Create gpu ISCE objects
     isce::cuda::core::gpuEllipsoid gpu_ellipsoid(ellipsoid);
     isce::cuda::core::gpuOrbit gpu_orbit(orbit);
-    isce::cuda::core::gpuPoly2d gpu_doppler(doppler);
+    isce::cuda::core::gpuLUT1d<double> gpu_doppler(doppler);
     isce::cuda::product::gpuImageMode gpu_mode(mode); 
 
     // Allocate memory on device topo data and results

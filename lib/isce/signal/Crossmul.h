@@ -11,14 +11,13 @@
 # include <assert.h>
 
 // pyre
-#include <portinfo>
 #include <pyre/journal.h>
 
 #include <isce/io/Raster.h>
-#include <isce/core/Poly2d.h>
+#include <isce/core/LUT1d.h>
 #include "Signal.h"
 #include "Filter.h"
-
+#include "Looks.h"
 
 namespace isce {
     namespace signal {
@@ -48,10 +47,17 @@ class isce::signal::Crossmul {
         void crossmul(isce::io::Raster& referenceSLC,
                     isce::io::Raster& secondarySLC,
                     isce::io::Raster& rngOffset,
-                    isce::io::Raster& interferogram);
+                    isce::io::Raster& interferogram,
+                    isce::io::Raster& coherence);
 
         /** \brief Run crossmul */
         void crossmul(isce::io::Raster& referenceSLC, 
+                    isce::io::Raster& secondarySLC,
+                    isce::io::Raster& interferogram,
+                    isce::io::Raster& coherence);
+
+        /** \brief Run crossmul */
+        void crossmul(isce::io::Raster& referenceSLC,
                     isce::io::Raster& secondarySLC,
                     isce::io::Raster& interferogram);
 
@@ -73,9 +79,9 @@ class isce::signal::Crossmul {
                         size_t ncols);
         
 
-       /** Set doppler polynomials for reference and secondary SLCs*/
-        inline void doppler(isce::core::Poly2d, 
-                            isce::core::Poly2d);
+       /** Set doppler LUTs for reference and secondary SLCs*/
+        inline void doppler(isce::core::LUT1d<double>, 
+                            isce::core::LUT1d<double>);
 
         /** Set pulse repetition frequency (PRF) */
         inline void prf(double);
@@ -125,11 +131,11 @@ class isce::signal::Crossmul {
                                 size_t &peakIndex);
 
     private:
-        //Doppler polynomial for the refernce SLC
-        isce::core::Poly2d _refDoppler;
+        //Doppler LUT for the refernce SLC
+        isce::core::LUT1d<double> _refDoppler;
 
-        //Doppler polynomial for the secondary SLC
-        isce::core::Poly2d _secDoppler;
+        //Doppler LUT for the secondary SLC
+        isce::core::LUT1d<double> _secDoppler;
 
         //pulse repetition frequency
         double _prf;
@@ -153,22 +159,29 @@ class isce::signal::Crossmul {
         double _beta;
 
         // number of range looks
-        int _rangeLooks;
+        int _rangeLooks = 1;
 
         // number of azimuth looks
-        int _azimuthLooks;
+        int _azimuthLooks = 1;
+
+        bool _doMultiLook = false;
 
         // Flag for common azimuth band filtering
-        bool _doCommonAzimuthbandFilter;
+        bool _doCommonAzimuthbandFilter = false;
 
         // Flag for common range band filtering
-        bool _doCommonRangebandFilter;
+        bool _doCommonRangebandFilter = false;
+
+        // Flag for computing coherence
+        bool _computeCoherence = true;
 
         // number of lines per block
-        size_t blockRows = 1000;
+        size_t blockRows = 8192;
 
         // upsampling factor
-        size_t oversample = 2;
+        size_t oversample = 1;
+
+        
 };
 
 // Get inline implementations for Crossmul

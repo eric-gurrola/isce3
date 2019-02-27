@@ -13,7 +13,6 @@
 #include <vector>
 
 // pyre
-#include <portinfo>
 #include <pyre/journal.h>
 
 // isce::core
@@ -93,6 +92,11 @@ class isce::product::ImageMode {
         /** Set range pixel spacing. */
         inline void rangePixelSpacing(double value) { _rangePixelSpacing = value; }
 
+        /** Get azimuth pixel spacing. */
+        inline double azimuthPixelSpacing() const { return _azimuthPixelSpacing; }
+        /** Set azimuth pixel spacing. */
+        inline void azimuthPixelSpacing(double value) { _azimuthPixelSpacing = value; }
+
         /** Get number of azimuth looks. */
         inline size_t numberAzimuthLooks() const { return _numberAzimuthLooks; }
         /** Set number of azimuth looks. */
@@ -129,6 +133,7 @@ class isce::product::ImageMode {
         double _wavelength;
         double _startingRange;
         double _rangePixelSpacing;
+        double _azimuthPixelSpacing;
 
         // Looks
         size_t _numberAzimuthLooks;

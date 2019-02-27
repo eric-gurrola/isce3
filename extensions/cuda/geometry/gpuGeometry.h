@@ -23,7 +23,7 @@
 // isce::core
 #include "isce/core/Ellipsoid.h"
 #include "isce/core/Orbit.h"
-#include "isce/core/Poly2d.h"
+#include "isce/core/LUT1d.h"
 
 // isce::product
 #include "isce/product/ImageMode.h"
@@ -36,7 +36,7 @@
 #include "isce/cuda/core/gpuEllipsoid.h"
 #include "isce/cuda/core/gpuOrbit.h"
 #include "isce/cuda/core/gpuPixel.h"
-#include "isce/cuda/core/gpuPoly2d.h"
+#include "isce/cuda/core/gpuLUT1d.h"
 #include "isce/cuda/core/gpuLinAlg.h"
 #include "isce/cuda/core/gpuStateVector.h"
 
@@ -45,7 +45,6 @@
 
 // isce::cuda::geometry
 #include "isce/cuda/geometry/gpuDEMInterpolator.h"
-#include "isce/cuda/helper_cuda.h"
 
 // Declaration
 namespace isce {
@@ -58,8 +57,7 @@ namespace geometry {
                          const isce::cuda::core::gpuEllipsoid &,
                          const gpuDEMInterpolator &,
                          double *,
-                         double, int, double, int, int,
-                         isce::core::orbitInterpMethod);
+                         double, int, double, int, int);
 
     /** Radar geometry coordinates to map coordinates transformer*/
     CUDA_DEV int rdr2geo(const isce::cuda::core::gpuPixel &,
@@ -74,7 +72,7 @@ namespace geometry {
     CUDA_DEV int geo2rdr(double *,
                          const isce::cuda::core::gpuEllipsoid &,
                          const isce::cuda::core::gpuOrbit &,
-                         const isce::cuda::core::gpuPoly2d &,
+                         const isce::cuda::core::gpuLUT1d<double> &,
                          const isce::cuda::product::gpuImageMode &,
                          double *, double *,
                          double, int, double);
@@ -92,7 +90,7 @@ namespace geometry {
     CUDA_HOST int geo2rdr_h(const cartesian_t &,
                             const isce::core::Ellipsoid &,
                             const isce::core::Orbit &,
-                            const isce::core::Poly2d &,
+                            const isce::core::LUT1d<double> &,
                             const isce::product::ImageMode &,
                             double &, double &,
                             double, int, double);
