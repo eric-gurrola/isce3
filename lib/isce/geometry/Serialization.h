@@ -60,7 +60,6 @@ namespace isce {
             topo.orbitMethod(orbitMethod);
             topo.demMethod(demMethod);
             topo.epsgOut(epsgOut);
-            topo.initialized(true);
         }
 
         // ----------------------------------------------------------------------
