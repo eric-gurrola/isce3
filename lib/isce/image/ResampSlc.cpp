@@ -30,16 +30,9 @@ resamp(const std::string & outputFilename,
        bool flatten, bool isComplex, int rowBuffer,
        int chipSize) {
 
-  std::string inputFilename;
-
-  // Form the GDAL-compatible path for the HDF5 dataset if dataset is HDF5
-  // TODO: need to implement a proper isHDF5() method in Product class
-  if(_filename.substr( _filename.length() - 2 ) == "h5") {
+    // Form the GDAL-compatible path for the HDF5 dataset
     const std::string dataPath = _mode.dataPath(polarization);
-    const std::string inputFilename = "HDF5:\"" + _filename + "\":/" + dataPath;
-  }
-  else
-    inputFilename = _filename;
+    const std::string h5path = "HDF5:\"" + _filename + "\":/" + dataPath;
 
     // Call alternative resmap entry point using filenames
     resamp(h5path, outputFilename, rgOffsetFilename, azOffsetFilename, 1,
@@ -82,7 +75,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         std::cout << "Real data interpolation not implemented yet.\n";
         return;
     }
-
+        
     // Set the band number for input SLC
     _inputBand = inputBand;
     // Cache width of SLC image
@@ -94,11 +87,11 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
 
     // Initialize resampling methods
     _prepareInterpMethods(isce::core::SINC_METHOD, chipSize-1);
-
+   
     // Determine number of tiles needed to process image
     const int nTiles = _computeNumberOfTiles(outLength, _linesPerTile);
-    std::cout<<
-        "Resampling using " << nTiles << " tiles of " << _linesPerTile
+    std::cout<< 
+        "Resampling using " << nTiles << " tiles of " << _linesPerTile 
         << " lines per tile\n";
     // Start timer
     auto timerStart = std::chrono::steady_clock::now();
@@ -124,8 +117,8 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
 
         // Get corresponding image indices
         std::cout << "Reading in image data for tile " << tileCount << "\n";
-        _initializeTile(tile, inputSlc, azOffTile, outLength, rowBuffer, chipSize/2);
-
+        _initializeTile(tile, inputSlc, azOffTile, outLength, rowBuffer, chipSize/2); 
+    
         // Perform interpolation
         std::cout << "Interpolating tile " << tileCount << "\n";
         _transformTile(tile, outputSlc, rgOffTile, azOffTile, inLength, flatten, chipSize);
@@ -163,7 +156,7 @@ _initializeOffsetTiles(Tile_t & tile,
     rgOffTile.lastImageRow(tile.rowEnd());
     rgOffTile.allocate();
 
-    // Read in block of range and azimuth offsets
+    // Read in block of range and azimuth offsets 
     azOffsetRaster.getBlock(&azOffTile[0], 0, azOffTile.rowStart(),
                             azOffTile.width(), azOffTile.length());
     rgOffsetRaster.getBlock(&rgOffTile[0], 0, rgOffTile.rowStart(),
@@ -213,8 +206,7 @@ _initializeTile(Tile_t & tile, Raster & inputSlc, const isce::image::Tile<float>
         for (int j = 0; j < outWidth; ++j) {
             // Get azimuth offset for pixel
             const double azOff = azOffTile(i,j);
-
-            // Skip null values
+            // Skip null values 
             if (azOff < -5.0e5 || std::isnan(azOff)) {
                 continue;
             } else {
@@ -232,7 +224,7 @@ _initializeTile(Tile_t & tile, Raster & inputSlc, const isce::image::Tile<float>
     } else {
         tile.lastImageRow(inLength);
     }
-
+    
     // Tile will allocate memory for itself
     tile.allocate();
 
@@ -245,7 +237,7 @@ _initializeTile(Tile_t & tile, Raster & inputSlc, const isce::image::Tile<float>
         for (int j = 0; j < inWidth; j++) {
             // Evaluate the pixel's carrier phase
             const double phase = modulo_f(
-                  _rgCarrier.eval(tile.firstImageRow() + i, j)
+                  _rgCarrier.eval(tile.firstImageRow() + i, j) 
                 + _azCarrier.eval(tile.firstImageRow() + i, j), 2.0*M_PI);
             // Remove the carrier
             std::complex<float> cpxPhase(std::cos(phase), -std::sin(phase));
@@ -305,7 +297,7 @@ _transformTile(Tile_t & tile,
             const int intRg = static_cast<int>(j + rgOff);
             const double fracAz = i + azOff - intAz;
             const double fracRg = j + rgOff - intRg;
-
+           
             // Check bounds
             if ((intAz < chipHalf) || (intAz >= (inLength - chipHalf)))
                 continue;
@@ -318,22 +310,22 @@ _transformTile(Tile_t & tile,
 
             // Doppler to be added back. Simultaneously evaluate carrier that needs to
             // be added back after interpolation
-            double phase = (dop * fracAz)
-                + _rgCarrier.eval(i + azOff, j + rgOff)
+            double phase = (dop * fracAz) 
+                + _rgCarrier.eval(i + azOff, j + rgOff) 
                 + _azCarrier.eval(i + azOff, j + rgOff);
 
             // Flatten the carrier phase if requested
             if (flatten && _haveRefMode) {
-                phase += ((4. * (M_PI / _mode.wavelength())) *
-                    ((_mode.startingRange() - _refMode.startingRange())
-                    + (j * (_mode.rangePixelSpacing() - _refMode.rangePixelSpacing()))
-                    + (rgOff * _mode.rangePixelSpacing()))) + ((4.0 * M_PI
-                    * (_refMode.startingRange() + (j * _refMode.rangePixelSpacing())))
+                phase += ((4. * (M_PI / _mode.wavelength())) * 
+                    ((_mode.startingRange() - _refMode.startingRange()) 
+                    + (j * (_mode.rangePixelSpacing() - _refMode.rangePixelSpacing())) 
+                    + (rgOff * _mode.rangePixelSpacing()))) + ((4.0 * M_PI 
+                    * (_refMode.startingRange() + (j * _refMode.rangePixelSpacing()))) 
                     * ((1.0 / _refMode.wavelength()) - (1.0 / _mode.wavelength())));
             }
             // Modulate by 2*PI
             phase = modulo_f(phase, 2.0*M_PI);
-
+            
             // Read data chip without the carrier phases
             for (int ii = 0; ii < chipSize; ++ii) {
                 // Row to read from
