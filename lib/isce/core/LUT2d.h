@@ -44,9 +44,6 @@ class isce::core::LUT2d {
         // Deep assignment operator
         inline LUT2d & operator=(const LUT2d<T> & lut);
 
-        // Constructor from an LUT1d object
-        inline LUT2d(const LUT1d<T> & lut);
-
         // Set data from external data
         void setFromData(const std::valarray<double> & xcoord,
                          const std::valarray<double> & ycoord,
@@ -143,11 +140,6 @@ operator=(const LUT2d<T> & lut) {
     _setInterpolator(lut.interpMethod());
     return *this;
 }
-
-// Constructor from an LUT1d object
-template <typename T>
-isce::core::LUT2d<T>::
-LUT2d(const isce::core::LUT1d<T> & lut) : 
 
 // Set interpolator method
 /** @param[in] method Data interpolation method */

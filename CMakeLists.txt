@@ -86,7 +86,7 @@ add_subdirectory(extensions)
 add_subdirectory(tests)
 
 ###Setup tests
-#add_subdirectory(app)
+add_subdirectory(app)
 
 ###Setup doc
 if (WITH_DOC)

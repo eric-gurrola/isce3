@@ -71,6 +71,9 @@ class isce::core::LUT1d {
         /** Assignment operator from an LUT2d (values averaged in y-direction) */
         inline LUT1d & operator=(const LUT2d<T> & lut2d);
 
+        /** Convert to an LUT2d */
+        inline LUT2d<T> toLUT2d() const;
+
         /** Get a reference to the coordinates
           * @param[out] coords Reference to valarray for coordinates */
         inline std::valarray<double> & coords() { return _coords; }
