@@ -8,71 +8,126 @@
 #error "Baseline.icc is an implementation detail of class Baseline"
 #endif
 
+// isce::geometry::Baseline::
+// Baseline(isce::product::Product & productMaster,
+//          isce::product::Product & productSlave) {
+
+
+//   // Copy objects for Master
+//   _modeMaster = productMaster.complexImagery().primaryMode();
+//   _orbitMaster = productMaster.metadata().orbitPOE();
+//   _ellipsoidMaster = productMaster.metadata().identification().ellipsoid();
+//   _dopplerMaster = productMaster.metadata().instrument().skewDoppler();
+
+//   // For numerical precision purposes, set reference epoch 2 days prior
+//   _sensingStartMaster = _modeMaster.startAzTime();
+//   _refEpochMaster._init(_sensingStartMaster.year, _sensingStartMaster.months,
+//                         _sensingStartMaster.days - 2, 0, 0, 0, 0.0);
+//   // Update orbit epochs with new epoch
+//   _orbitMaster.updateUTCTimes(_refEpochMaster);
+
+
+//   // Copy objects for Slave
+//   _modeSlave = productSlave.complexImagery().primaryMode();
+//   _orbitSlave = productSlave.metadata().orbitPOE();
+//   _ellipsoidSlave = productSlave.metadata().identification().ellipsoid();
+//   _dopplerSlave = productSlave.metadata().instrument().skewDoppler();
+
+//   // For numerical precision purposes, set reference epoch 2 days prior
+//   _sensingStartSlave = _modeSlave.startAzTime();
+//   _refEpochSlave._init(_sensingStartSlave.year, _sensingStartSlave.months,
+//                         _sensingStartSlave.days - 2, 0, 0, 0, 0.0);
+//   // Update orbit epochs with new epoch
+//   _orbitSlave.updateUTCTimes(_refEpochSlave);
+
+// }
+
+/** @param[in] product Input Product Master
+  * @param[in] product Input Product Slave
+  * @param[in] frequency Frequency designation
+  * @param[in] nativeDoppler Flag for using native Doppler frequencies instead of zero-Doppler
+  * @param[in] numberAzimuthLooks Number of azimuth looks of input product
+  * @param[in] numberRangeLooks Number of range looks of input product
+  *
+  * Primary constructor of Baseline object. */
 isce::geometry::Baseline::
-Baseline(isce::product::Product & productMaster,
-         isce::product::Product & productSlave) {
+Baseline(const isce::product::Product & productMaster,
+         const isce::product::Product & productSlave,
+         char frequency,
+         bool nativeDoppler,
+         size_t numberAzimuthLooks,
+         size_t numberRangeLooks) :
+  _radarGridMaster(productMaster, frequency, numberAzimuthLooks, numberRangeLooks),
+  _radarGridSlave (productSlave,  frequency, numberAzimuthLooks, numberRangeLooks) {
 
+  // Copy orbit and doppler
+  _orbitMaster = productMaster.metadata().orbit();
+  _orbitSlave  = productSlave.metadata().orbit();
+  if (nativeDoppler) {
+      _dopplerMaster = productMaster.metadata().procInfo().dopplerCentroid(frequency);
+      _dopplerSlave  = productSlave.metadata().procInfo().dopplerCentroid(frequency);
+  }
 
-  // Copy objects for Master
-  _modeMaster = productMaster.complexImagery().primaryMode();
-  _orbitMaster = productMaster.metadata().orbitPOE();
-  _ellipsoidMaster = productMaster.metadata().identification().ellipsoid();
-  _dopplerMaster = productMaster.metadata().instrument().skewDoppler();
-
-  // For numerical precision purposes, set reference epoch 2 days prior
-  _sensingStartMaster = _modeMaster.startAzTime();
-  _refEpochMaster._init(_sensingStartMaster.year, _sensingStartMaster.months,
-                        _sensingStartMaster.days - 2, 0, 0, 0, 0.0);
-  // Update orbit epochs with new epoch
-  _orbitMaster.updateUTCTimes(_refEpochMaster);
-
-
-  // Copy objects for Slave
-  _modeSlave = productSlave.complexImagery().primaryMode();
-  _orbitSlave = productSlave.metadata().orbitPOE();
-  _ellipsoidSlave = productSlave.metadata().identification().ellipsoid();
-  _dopplerSlave = productSlave.metadata().instrument().skewDoppler();
-
-  // For numerical precision purposes, set reference epoch 2 days prior
-  _sensingStartSlave = _modeSlave.startAzTime();
-  _refEpochSlave._init(_sensingStartSlave.year, _sensingStartSlave.months,
-                        _sensingStartSlave.days - 2, 0, 0, 0, 0.0);
-  // Update orbit epochs with new epoch
-  _orbitSlave.updateUTCTimes(_refEpochSlave);
+    // Make an ellipsoid manually
+  _ellipsoidMaster = isce::core::Ellipsoid(isce::core::EarthSemiMajorAxis,
+                                           isce::core::EarthEccentricitySquared);
 
 }
 
 
-// Constructor
+/** @param[in] ellipsoid Ellipsoid Master object
+  * @param[in] orbit Orbit Master object
+  * @param[in] doppler LUT1d doppler Master model
+  * @param[in] meta Metadata Master object
+  * @param[in] ellipsoid Ellipsoid Slave object
+  * @param[in] orbit Orbit Slave object
+  * @param[in] doppler LUT1d doppler Slave model
+  * @param[in] numberAzimuthLooks Number of azimuth looks of input product
+  * @param[in] numberRangeLooks Number of range looks of input product
+  *
+  * Alternative constructor from ellipsoid, orbit, doppler, and metadata. */
 isce::geometry::Baseline::
-Baseline(isce::core::Ellipsoid ellipsoidMaster,
-         isce::core::Orbit orbitMaster,
-         isce::product::ImageMode modeMaster,
-         isce::core::Ellipsoid ellipsoidSlave,
-         isce::core::Orbit orbitSlave,
-         isce::product::ImageMode modeSlave) {
-
-  // Copy objects
-  _ellipsoidMaster = ellipsoidMaster;
-  _orbitMaster = orbitMaster;
-  _modeMaster = modeMaster;
-  // For numerical precision purposes, set reference epoch 2 days prior
-  _refEpochMaster._init(_modeMaster.startAzTime().year, _modeMaster.startAzTime().months,
-                        _modeMaster.startAzTime().days - 2, 0, 0, 0, 0.0);
-  // Reformat orbit using this epoch
-  _orbitMaster.updateUTCTimes(_refEpochMaster);
+Baseline(const isce::core::Ellipsoid & ellipsoidMaster, const isce::core::Orbit & orbitMaster,
+        const isce::core::LUT2d<double> & dopplerMaster, const isce::core::Metadata & metaMaster,
+         const isce::core::Ellipsoid & ellipsoidSlave, const isce::core::Orbit & orbitSlave,
+        const isce::core::LUT2d<double> & dopplerSlave, const isce::core::Metadata & metaSlave,
+         size_t numberAzimuthLooks, size_t numberRangeLooks) :
+        _radarGridMaster(metaMaster, orbitMaster.refEpoch, numberAzimuthLooks, numberRangeLooks),
+        _radarGridSlave(metaSlave, orbitSlave.refEpoch, numberAzimuthLooks, numberRangeLooks),
+        _ellipsoidMaster(ellipsoidMaster), _orbitMaster(orbitMaster), _dopplerMaster(dopplerMaster),
+        _ellipsoidSlave(ellipsoidSlave), _orbitSlave(orbitSlave), _dopplerSlave(dopplerSlave) {}
 
 
-  // Copy objects
-  _ellipsoidSlave = ellipsoidSlave;
-  _orbitSlave = orbitSlave;
-  _modeSlave = modeSlave;
-  // For numerical precision purposes, set reference epoch 2 days prior
-  _refEpochSlave._init(_modeSlave.startAzTime().year, _modeSlave.startAzTime().months,
-                       _modeSlave.startAzTime().days - 2, 0, 0, 0, 0.0);
-  // Reformat orbit using this epoch
-  _orbitSlave.updateUTCTimes(_refEpochSlave);
-}
+// // Constructor
+// isce::geometry::Baseline::
+// Baseline(isce::core::Ellipsoid ellipsoidMaster,
+//          isce::core::Orbit orbitMaster,
+//          isce::product::ImageMode modeMaster,
+//          isce::core::Ellipsoid ellipsoidSlave,
+//          isce::core::Orbit orbitSlave,
+//          isce::product::ImageMode modeSlave) {
+
+//   // Copy objects
+//   _ellipsoidMaster = ellipsoidMaster;
+//   _orbitMaster = orbitMaster;
+//   _modeMaster = modeMaster;
+//   // For numerical precision purposes, set reference epoch 2 days prior
+//   _refEpochMaster._init(_modeMaster.startAzTime().year, _modeMaster.startAzTime().months,
+//                         _modeMaster.startAzTime().days - 2, 0, 0, 0, 0.0);
+//   // Reformat orbit using this epoch
+//   _orbitMaster.updateUTCTimes(_refEpochMaster);
+
+
+//   // Copy objects
+//   _ellipsoidSlave = ellipsoidSlave;
+//   _orbitSlave = orbitSlave;
+//   _modeSlave = modeSlave;
+//   // For numerical precision purposes, set reference epoch 2 days prior
+//   _refEpochSlave._init(_modeSlave.startAzTime().year, _modeSlave.startAzTime().months,
+//                        _modeSlave.startAzTime().days - 2, 0, 0, 0, 0.0);
+//   // Reformat orbit using this epoch
+//   _orbitSlave.updateUTCTimes(_refEpochSlave);
+// }
 
 // Set threshold
 void isce::geometry::Baseline::

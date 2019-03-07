@@ -106,7 +106,8 @@ class isce::geometry::Topo {
                   isce::io::Raster & yRaster, isce::io::Raster & heightRaster,
                   isce::io::Raster & incRaster, isce::io::Raster & hdgRaster,
                   isce::io::Raster & localIncRaster, isce::io::Raster & localPsiRaster,
-                  isce::io::Raster & simRaster, isce::io::Raster & maskRaster);
+                  isce::io::Raster & simRaster, isce::io::Raster & maskRaster,
+                  isce::io::Raster & alphaRaster, isce::io::Raster & betaRaster);
 
         /** Run topo with externally created topo rasters; generate mask */
         void topo(isce::io::Raster & demRaster, isce::io::Raster & xRaster,

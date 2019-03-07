@@ -119,7 +119,6 @@ class isce::geometry::TopoLayers {
                         isce::io::Raster & zRaster, isce::io::Raster & incRaster,
                         isce::io::Raster & hdgRaster, isce::io::Raster & localIncRaster,
                         isce::io::Raster & localPsiRaster, isce::io::Raster & simRaster,
-                        isce::io::Raster & localPsiRaster, isce::io::Raster & simRaster,
                         isce::io::Raster & alphaRaster, isce::io::Raster & betaRaster) {
             _xRaster = &xRaster;
             _yRaster = &yRaster;

@@ -67,35 +67,47 @@ namespace isce {
                     double, double, double, size_t,
                     double, int, double);
 
-        // geo->radar with output satpos and satvel
-        int geo2rdr(const cartesian_t &,
-                    const isce::core::Ellipsoid &,
-                    const isce::core::Orbit &,
-                    const isce::core::Poly2d &,
-                    const isce::product::ImageMode &,
-                    double &, double &,
-                    isce::core::cartesian_t &, isce::core::cartesian_t &,
-                    double, int, double);
-
-        // baseline
-        int baseline(const cartesian_t &,
-                     const isce::core::Ellipsoid &,
-                     const isce::core::Ellipsoid &,
-                     const isce::core::Orbit &,
-                     const isce::core::Orbit &,
-                     const isce::core::Poly2d &,
-                     const isce::core::Poly2d &,
-                     const isce::product::ImageMode &,
-                     const isce::product::ImageMode &,
-                     double &, double &,
-                     double, int, double, double &, double &);
-
         int geo2rdr(const cartesian_t &,
                     const isce::core::Ellipsoid &,
                     const isce::core::Orbit &,
                     const isce::core::LUT2d<double> &,
                     double &, double &,
                     double, double, int, double);
+
+        // // // geo->radar with output satpos and satvel
+        // int geo2rdr(const cartesian_t &,
+        //             const isce::core::Ellipsoid &,
+        //             const isce::core::Orbit &,
+        //             const isce::core::LUT2d<double> &,
+        //             //const isce::product::ImageMode &,
+        //             isce::core::cartesian_t &, isce::core::cartesian_t &,
+        //             double &, double &,
+        //             double, double, int, double);
+
+        int geo2rdr(const cartesian_t &,
+                    const isce::core::Ellipsoid &,
+                    const isce::core::Orbit &,
+                    const isce::core::LUT2d<double> &,
+                    isce::core::cartesian_t &, isce::core::cartesian_t &,
+                    double &, double &,
+                    double, double, int, double);
+
+
+        // // baseline
+        int baseline(const cartesian_t &,
+                     const isce::core::Ellipsoid &,
+                     const isce::core::Ellipsoid &,
+                     const isce::core::Orbit &,
+                     const isce::core::Orbit &,
+                    const isce::core::LUT2d<double> &,
+                     const isce::core::LUT2d<double> &,
+                     //const isce::product::ImageMode &,
+                     //const isce::product::ImageMode &,
+                     double &, double &,
+                     double,
+                     //double, double, double, size_t,
+                     double, int, double, double &, double &);
+
 
         // Utility function to compute geocentric TCN basis from state vector
         void geocentricTCN(isce::core::StateVector &,

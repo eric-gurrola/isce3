@@ -120,7 +120,8 @@ cdef class pyTopo:
                                  deref(yRaster.c_raster), deref(heightRaster.c_raster),
                                  deref(incRaster.c_raster), deref(hdgRaster.c_raster),
                                  deref(localIncRaster.c_raster), deref(localPsiRaster.c_raster),
-                                 deref(simRaster.c_raster), deref(alphaRaster.c_raster), deref(betaRaster.c_raster))
+                                 deref(simRaster.c_raster),
+                                 deref(alphaRaster.c_raster), deref(betaRaster.c_raster))
 
         elif outputDir is not None:
             # Convert output directory to C++ string

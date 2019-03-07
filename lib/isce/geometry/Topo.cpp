@@ -101,16 +101,20 @@ topo(Raster & demRaster,
   * @param[in] simRaster output raster for simulated amplitude image.
   * @param[in] maskRaster output raster for layover/shadow mask. */
 void isce::geometry::Topo::
-topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRaster,
-     Raster & incRaster, Raster & hdgRaster, Raster & localIncRaster, Raster & localPsiRaster,
-     Raster & simRaster, Raster & maskRaster) {
+topo(Raster & demRaster, Raster & xRaster,
+     Raster & yRaster, Raster & heightRaster,
+     Raster & incRaster, Raster & hdgRaster,
+     Raster & localIncRaster, Raster & localPsiRaster,
+     Raster & simRaster, Raster & maskRaster,
+     Raster & alphaRaster, Raster & betaRaster) {
 
     // Initialize a TopoLayers object to handle block data and raster data
     TopoLayers layers;
 
     // Create rasters for individual layers (provide output raster sizes)
     layers.setRasters(xRaster, yRaster, heightRaster, incRaster, hdgRaster, localIncRaster,
-                      localPsiRaster, simRaster, maskRaster);
+                      localPsiRaster, simRaster, maskRaster,
+                      alphaRaster, betaRaster);
     // Indicate a mask raster has been provided for writing
     computeMask(true);
 
@@ -132,16 +136,19 @@ topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRast
   * @param[in] localPsiRaster output raster for local projection angle (degrees) at target
   * @param[in] simRaster output raster for simulated amplitude image. */
 void isce::geometry::Topo::
-topo(Raster & demRaster, Raster & xRaster, Raster & yRaster, Raster & heightRaster,
-     Raster & incRaster, Raster & hdgRaster, Raster & localIncRaster, Raster & localPsiRaster,
-     Raster & simRaster, Raster & alphaRaster, Raster & betaRaster) {
+topo(Raster & demRaster, Raster & xRaster,
+     Raster & yRaster, Raster & heightRaster,
+     Raster & incRaster, Raster & hdgRaster,
+     Raster & localIncRaster, Raster & localPsiRaster,
+     Raster & simRaster,
+     Raster & alphaRaster, Raster & betaRaster) {
 
     // Initialize a TopoLayers object to handle block data and raster data
     TopoLayers layers;
 
     // Create rasters for individual layers (provide output raster sizes)
     layers.setRasters(xRaster, yRaster, heightRaster, incRaster, hdgRaster, localIncRaster,
-                      localPsiRaster, simRaster);
+                      localPsiRaster, simRaster, alphaRaster, betaRaster);
     // Indicate no mask raster has been provided for writing
     computeMask(false);
 

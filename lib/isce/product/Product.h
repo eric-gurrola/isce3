@@ -38,10 +38,10 @@ class isce::product::Product {
         inline Product(std::string vrtFile, int numBand=1);
 
         /** Constructor with ComplexImagery and Metadata objects. ML */
-        inline Product(const ComplexImagery &, const Metadata &);
+        //inline Product(const ComplexImagery &, const Metadata &);
 
         /** Get a const reference to the complex imagery. ML */
-        inline const ComplexImagery & complexImagery() const { return _complexImagery; }
+        //inline const ComplexImagery & complexImagery() const { return _complexImagery; }
         //inline  ComplexImagery & complexImagery() { return _complexImagery; }
 
         /** Constructor with Metadata and Swath map. */
