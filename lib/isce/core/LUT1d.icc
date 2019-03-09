@@ -81,6 +81,40 @@ operator=(const LUT2d<T> & lut2d) {
     return *this;
 }
 
+// Convert to an LUT2d
+template <typename T>
+isce::core::LUT2d<T>
+isce::core::LUT1d<T>::
+toLUT2d() const {
+
+    // Cache x-coordinates
+    const double xstart = _coords[0];
+    const double dx = _coords[1] - xstart;
+    const double nx = _coords.size();
+
+    // We simply replicate the LUT1d data in azimuth
+    // Use 7 azimuth records to ensure enough points for interpolation kernels
+    // Max time chosen to be roughly August 8, 2920
+    const double ystart = 0.0;
+    const double ymax = 3.0e10;
+    const size_t ny = 7;
+    const double dy = ymax / (ny - 1);
+
+    // Create a Matrix with the correct size
+    isce::core::Matrix<T> data(ny, nx);
+
+    // Copy values
+    for (size_t i = 0; i < ny; ++i) {
+        for (size_t j = 0; j < nx; ++j) {
+            data(i,j) = _values[j];
+        }
+    }
+
+    // Create LUT2d and return
+    isce::core::LUT2d<T> lut2d(xstart, ystart, dx, dy, data, isce::core::BILINEAR_METHOD);
+    return lut2d;
+}
+
 /** @param[in] x Point to evaluate the LUT
   * @param[out] result Interpolated value */
 template <typename T>
