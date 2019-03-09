@@ -27,7 +27,7 @@ namespace isce {
 
 /** \brief Intereferogram generation by cross-multiplication of reference and secondary SLCs.
  *
- *  The secondary SLC must be on the same image grid as the reference SLC, 
+ *  The secondary SLC must be on the same image grid as the reference SLC,
  */
 class isce::signal::Crossmul {
     public:
@@ -35,7 +35,7 @@ class isce::signal::Crossmul {
         Crossmul() {};
 
         ~Crossmul() {};
-        
+
         /*
         void Crossmul(const isce::product::Product& referenceSLC,
                     const isce::product::Product& secondarySLC,
@@ -45,24 +45,30 @@ class isce::signal::Crossmul {
 
         /** \brief Run crossmul */
         void crossmul(isce::io::Raster& referenceSLC,
-                    isce::io::Raster& secondarySLC,
-                    isce::io::Raster& rngOffset,
-                    isce::io::Raster& interferogram,
-                    isce::io::Raster& coherence);
-
-        /** \brief Run crossmul */
-        void crossmul(isce::io::Raster& referenceSLC, 
-                    isce::io::Raster& secondarySLC,
-                    isce::io::Raster& interferogram,
-                    isce::io::Raster& coherence);
+                      isce::io::Raster& secondarySLC,
+                      isce::io::Raster& rngOffset,
+                      isce::io::Raster& interferogram,
+                      isce::io::Raster& coherence,
+                      size_t referenceSlcBand = 1,
+                      size_t secondarySlcBand = 1);
 
         /** \brief Run crossmul */
         void crossmul(isce::io::Raster& referenceSLC,
-                    isce::io::Raster& secondarySLC,
-                    isce::io::Raster& interferogram);
+                      isce::io::Raster& secondarySLC,
+                      isce::io::Raster& interferogram,
+                      isce::io::Raster& coherence,
+                      size_t referenceSlcBand = 1,
+                      size_t secondarySlcBand = 1);
+
+        /** \brief Run crossmul */
+        void crossmul(isce::io::Raster& referenceSLC,
+                      isce::io::Raster& secondarySLC,
+                      isce::io::Raster& interferogram,
+                      size_t referenceSlcBand = 1,
+                      size_t secondarySlcBand = 1);
 
         /** Compute the frequency response due to a subpixel shift introduced by upsampling and downsampling*/
-        void lookdownShiftImpact(size_t oversample, size_t nfft, 
+        void lookdownShiftImpact(size_t oversample, size_t nfft,
                                 size_t blockRows,
                                 std::valarray<std::complex<float>> &shiftImpact);
 
@@ -77,10 +83,10 @@ class isce::signal::Crossmul {
                         isce::signal::Filter<float> &rngFilter,
                         size_t blockRows,
                         size_t ncols);
-        
+
 
        /** Set doppler LUTs for reference and secondary SLCs*/
-        inline void doppler(isce::core::LUT1d<double>, 
+        inline void doppler(isce::core::LUT1d<double>,
                             isce::core::LUT1d<double>);
 
         /** Set pulse repetition frequency (PRF) */
@@ -106,7 +112,7 @@ class isce::signal::Crossmul {
         inline void beta(double);
 
 
-        /** Set number of range looks */ 
+        /** Set number of range looks */
         inline void rangeLooks(int);
 
         /** Set number of azimuth looks */
@@ -127,7 +133,7 @@ class isce::signal::Crossmul {
                                         double &frequencyShift);
 
         /** estimate the index of the maximum of a vector of data */
-        inline void getPeakIndex(std::valarray<float> data, 
+        inline void getPeakIndex(std::valarray<float> data,
                                 size_t &peakIndex);
 
     private:
@@ -145,7 +151,7 @@ class isce::signal::Crossmul {
 
         // range signal bandwidth
         double _rangeBandwidth;
-        
+
         // range pixel spacing
         double _rangePixelSpacing;
 
@@ -181,7 +187,7 @@ class isce::signal::Crossmul {
         // upsampling factor
         size_t oversample = 1;
 
-        
+
 };
 
 // Get inline implementations for Crossmul
