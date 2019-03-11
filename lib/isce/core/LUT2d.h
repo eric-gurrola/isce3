@@ -48,7 +48,7 @@ class isce::core::LUT2d {
         // Constructor from a Poly2d
         inline LUT2d(const Poly2d & poly,
                      double xstart,
-                     double xend
+                     double xend,
                      double dx,
                      double ystart,
                      double yend,
@@ -63,7 +63,7 @@ class isce::core::LUT2d {
         inline isce::core::dataInterpMethod interpMethod() const {
             return _interp->method();
         }
-    
+
         // Set interpolator method
         inline void interpMethod(isce::core::dataInterpMethod method) {
             _setInterpolator(method);
@@ -90,8 +90,8 @@ class isce::core::LUT2d {
 
         // Set bounds error floag
         inline void boundsError(bool flag) { _boundsError = flag; }
-              
-        // Evaluate LUT    
+
+        // Evaluate LUT
         T eval(double y, double x) const;
 
     private:
@@ -156,7 +156,7 @@ template <typename T>
 isce::core::LUT2d<T>::
 LUT2d(const isce::core::Poly2d & poly,
       double xstart,
-      double xend
+      double xend,
       double dx,
       double ystart,
       double yend,
@@ -183,7 +183,6 @@ LUT2d(const isce::core::Poly2d & poly,
 
     // Create LUT2d and return
     isce::core::LUT2d<T> lut2d(xstart, ystart, dx, dy, data, isce::core::BILINEAR_METHOD);
-    return lut2d;
 }
 
 // Set interpolator method
