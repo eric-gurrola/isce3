@@ -12,6 +12,7 @@
 
 // isce::core
 #include <isce/core/Interpolator.h>
+#include <isce/core/Poly2d.h>
 
 // Declaration
 namespace isce {
@@ -43,6 +44,15 @@ class isce::core::LUT2d {
 
         // Deep assignment operator
         inline LUT2d & operator=(const LUT2d<T> & lut);
+
+        // Constructor from a Poly2d
+        inline LUT2d(const Poly2d & poly,
+                     double xstart,
+                     double xend
+                     double dx,
+                     double ystart,
+                     double yend,
+                     double dy);
 
         // Set data from external data
         void setFromData(const std::valarray<double> & xcoord,
@@ -139,6 +149,41 @@ operator=(const LUT2d<T> & lut) {
     _boundsError = lut.boundsError();
     _setInterpolator(lut.interpMethod());
     return *this;
+}
+
+// Constructor from a Poly2d
+template <typename T>
+isce::core::LUT2d<T>::
+LUT2d(const isce::core::Poly2d & poly,
+      double xstart,
+      double xend
+      double dx,
+      double ystart,
+      double yend,
+      double dy) {
+
+    // Compute number of coordinates in each direction
+    const size_t nx = static_cast<size_t>((xend - xstart) / dx + 1.0);
+    const size_t ny = static_cast<size_t>((yend - ystart) / dy + 1.0);
+
+    // Create a Matrix with the correct size
+    isce::core::Matrix<T> data(ny, nx);
+
+    // Loop over coordinates
+    for (size_t i = 0; i < ny; ++i) {
+        // Compute y-coordinate
+        const double y = ystart + dy * i;
+        for (size_t j = 0; j < nx; ++j) {
+            // Compute x-coordinate
+            const double x = xstart + dx * j;
+            // Evaluate polynomial
+            data(i,j) = poly.eval(y, x);
+        }
+    }
+
+    // Create LUT2d and return
+    isce::core::LUT2d<T> lut2d(xstart, ystart, dx, dy, data, isce::core::BILINEAR_METHOD);
+    return lut2d;
 }
 
 // Set interpolator method
