@@ -160,14 +160,14 @@ LUT2d(const isce::core::Poly2d & poly,
       double dx,
       double ystart,
       double yend,
-      double dy) {
+      double dy) : _xstart(xstart), _ystart(ystart), _dx(dx), _dy(dy) {
 
     // Compute number of coordinates in each direction
     const size_t nx = static_cast<size_t>((xend - xstart) / dx + 1.0);
     const size_t ny = static_cast<size_t>((yend - ystart) / dy + 1.0);
 
-    // Create a Matrix with the correct size
-    isce::core::Matrix<T> data(ny, nx);
+    // Resize matrix of data
+    _data.resize(ny, nx);
 
     // Loop over coordinates
     for (size_t i = 0; i < ny; ++i) {
@@ -177,12 +177,14 @@ LUT2d(const isce::core::Poly2d & poly,
             // Compute x-coordinate
             const double x = xstart + dx * j;
             // Evaluate polynomial
-            data(i,j) = poly.eval(y, x);
+            _data(i,j) = poly.eval(y, x);
         }
     }
 
-    // Create LUT2d and return
-    isce::core::LUT2d<T> lut2d(xstart, ystart, dx, dy, data, isce::core::BILINEAR_METHOD);
+    // Set flags
+    _haveData = true;
+    _boundsError = true;
+    _setInterpolator(isce::core::BILINEAR_METHOD);
 }
 
 // Set interpolator method
