@@ -83,6 +83,8 @@ class isce::core::LUT2d {
         inline size_t width() const { return _data.width(); }
         // Get the reference value
         inline T refValue() const { return _refValue; }
+        // Get flag for having data
+        inline bool haveData() const { return _haveData; }
         // Get bounds error flag
         inline bool boundsError() const { return _boundsError; }
         // Get read-only reference to data
@@ -126,7 +128,8 @@ LUT2d(isce::core::dataInterpMethod method) : _haveData(false), _boundsError(true
 // Deep copy constructor
 template <typename T>
 isce::core::LUT2d<T>::
-LUT2d(const isce::core::LUT2d<T> & lut) : _haveData(true), _boundsError(lut.boundsError()),
+LUT2d(const isce::core::LUT2d<T> & lut) : _haveData(lut.haveData()),
+                                          _boundsError(lut.boundsError()),
                                           _refValue(lut.refValue()),
                                           _xstart(lut.xStart()), _ystart(lut.yStart()),
                                           _dx(lut.xSpacing()), _dy(lut.ySpacing()),
@@ -145,7 +148,7 @@ operator=(const LUT2d<T> & lut) {
     _dx = lut.xSpacing();
     _dy = lut.ySpacing();
     _data = lut.data();
-    _haveData = true;
+    _haveData = lut.haveData();
     _boundsError = lut.boundsError();
     _setInterpolator(lut.interpMethod());
     return *this;
