@@ -28,14 +28,14 @@
 
 namespace isce {
   namespace io {
-   
+
     /** Data structure meant to handle Raster I/O operations.
      *
      * This is currently a thin wrapper over GDAL's Dataset class with some simpler
-     * interfaces for I/O. ISCE is expected to only support North-up and West-left 
+     * interfaces for I/O. ISCE is expected to only support North-up and West-left
      * oriented rasters. */
     class Raster {
-      
+
     public:
 
       Raster() {_dataset = nullptr;};
@@ -64,7 +64,7 @@ namespace isce {
       /** Constructor for a 1 band dataset from isce::core::Matrix<T> */
       template<typename T> Raster(isce::core::Matrix<T> &matrix);
 
-      // Constructor for a 1 band dataset from isce::core::Matrix<T>::view_type 
+      // Constructor for a 1 band dataset from isce::core::Matrix<T>::view_type
       template<typename T> Raster(pyre::grid::View<T> &view);
 
       /** Create new raster object like another */
@@ -74,7 +74,7 @@ namespace isce {
 
       /** Create a VRT raster dataset with collection of bands from Rasters */
       Raster(const std::string& fname, const std::vector<Raster>& rastVec);
-      
+
       /** Copy constructor*/
       Raster(const Raster&);
 
@@ -108,7 +108,7 @@ namespace isce {
       /** GDALDataset pointer getter */
       inline GDALDataset* dataset()  const { return _dataset; }
 
-      /** GDALDataset pointer setter 
+      /** GDALDataset pointer setter
        *
        * @param[in] ds GDALDataset pointer*/
       inline void         dataset(GDALDataset* ds) { _dataset=ds; }
@@ -121,9 +121,9 @@ namespace isce {
       /** Check dimensions compatibility with another raster
        *
        * @param[in] rast Reference raster to compare against*/
-      inline bool         match(const Raster & rast) const { return width()==rast.width() && length()==rast.length(); } 
+      inline bool         match(const Raster & rast) const { return width()==rast.width() && length()==rast.length(); }
 
-      /**Open file with GDAL*/ 
+      /**Open file with GDAL*/
       inline void         open(const std::string &fname, GDALAccess access);
 
       /** Add a raster to VRT*/
@@ -135,9 +135,9 @@ namespace isce {
       /** Add a raw data band to VRT */
       inline void         addRawBandToVRT(const std::string &fname, GDALDataType dtype);
       //void close() { GDALClose( _dataset ); }  // todo: fix segfault conflict with destructor
-     
+
       //Pixel read/write with buffer passed by reference, optional band index
-      /** Get/Set single value */  
+      /** Get/Set single value */
       template<typename T> void getSetValue(T& buffer, size_t xidz, size_t yidx, size_t band, GDALRWFlag);
       /** Get single value for given band*/
       template<typename T> void getValue(T& buffer, size_t xidx, size_t yidx, size_t band);
@@ -148,11 +148,11 @@ namespace isce {
       /** Set single value in band 1*/
       template<typename T> void setValue(T& buffer, size_t xidx, size_t yidx);
 
-     
+
       // Line read/write with raw pointer and width or STL container, optional band index
       /** Get/Set line in a band from raw pointer */
       template<typename T> void getSetLine(T* buffer, size_t yidx, size_t iowidth, size_t band, GDALRWFlag iodir);
-      /** Read one line of data from given band to buffer */ 
+      /** Read one line of data from given band to buffer */
       template<typename T> void getLine(T* buffer, size_t yidx, size_t iowidth, size_t band);
       /** Read one line of data from band 1 to buffer */
       template<typename T> void getLine(T* buffer, size_t yidx, size_t iowidth);
@@ -164,7 +164,7 @@ namespace isce {
       template<typename T> void getLine(std::valarray<T>& arr, size_t yidx, size_t band);
       /** Read one line of data from band 1 to std::valarray*/
       template<typename T> void getLine(std::valarray<T>& arr, size_t yidx);
-      /** Write one line of data from buffer to given band*/ 
+      /** Write one line of data from buffer to given band*/
       template<typename T> void setLine(T* buffer, size_t yidx, size_t iowidth, size_t band);
       /** Write one line of data from buffer to band 1*/
       template<typename T> void setLine(T* buffer, size_t yidx, size_t iowidth);
@@ -177,7 +177,7 @@ namespace isce {
       /** Write one line of data from std::valarray to band 1*/
       template<typename T> void setLine(std::valarray<T>& arr, size_t yidx);
 
-      
+
       // 2D block read/write, generic container w/ width or STL container, optional band index
       /** Get/Set block in band from raw pointer */
       template<typename T> void getSetBlock(T* buffer, size_t xidx, size_t yidx, size_t iowidth, size_t iolength, size_t band, GDALRWFlag iodir);
@@ -205,19 +205,19 @@ namespace isce {
       template<typename T> void setBlock(std::valarray<T>& arr, size_t xidx, size_t yidx, size_t iowidth, size_t iolength, size_t band);
       /** Write block of data to band 1 from std::valarray*/
       template<typename T> void setBlock(std::valarray<T>& arr, size_t xidx, size_t yidx, size_t iowidth, size_t iolength);
-    
+
       //2D block read/write for Matrix<T>, optional band index
       /** Read block of data from given band to Matrix<T> */
       template<typename T> void getBlock(isce::core::Matrix<T>& mat, size_t xidx, size_t yidx, size_t band);
 
       /** Read block of data from band 1 to Matrix<T> */
       template<typename T> void getBlock(isce::core::Matrix<T>& mat, size_t xidx, size_t yidx);
-      
+
       /** Write block of data to given band from Matrix<T> */
       template<typename T> void setBlock(isce::core::Matrix<T>& mat, size_t xidx, size_t yidx, size_t band);
 
       /** Write block of data to band 1 from Matrix<T> */
-      template<typename T> void setBlock(isce::core::Matrix<T>& mat, size_t xidx, size_t yidx); 
+      template<typename T> void setBlock(isce::core::Matrix<T>& mat, size_t xidx, size_t yidx);
 
       //2D block read/write for Matrix<T>, optional band index
       /** Read/Write block of data from given band to/from Matrix<T>::view_type */
@@ -261,10 +261,10 @@ namespace isce {
       inline double dx() const;
       /** Return NS pixel spacing of Raster*/
       inline double dy() const;
-      
+
     private:
-      
-      GDALDataset * _dataset; 
+
+      GDALDataset * _dataset;
 
     };
   }
