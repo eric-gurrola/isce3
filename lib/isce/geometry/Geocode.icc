@@ -14,7 +14,7 @@ geoGrid(double geoGridStartX, double geoGridStartY,
         double geoGridSpacingX, double geoGridSpacingY,
         double geoGridEndX, double geoGridEndY,
         int epsgcode) {
-   
+
     int length = 1 + (geoGridEndY - geoGridStartY) /
                     geoGridSpacingY;
 
@@ -33,8 +33,8 @@ geoGrid(double geoGridStartX, double geoGridStartY,
         double geoGridSpacingX, double geoGridSpacingY,
         int width, int length, int epsgcode) {
 
-    // populate the geoTransform 
-    // Assumption: origin is the top-left corner of 
+    // populate the geoTransform
+    // Assumption: origin is the top-left corner of
     //               the top-left pixel of the grid
     _geoTrans = new double[6];
     _geoTrans[0] = geoGridStartX;
@@ -43,10 +43,10 @@ geoGrid(double geoGridStartX, double geoGridStartY,
     _geoTrans[3] = geoGridStartY;
     _geoTrans[4] = 0.0;
     _geoTrans[5] = geoGridSpacingY;
-    
+
 
     // the starting coordinate of the output geocoded grid in X direction.
-    // Since the input is alwayas referring to the top-left corner of the 
+    // Since the input is alwayas referring to the top-left corner of the
     // top-left pixel, we adjust to the center for internal use only
     _geoGridStartX = geoGridStartX + geoGridSpacingX/2;
 
@@ -91,6 +91,35 @@ radarGrid(isce::core::LUT2d<double> doppler,
         rangeSpacing, radarGridLength, radarGridWidth, refEpoch
     );
 }
+
+template<class T>
+void isce::geometry::Geocode<T>::
+radarGrid(const isce::core::LUT2d<double> & doppler,
+          const isce::core::Metadata & meta,
+          const isce::core::DateTime & refEpoch,
+          size_t numberAzimuthLooks,
+          size_t numberRangeLooks) {
+  _doppler = doppler;
+  _radarGrid = isce::product::RadarGridParameters(meta,
+                                                  refEpoch,
+                                                  numberAzimuthLooks,
+                                                  numberRangeLooks);
+}
+
+
+template<class T>
+void isce::geometry::Geocode<T>::
+radarGrid(isce::product::RadarGridParameters radarGrid) {
+    _radarGrid = radarGrid;
+}
+
+
+template<class T>
+void isce::geometry::Geocode<T>::
+doppler(isce::core::LUT2d<double> doppler) {
+    _doppler = doppler;
+}
+
 
 template<class T>
 void isce::geometry::Geocode<T>::
@@ -174,7 +203,7 @@ interpolator(isce::core::Interpolator<T> * interp) {
 template<class T>
 void isce::geometry::Geocode<T>::
 interpolator(isce::core::dataInterpMethod method) {
-    
+
     _interp = isce::core::createInterpolator<T>(method);
 
 }
