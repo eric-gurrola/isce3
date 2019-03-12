@@ -89,7 +89,7 @@ namespace isce {
             ellps.a(ellpsData[0]);
             ellps.e2(ellpsData[1]);
         }
-        
+
         // ------------------------------------------------------------------------
         // Serialization for Orbit
         // ------------------------------------------------------------------------
@@ -113,8 +113,8 @@ namespace isce {
          * @param[in] orbit         Orbit object to be configured. */
         inline void loadFromH5(isce::io::IGroup & group, Orbit & orbit) {
             // Reset orbit data
-            orbit.position.clear(); 
-            orbit.velocity.clear(); 
+            orbit.position.clear();
+            orbit.velocity.clear();
             orbit.UTCtime.clear();
             orbit.epochs.clear();
 
@@ -138,7 +138,7 @@ namespace isce {
                 date += orbit.UTCtime[i];
                 orbit.epochs[i] = date;
             }
-            
+
         }
 
         // ------------------------------------------------------------------------
@@ -154,7 +154,7 @@ namespace isce {
             // Create temporary data
             std::vector<double> time, angles, yaw, pitch, roll;
             isce::core::DateTime refEpoch;
-            
+
             // Load angles
             isce::io::loadFromH5(group, "eulerAngles", angles);
 
@@ -246,10 +246,10 @@ namespace isce {
          * @param[in] poly          Poly2d to be configured.
          * @param[in] name          Dataset name within group. */
         inline void loadFromH5(isce::io::IGroup & group, Poly2d & poly, std::string name) {
-            
+
             // Configure the polynomial coefficients
             isce::io::loadFromH5(group, name, poly.coeffs);
-            
+
             // Set other polynomial properties
             poly.rangeOrder = poly.coeffs.size() - 1;
             poly.azimuthOrder = 0;
