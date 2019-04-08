@@ -50,4 +50,7 @@ include "pyResampSlc.pxd"
 include "pyTopo.pxd"
 include "pyGeo2rdr.pxd"
 
+# Include the signal extensions
+include "Crossmul.pxd"
+
 # end of file

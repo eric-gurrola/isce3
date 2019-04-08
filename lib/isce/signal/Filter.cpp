@@ -97,7 +97,7 @@ constructRangeBandpassFilter(double rangeSamplingFrequency,
 
     std::valarray<double> frequency(nfft);
     double dt = 1.0/rangeSamplingFrequency;
-    fftfreq(nfft, dt, frequency);
+    fftfreq(dt, frequency);
 
     if (filterType=="boxcar"){
         constructRangeBandpassBoxcar(
@@ -264,7 +264,7 @@ constructAzimuthCommonbandFilter(const isce::core::LUT1d<double> & refDoppler,
     int nfft = nrows;
     // Construct vector of frequencies
     std::valarray<double> frequency(nfft);
-    fftfreq(nfft, 1.0/prf, frequency);
+    fftfreq(1.0/prf, frequency);
     
     // Loop over range bins
     for (int j = 0; j < ncols; ++j) {
@@ -314,14 +314,15 @@ filter(std::valarray<std::complex<T>> &signal,
 }
 
 /**
- * @param[in] N length of the signal
  * @param[in] dt sampling interval of the signal
  * @param[out] freq output vector of the frequencies 
  */
 template <class T>
 void
 isce::signal::Filter<T>::
-fftfreq(int N, double dt, std::valarray<double> &freq){
+fftfreq(double dt, std::valarray<double> &freq){
+
+    int N = freq.size();
 
     // Scale factor
     const double scale = 1.0 / (N * dt);

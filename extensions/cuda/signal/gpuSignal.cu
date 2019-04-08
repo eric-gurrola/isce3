@@ -38,7 +38,7 @@ gpuSignal<T>::
     }
 
     if (_d_data_set) {
-        cudaFree(_d_data);
+        checkCudaErrors(cudaFree(_d_data));
     }
 }
 
@@ -292,6 +292,8 @@ forwardDevMem(float *input, float *output)
         checkCudaErrors(cufftExecC2C(_plan, reinterpret_cast<cufftComplex *>(input),
                     reinterpret_cast<cufftComplex *>(output),
                     CUFFT_FORWARD));
+
+        checkCudaErrors(cudaDeviceSynchronize());
     }
 }
 
@@ -308,6 +310,8 @@ forwardDevMem(double *input, double *output)
         checkCudaErrors(cufftExecZ2Z(_plan, reinterpret_cast<cufftDoubleComplex *>(input),
                     reinterpret_cast<cufftDoubleComplex *>(output),
                     CUFFT_FORWARD));
+
+        checkCudaErrors(cudaDeviceSynchronize());
     }
 }
 
@@ -348,11 +352,13 @@ forwardC2C(std::complex<T> *input, std::complex<T> *output)
                                     reinterpret_cast<cufftComplex *>(d_input),
                                     CUFFT_FORWARD));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(output, d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -383,11 +389,13 @@ forwardC2C(std::valarray<std::complex<T>> &input, std::valarray<std::complex<T>>
                                     reinterpret_cast<cufftComplex *>(d_input),
                                     CUFFT_FORWARD));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(&output[0], d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -418,11 +426,13 @@ forwardZ2Z(std::complex<T> *input, std::complex<T> *output)
                                     reinterpret_cast<cufftDoubleComplex *>(d_input),
                                     CUFFT_FORWARD));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(output, d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -453,11 +463,13 @@ forwardZ2Z(std::valarray<std::complex<T>> &input, std::valarray<std::complex<T>>
                                     reinterpret_cast<cufftDoubleComplex *>(d_input),
                                     CUFFT_FORWARD));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(&output[0], d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -487,11 +499,13 @@ forwardD2Z(T *input, std::complex<T> *output)
         checkCudaErrors(cufftExecD2Z(_plan, reinterpret_cast<cufftDoubleReal *>(d_input),
                                     reinterpret_cast<cufftDoubleComplex *>(d_output)));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(output, d_output, output_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -569,6 +583,8 @@ inverseDevMem(float *input, float *output)
         checkCudaErrors(cufftExecC2C(_plan, reinterpret_cast<cufftComplex *>(input),
                     reinterpret_cast<cufftComplex *>(output),
                     CUFFT_INVERSE));
+
+        checkCudaErrors(cudaDeviceSynchronize());
     }
 }
 
@@ -585,6 +601,8 @@ inverseDevMem(double *input, double *output)
         checkCudaErrors(cufftExecZ2Z(_plan, reinterpret_cast<cufftDoubleComplex *>(input),
                     reinterpret_cast<cufftDoubleComplex *>(output),
                     CUFFT_INVERSE));
+
+        checkCudaErrors(cudaDeviceSynchronize());
     }
 }
 
@@ -625,11 +643,13 @@ inverseC2C(std::complex<T> *input, std::complex<T> *output)
                                     reinterpret_cast<cufftComplex *>(d_input),
                                     CUFFT_INVERSE));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(output, d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 
 }
@@ -661,11 +681,13 @@ inverseC2C(std::valarray<std::complex<T>> &input, std::valarray<std::complex<T>>
                                     reinterpret_cast<cufftComplex *>(d_input),
                                     CUFFT_INVERSE));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(&output[0], d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -696,11 +718,13 @@ inverseZ2Z(std::complex<T> *input, std::complex<T> *output)
                                     reinterpret_cast<cufftDoubleComplex *>(d_input),
                                     CUFFT_INVERSE));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(output, d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -731,11 +755,13 @@ inverseZ2Z(std::valarray<std::complex<T>> &input, std::valarray<std::complex<T>>
                                     reinterpret_cast<cufftDoubleComplex *>(d_input),
                                     CUFFT_INVERSE));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(&output[0], d_input, input_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -765,11 +791,13 @@ inverseZ2D(std::complex<T> *input, T *output)
         checkCudaErrors(cufftExecZ2D(_plan, reinterpret_cast<cufftDoubleComplex *>(d_input),
                                     reinterpret_cast<cufftDoubleReal *>(d_output)));
 
+        checkCudaErrors(cudaDeviceSynchronize());
+
         // copy output
         checkCudaErrors(cudaMemcpy(output, d_output, output_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 
@@ -870,7 +898,7 @@ upsample(std::valarray<std::complex<T>> &input,
                     reinterpret_cast<thrust::complex<T> *>(d_output),
                     reinterpret_cast<thrust::complex<T> *>(d_shift_impact),
                     _rows, _columns, upsampleFactor*_columns);
-            cudaFree(d_shift_impact);
+            checkCudaErrors(cudaFree(d_shift_impact));
         }
         else
             rangeShift_g<<<grid, block>>>(
@@ -893,8 +921,8 @@ upsample(std::valarray<std::complex<T>> &input,
         // copy output
         checkCudaErrors(cudaMemcpy(&output[0], d_output, output_size, cudaMemcpyDeviceToHost));
 
-        cudaFree(d_input);
-        cudaFree(d_output);
+        checkCudaErrors(cudaFree(d_input));
+        checkCudaErrors(cudaFree(d_output));
     }
 }
 

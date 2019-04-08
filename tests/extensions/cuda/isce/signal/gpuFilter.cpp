@@ -25,7 +25,6 @@ TEST(Filter, constructAzimuthCommonbandFilter)
     int oversample = 2;
 
     std::valarray<std::complex<float>> refSlc(ncols*blockRows);
-    std::valarray<std::complex<float>> refSpectrum(nfft*blockRows);
 
     // Get some metadata from an existing HDF5 file
     std::string h5file("../../../../lib/isce/data/envisat.h5");
@@ -57,8 +56,8 @@ TEST(Filter, constructAzimuthCommonbandFilter)
             commonAzimuthBandwidth,
             prf,
             beta,
-            refSlc, refSpectrum,
-            ncols, blockRows);
+            ncols,
+            blockRows);
 
     az_filter.writeFilter(ncols, blockRows);
 
