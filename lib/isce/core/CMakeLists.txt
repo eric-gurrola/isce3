@@ -52,6 +52,8 @@ set(HEADERS Attitude.h
             Cube.icc
             Metadata.h
             Orbit.h
+            NewOrbit.h
+            NewOrbit.icc
             Peg.h
             Pegtrans.h
             Pixel.h

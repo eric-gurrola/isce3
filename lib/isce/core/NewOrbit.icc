@@ -1,0 +1,262 @@
+#ifndef ISCE_CORE_ORBIT_ICC
+#error "NewOrbit.icc is an implementation detail of NewOrbit.h"
+#endif
+
+#include <isce/except/Error.h>
+
+namespace isce { namespace core {
+
+inline
+OrbitPoint & OrbitPoint::operator=(const StateVector & statevec)
+{
+    if (!statevec.datetime.isClose(datetime)) {
+        throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
+    }
+
+    position = statevec.position;
+    velocity = statevec.velocity;
+
+    return *this;
+}
+
+inline
+OrbitPoint::operator StateVector() const
+{
+    return {datetime, position, velocity};
+}
+
+inline
+OrbitPoint::OrbitPoint(const DateTime & datetime, Vec3 & position, Vec3 & velocity)
+:
+    datetime {datetime},
+    position {position},
+    velocity {velocity}
+{}
+
+inline
+bool operator==(const OrbitPoint & lhs, const StateVector & rhs)
+{
+    return lhs.datetime == rhs.datetime &&
+           lhs.position == rhs.position &&
+           lhs.velocity == rhs.velocity;
+}
+
+inline
+bool operator==(const StateVector & rhs, const OrbitPoint & lhs)
+{
+    return lhs.datetime == rhs.datetime &&
+           lhs.position == rhs.position &&
+           lhs.velocity == rhs.velocity;
+}
+
+inline
+bool operator!=(const OrbitPoint & lhs, const StateVector & rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline
+bool operator!=(const StateVector & lhs, const OrbitPoint & rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline
+const_OrbitPoint::operator StateVector() const
+{
+    return {datetime, position, velocity};
+}
+
+inline
+bool operator==(const const_OrbitPoint & lhs, const StateVector & rhs)
+{
+    return lhs.datetime == rhs.datetime &&
+           lhs.position == rhs.position &&
+           lhs.velocity == rhs.velocity;
+}
+
+inline
+bool operator==(const StateVector & rhs, const const_OrbitPoint & lhs)
+{
+    return lhs.datetime == rhs.datetime &&
+           lhs.position == rhs.position &&
+           lhs.velocity == rhs.velocity;
+}
+
+inline
+bool operator!=(const const_OrbitPoint & lhs, const StateVector & rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline
+bool operator!=(const StateVector & lhs, const const_OrbitPoint & rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline
+bool operator==(const const_OrbitPoint & lhs, const OrbitPoint & rhs)
+{
+    return lhs.datetime == rhs.datetime &&
+           lhs.position == rhs.position &&
+           lhs.velocity == rhs.velocity;
+}
+
+inline
+bool operator==(const OrbitPoint & rhs, const const_OrbitPoint & lhs)
+{
+    return lhs.datetime == rhs.datetime &&
+           lhs.position == rhs.position &&
+           lhs.velocity == rhs.velocity;
+}
+
+inline
+bool operator!=(const const_OrbitPoint & lhs, const OrbitPoint & rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline
+bool operator!=(const OrbitPoint & lhs, const const_OrbitPoint & rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline
+const_OrbitPoint::const_OrbitPoint(
+        const DateTime & datetime,
+        const Vec3 & position,
+        const Vec3 & velocity)
+:
+    datetime {datetime},
+    position {position},
+    velocity {velocity}
+{}
+
+inline
+NewOrbit NewOrbit::from_statevectors(const std::vector<StateVector> & statevecs)
+{
+    if (statevecs.size() < 2) {
+        throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
+    }
+
+    DateTime refepoch = statevecs[0].datetime;
+    TimeDelta spacing = statevecs[1].datetime - statevecs[0].datetime;
+    int size = statevecs.size();
+
+    NewOrbit orbit {refepoch, spacing};
+
+    for (int i = 0; i < size; ++i) {
+        DateTime expected = refepoch + orbit.spacing() * i;
+        if (!statevecs[i].datetime.isClose(expected)) {
+            throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
+        }
+
+        orbit.push_back(statevecs[i]);
+    }
+
+    return orbit;
+}
+
+inline
+NewOrbit::NewOrbit(const DateTime & refepoch, const TimeDelta & spacing, int size)
+:
+    _refepoch {refepoch},
+    _time {0., spacing.getTotalSeconds(), size},
+    _position (std::size_t(size)),
+    _velocity (std::size_t(size))
+{}
+
+inline
+OrbitPoint NewOrbit::operator[](int idx)
+{
+    return {_refepoch + _time[idx], _position[idx], _velocity[idx]};
+}
+
+inline
+const_OrbitPoint NewOrbit::operator[](int idx) const
+{
+    return {_refepoch + _time[idx], _position[idx], _velocity[idx]};
+}
+
+inline
+const DateTime & NewOrbit::refepoch() const
+{
+    return _refepoch;
+}
+
+inline
+TimeDelta NewOrbit::spacing() const
+{
+    return _time.spacing();
+}
+
+inline
+int NewOrbit::size() const
+{
+    return _time.size();
+}
+
+inline
+const Linspace<double> & NewOrbit::time() const
+{
+    return _time;
+}
+
+inline
+const std::vector<Vec3> & NewOrbit::position() const
+{
+    return _position;
+}
+
+inline
+const std::vector<Vec3> & NewOrbit::velocity() const
+{
+    return _velocity;
+}
+
+inline
+void NewOrbit::push_back(const StateVector & statevec)
+{
+    DateTime expected = _refepoch + spacing() * size();
+    if (!statevec.datetime.isClose(expected)) {
+        throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
+    }
+    _time.resize(size() + 1);
+
+    _position.push_back(statevec.position);
+    _velocity.push_back(statevec.velocity);
+}
+
+inline
+void NewOrbit::resize(int size)
+{
+    _time.resize(size);
+    _position.resize(std::size_t(size));
+    _velocity.resize(std::size_t(size));
+}
+
+inline
+bool NewOrbit::empty() const
+{
+    return size() == 0;
+}
+
+inline
+bool operator==(const NewOrbit & lhs, const NewOrbit & rhs)
+{
+    return lhs.refepoch() == rhs.refepoch() &&
+           lhs.time() == rhs.time() &&
+           lhs.position() == rhs.position() &&
+           lhs.velocity() == rhs.velocity();
+}
+
+inline
+bool operator!=(const NewOrbit & lhs, const NewOrbit & rhs)
+{
+    return !(lhs == rhs);
+}
+
+}}
+
