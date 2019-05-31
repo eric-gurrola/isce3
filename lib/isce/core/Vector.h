@@ -152,6 +152,25 @@ CUDA_HOSTDEV inline Vec3 normalPlane(const Vec3& p1,
     return p13.cross(p12).unitVec();
 }
 
+template<int N>
+CUDA_HOSTDEV
+bool operator==(const Vector<N> & lhs, const Vector<N> & rhs)
+{
+    for (int i = 0; i < N; ++i) {
+        if (lhs[0] != rhs[0]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<int N>
+CUDA_HOSTDEV
+bool operator!=(const Vector<N> & lhs, const Vector<N> & rhs)
+{
+    return !(lhs == rhs);
+}
+
 }} // namespace isce::core
 
 #endif
