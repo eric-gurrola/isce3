@@ -64,7 +64,7 @@ bool operator!=(const OrbitPoint &, const const_OrbitPoint &);
  */
 class NewOrbit {
 public:
-    /** Create Orbit from vector of uniformly spacing StateVectors. */
+    /** Create Orbit from vector of uniformly spaced StateVectors. */
     static
     NewOrbit from_statevectors(const std::vector<StateVector> &);
 
@@ -73,7 +73,7 @@ public:
     /**
      * Constructor
      *
-     * @param[in] refepoch datetime of the initial state vector sample
+     * @param[in] refepoch datetime of the initial state vector
      * @param[in] spacing time interval between state vectors
      * @param[in] size number of state vectors
      */

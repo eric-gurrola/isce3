@@ -10,7 +10,10 @@ inline
 OrbitPoint & OrbitPoint::operator=(const StateVector & statevec)
 {
     if (!statevec.datetime.isClose(datetime)) {
-        throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
+        std::string errmsg = "input state vector datetime (which is " +
+                statevec.datetime.isoformat() + ") did not match datetime "
+                "of the orbit point (which is " + datetime.isoformat() + ")";
+        throw isce::except::InvalidArgument(ISCE_SRCINFO(), errmsg);
     }
 
     position = statevec.position;
@@ -138,22 +141,18 @@ inline
 NewOrbit NewOrbit::from_statevectors(const std::vector<StateVector> & statevecs)
 {
     if (statevecs.size() < 2) {
-        throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
+        throw isce::except::InvalidArgument(ISCE_SRCINFO(),
+                "at least 2 state vectors are required");
     }
 
     DateTime refepoch = statevecs[0].datetime;
     TimeDelta spacing = statevecs[1].datetime - statevecs[0].datetime;
     int size = statevecs.size();
 
-    NewOrbit orbit {refepoch, spacing};
+    NewOrbit orbit {refepoch, spacing, size};
 
     for (int i = 0; i < size; ++i) {
-        DateTime expected = refepoch + orbit.spacing() * i;
-        if (!statevecs[i].datetime.isClose(expected)) {
-            throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
-        }
-
-        orbit.push_back(statevecs[i]);
+        orbit[i] = statevecs[i];
     }
 
     return orbit;
@@ -221,8 +220,13 @@ void NewOrbit::push_back(const StateVector & statevec)
 {
     DateTime expected = _refepoch + spacing() * size();
     if (!statevec.datetime.isClose(expected)) {
-        throw isce::except::InvalidArgument(ISCE_SRCINFO(), "XXX");
+        std::string errmsg = "input state vector datetime (which is " +
+                statevec.datetime.isoformat() + ") did not match expected "
+                "datetime of the next orbit point (which is " +
+                expected.isoformat() + ")";
+        throw isce::except::InvalidArgument(ISCE_SRCINFO(), errmsg);
     }
+
     _time.resize(size() + 1);
 
     _position.push_back(statevec.position);

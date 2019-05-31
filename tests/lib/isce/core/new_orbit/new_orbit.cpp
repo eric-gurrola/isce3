@@ -71,7 +71,7 @@ TEST_F(OrbitTest, ConstAccessor)
     EXPECT_EQ( orbit[1], statevecs[1] );
 }
 
-TEST_F(OrbitTest, DateTimeMismatch)
+TEST_F(OrbitTest, AccessorDateTimeMismatch)
 {
     typedef isce::core::NewOrbit Orbit;
 
@@ -98,6 +98,17 @@ TEST_F(OrbitTest, PushBack)
     EXPECT_EQ( orbit.time()[1], spacing.getTotalSeconds() );
     EXPECT_EQ( orbit.position()[1], statevecs[1].position );
     EXPECT_EQ( orbit.velocity()[1], statevecs[1].velocity );
+}
+
+TEST_F(OrbitTest, PushBackDateTimeMismatch)
+{
+    isce::core::NewOrbit orbit (refepoch, spacing);
+
+    isce::core::StateVector statevec = statevecs[0];
+    statevec.datetime += 1.;
+
+    // datetime of next statevector must be = refepoch() + spacing() * size()
+    EXPECT_THROW( orbit.push_back(statevec), isce::except::InvalidArgument );
 }
 
 TEST_F(OrbitTest, Resize)
