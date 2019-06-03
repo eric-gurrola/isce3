@@ -2,6 +2,7 @@
 #ifndef ISCE_CORE_ORBIT_H
 #define ISCE_CORE_ORBIT_H
 
+#include <isce/io/IH5.h>
 #include <vector>
 
 #include "DateTime.h"
@@ -69,6 +70,10 @@ public:
     static
     NewOrbit from_statevectors(const std::vector<StateVector> &);
 
+//    /** Deserialize Orbit from HDF5 group. */
+//    static
+//    NewOrbit from_h5(const isce::io::IGroup &);
+
     NewOrbit() = default;
 
     /**
@@ -110,6 +115,9 @@ public:
 
     /** Check if there are no state vectors in the sequence. */
     bool empty() const;
+
+    /** Convert to vector of StateVectors. */
+    std::vector<StateVector> to_statevectors() const;
 
 private:
     DateTime _refepoch;

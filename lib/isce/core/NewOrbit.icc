@@ -158,6 +158,11 @@ NewOrbit NewOrbit::from_statevectors(const std::vector<StateVector> & statevecs)
     return orbit;
 }
 
+//inline
+//NewOrbit NewOrbit::from_h5(const isce::io::IGroup & group)
+//{
+//}
+
 inline
 NewOrbit::NewOrbit(const DateTime & refepoch, const TimeDelta & spacing, int size)
 :
@@ -245,6 +250,19 @@ inline
 bool NewOrbit::empty() const
 {
     return size() == 0;
+}
+
+inline
+std::vector<StateVector> NewOrbit::to_statevectors() const
+{
+    std::vector<StateVector> statevecs;
+
+    for (int i = 0; i < size(); ++i) {
+        StateVector sv = operator[](i);
+        statevecs.push_back(sv);
+    }
+
+    return statevecs;
 }
 
 inline

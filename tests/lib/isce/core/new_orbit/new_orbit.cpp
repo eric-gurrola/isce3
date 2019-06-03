@@ -134,6 +134,18 @@ TEST_F(OrbitTest, Empty)
     }
 }
 
+TEST_F(OrbitTest, ToStateVectors)
+{
+    isce::core::NewOrbit orbit (refepoch, spacing);
+
+    orbit.push_back(statevecs[0]);
+    orbit.push_back(statevecs[1]);
+
+    std::vector<isce::core::StateVector> orbit_statevecs = orbit.to_statevectors();
+
+    EXPECT_EQ( orbit_statevecs, statevecs );
+}
+
 TEST_F(OrbitTest, Comparison)
 {
     typedef isce::core::NewOrbit Orbit;
