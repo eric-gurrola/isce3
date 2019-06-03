@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "DateTime.h"
+#include "InterpOrbit.h"
 #include "Linspace.h"
 #include "StateVector.h"
 #include "Vector.h"

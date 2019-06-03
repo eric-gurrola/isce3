@@ -40,6 +40,8 @@ set(HEADERS Attitude.h
             Interp1d.h
             Interp1d.icc
             Interpolator.h
+            InterpOrbit.h
+            InterpOrbit.icc
             Kernels.h
             Linspace.h
             Linspace.icc

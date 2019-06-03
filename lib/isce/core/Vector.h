@@ -35,6 +35,16 @@ public:
     CUDA_HOSTDEV           double& operator[](int i)       { return vdata[i]; }
     CUDA_HOSTDEV constexpr double  operator[](int i) const { return vdata[i]; }
 
+    CUDA_HOSTDEV
+    constexpr
+    Vector<N> & operator+=(const Vector<N> & v)
+    {
+        for (int i = 0; i < N; ++i) {
+            vdata[i] += v[i];
+        }
+        return *this;
+    }
+
     /*
      * Add two vectors
      */
