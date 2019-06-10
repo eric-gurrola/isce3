@@ -72,7 +72,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
     isce::cuda::core::gpuSinc2dInterpolator<thrust::complex<float>> interp(chipSize-1, isce::core::SINC_SUB);
 
     // Determine number of tiles needed to process image
-    const int nTiles = _computeNumberOfTiles(outLength, _linesPerTile);
+    const int nTiles = isce::image::_computeNumberOfTiles(outLength, _linesPerTile);
     std::cout << 
         "GPU resampling using " << nTiles << " tiles of " << _linesPerTile 
         << " lines per tile\n";

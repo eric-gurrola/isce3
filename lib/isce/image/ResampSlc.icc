@@ -173,8 +173,15 @@ linesPerTile(size_t value) {
     _linesPerTile = value;
 }
 
+// Prepare interpolation pointer
+void isce::image::ResampSlc::
+_prepareInterpMethods(isce::core::dataInterpMethod method, int sinc_len) {
+    _interp = new isce::core::Sinc2dInterpolator<std::complex<float>>(
+                  sinc_len, isce::core::SINC_SUB);
+}
+
 // Compute number of tiles given a specified nominal tile size
-int isce::image::ResampSlc::
+int isce::image::
 _computeNumberOfTiles(int outLength, int linesPerTile) {
     // Compute floor(nTiles)
     int nTiles = outLength / linesPerTile;
@@ -184,13 +191,6 @@ _computeNumberOfTiles(int outLength, int linesPerTile) {
         nTiles += 1;
     }
     return nTiles;
-}
-
-// Prepare interpolation pointer
-void isce::image::ResampSlc::
-_prepareInterpMethods(isce::core::dataInterpMethod method, int sinc_len) {
-    _interp = new isce::core::Sinc2dInterpolator<std::complex<float>>(
-                  sinc_len, isce::core::SINC_SUB);
 }
 
 // end of file

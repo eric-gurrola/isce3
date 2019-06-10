@@ -31,6 +31,7 @@
 namespace isce {
     namespace image {
         class ResampSlc;
+        inline int _computeNumberOfTiles(int, int);
     }
 }
 
@@ -177,9 +178,6 @@ class isce::image::ResampSlc {
                             const isce::image::Tile<float> & azOffTile,
                             int inLength, bool flatten,
                             int chipSize);
-
-        // Convenience functions
-        inline int _computeNumberOfTiles(int, int);
 
         // Initialize interpolator pointer
         void _prepareInterpMethods(isce::core::dataInterpMethod, int);
