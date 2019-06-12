@@ -5,20 +5,20 @@
 #include <math.h>
 
 // isce::core
-#include "isce/core/Constants.h"
-#include "isce/core/Poly2d.h"
+#include <isce/core/Constants.h>
+#include <isce/core/Poly2d.h>
 
 // isce::cuda::core
-#include "isce/cuda/core/gpuPoly2d.h"
-#include "isce/cuda/core/gpuLUT1d.h"
+#include <isce/cuda/core/gpuPoly2d.h>
+#include <isce/cuda/core/gpuLUT1d.h>
 
 // isce::cuda::image
 #include "gpuResampSlc.h"
 
 #include <isce/cuda/except/Error.h>
 
-#include <fstream>
-#include <string>
+//#include <fstream>
+//#include <string>
 
 using isce::cuda::core::gpuPoly2d;
 using isce::cuda::core::gpuInterpolator;
@@ -151,46 +151,53 @@ gpuTransformTile(isce::image::Tile<std::complex<float>> & tile,
     // Initialize to zeros
     imgOut = std::complex<float>(0.0, 0.0);
 
-    // declare equivalent objects in device memory
-    thrust::complex<float> *d_tile;
-    thrust::complex<float> *d_chip;
-    thrust::complex<float> *d_imgOut;
-    float *d_rgOffTile, *d_azOffTile;
-    gpuPoly2d d_rgCarrier(rgCarrier);
-    gpuPoly2d d_azCarrier(azCarrier);
-    gpuLUT1d<double> d_dopplerLUT(dopplerLUT);
-
     // determine sizes
     size_t nInPixels = (tile.lastImageRow() - tile.firstImageRow() + 1) * outWidth;
     size_t nOutPixels = imgOut.size();
     size_t nOutBytes = nOutPixels * sizeof(thrust::complex<float>);
     size_t nChipBytes = nOutBytes * chipSize * chipSize;
 
+    // declare equivalent objects in device memory
+    thrust::device_vector<thrust::complex<float>> d_tile(nInPixels); // tie in with RasterDataStream
+    thrust::device_vector<float> d_rgOffTile(nOutPixels); // tie in with RasterDataStream
+    thrust::device_vector<float> d_azOffTile(nOutPixels); // tie in with RasterDataStream
+    thrust::device_vector<thrust::complex<float>> d_chip(nOutPixels * chipSize * chipSize); // make contiguous 2D
+    thrust::device_vector<thrust::complex<float>> d_imgOut(nOutPixels); // tie in with RasterDataStream
+    //thrust::complex<float> *d_tile;
+    //thrust::complex<float> *d_chip;
+    //thrust::complex<float> *d_imgOut;
+    //float *d_rgOffTile, *d_azOffTile;
+    gpuPoly2d d_rgCarrier(rgCarrier);
+    gpuPoly2d d_azCarrier(azCarrier);
+    gpuLUT1d<double> d_dopplerLUT(dopplerLUT);
+
     // allocate equivalent objects in device memory
+    /* clean up later
     checkCudaErrors(cudaMalloc(&d_tile, nInPixels*sizeof(thrust::complex<float>)));
     checkCudaErrors(cudaMalloc(&d_chip, nChipBytes));
     checkCudaErrors(cudaMalloc(&d_imgOut, nOutBytes));
     checkCudaErrors(cudaMalloc(&d_azOffTile, nOutPixels*sizeof(float)));
     checkCudaErrors(cudaMalloc(&d_rgOffTile, nOutPixels*sizeof(float)));
+    */
 
     // copy objects to device memory
-    checkCudaErrors(cudaMemcpy(d_tile, &tile[0], nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_azOffTile, &azOffTile[0], nOutPixels*sizeof(float), cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaMemcpy(d_rgOffTile, &rgOffTile[0], nOutPixels*sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_tile.data().get(), &tile[0], nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_azOffTile.data().get(), &azOffTile[0], nOutPixels*sizeof(float), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_rgOffTile.data().get(), &rgOffTile[0], nOutPixels*sizeof(float), cudaMemcpyHostToDevice));
 
     // determine block layout
     dim3 block(THRD_PER_BLOCK);
     dim3 grid((nOutPixels+(THRD_PER_BLOCK-1))/THRD_PER_BLOCK);
 
     // global call to transform
-    transformTile<<<grid, block>>>(d_tile, 
-                                   d_chip,
-                                   d_imgOut, 
-                                   d_rgOffTile, 
-                                   d_azOffTile, 
-                                   d_rgCarrier, 
-                                   d_azCarrier, 
-                                   d_dopplerLUT, 
+    transformTile<<<grid, block>>>(d_tile.data().get(),
+                                   d_chip.data().get(),
+                                   d_imgOut.data().get(),
+                                   d_rgOffTile.data().get(),
+                                   d_azOffTile.data().get(),
+                                   d_rgCarrier,
+                                   d_azCarrier,
+                                   d_dopplerLUT,
                                    interp,
                                    flatten,
                                    outWidth,
@@ -203,23 +210,23 @@ gpuTransformTile(isce::image::Tile<std::complex<float>> & tile,
                                    wavelength,
                                    refStartingRange,
                                    refRangePixelSpacing,
-                                   refWavelength,             
+                                   refWavelength,
                                    chipSize,
                                    tile.rowStart()-tile.firstImageRow(),// needed to keep az in bounds in subtiles
-                                   tile.rowStart());                    // needed to match az components on CPU
+                                   tile.rowStart()); // needed to match az components on CPU
 
     // Check for any kernel errors
     checkCudaErrors(cudaPeekAtLastError());
 
     // copy to host memory
-    checkCudaErrors(cudaMemcpy(&imgOut[0], d_imgOut, nOutBytes, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(&imgOut[0], d_imgOut.data().get(), nOutBytes, cudaMemcpyDeviceToHost));
 
     // deallocate to device memory
-    checkCudaErrors(cudaFree(d_tile));
-    checkCudaErrors(cudaFree(d_chip));
-    checkCudaErrors(cudaFree(d_imgOut));
-    checkCudaErrors(cudaFree(d_azOffTile));
-    checkCudaErrors(cudaFree(d_rgOffTile));
+    //checkCudaErrors(cudaFree(d_tile));
+    //checkCudaErrors(cudaFree(d_chip));
+    //checkCudaErrors(cudaFree(d_imgOut));
+    //checkCudaErrors(cudaFree(d_azOffTile));
+    //checkCudaErrors(cudaFree(d_rgOffTile));
     
     // Write block of data
     outputSlc.setBlock(imgOut, 0, tile.rowStart(), outWidth, outLength);

@@ -11,7 +11,7 @@
 #include <cmath>
 
 // isce::core
-#include "isce/core/Constants.h"
+#include <isce/core/Constants.h>
 
 #include "ResampSlc.h"
 #include "gpuResampSlc.h"

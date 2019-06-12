@@ -8,19 +8,20 @@
 
 #include <complex>
 #include <thrust/complex.h>
+#include <thrust/device_vector.h>
 
 // isce::core
-#include "isce/core/Poly2d.h"
-#include "isce/core/LUT1d.h"
+#include <isce/core/Poly2d.h>
+#include <isce/core/LUT1d.h>
 
 // isce:io:
-#include  "isce/io/Raster.h"
+#include  <isce/io/Raster.h>
 
 // isce::image
-#include "isce/image/Tile.h"
+#include <isce/image/Tile.h>
 
 // isce::cuda::core
-#include "isce/cuda/core/gpuInterpolator.h"
+#include <isce/cuda/core/gpuInterpolator.h>
 
 using isce::cuda::core::gpuSinc2dInterpolator;
 
