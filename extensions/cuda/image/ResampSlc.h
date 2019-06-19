@@ -51,25 +51,14 @@ class isce::cuda::image::ResampSlc : public isce::image::ResampSlc {
             isce::image::ResampSlc(doppler, startingRange, rangePixelSpacing, sensingStart,
                                    prf, wvl, refStartingRange, refRangePixelSpacing, refWvl) {}
 
-        /*
-        // Tile initialization for input offsets
-        void _initializeOffsetTiles(Tile_t &, isce::io::Raster &, isce::io::Raster &,
-                                    isce::image::Tile<float> &,
-                                    isce::image::Tile<float> &, int);
-
-        // Tile initialization for input SLC data
-        void _initializeTile(Tile_t &, isce::io::Raster &,
-                             const isce::image::Tile<float> &,
-                             int, int, int);
-                             */
-
         // Tile transformation
-        void _transformTile(Tile_t & tile,
+        /*void _transformTile(Tile_t & tile,
                             isce::io::Raster & outputSlc,
                             const isce::image::Tile<float> & rgOffTile,
                             const isce::image::Tile<float> & azOffTile,
                             int inLength, bool flatten,
                             int chipSize);
+                            */
 
         // All resamp need? to be redefined to ensure derived functions used
         // Generic resamp entry point from externally created rasters

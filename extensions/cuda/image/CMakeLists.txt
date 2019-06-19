@@ -1,10 +1,8 @@
 set(HEADERS
-        gpuResampSlc.h
         ResampSlc.h)
 
 set(SRCS
-        gpuResampSlc.cu
-        ResampSlc.cpp)
+        ResampSlc.cu)
 
 # end of file
 add_isce_libdir(image "${SRCS}" "${HEADERS}")
