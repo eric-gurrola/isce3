@@ -31,6 +31,12 @@ using isce::cuda::core::gpuPoly2d;
 using isce::cuda::core::gpuInterpolator;
 using isce::cuda::core::gpuLUT1d;
 using isce::cuda::core::gpuSinc2dInterpolator;
+
+// thrust::host_vector whose data buffer uses page-locked memory
+template<typename T>
+using pinned_host_vector = thrust::host_vector<T,
+        thrust::system::cuda::experimental::pinned_allocator<T>>;
+
 //using isce::cuda::core::Stream;
 
 //using isce::cuda::io::DataStream;
@@ -52,7 +58,6 @@ void removeCarrier(thrust::complex<float> *tile,
         tile[iTile] *= thrust::complex<float>(cos(phase), -sin(phase));
     }
 }
-
 
 __global__
 void transformTile(const thrust::complex<float> *tile,
@@ -228,15 +233,31 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
 
         // initialize range offsets
         thrust::device_vector<float> d_rgOffsets(nOutPixels);
+        pinned_host_vector<float> h_rgOffsets;
+        rgOffsetRaster.getBlock(h_rgOffsets.data(), 0, rowStart, outWidth, outLength);
+        isce::cuda::core::Stream streamRgOffset;
+        checkCudaErrors( cudaMemcpyAsync(d_rgOffsets.data().get(), h_rgOffsets.data(),
+                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice, streamRgOffset.get()) );
+
+        /*
         isce::cuda::core::Stream streamRgOffset;
         isce::cuda::io::RasterDataStream datastreamRgOffset(&rgOffsetRaster, streamRgOffset);
         datastreamRgOffset.load(d_rgOffsets.data().get(), 0, rowStart, outWidth, outLength);
+        */
 
         // initialize azimuth offsets
         thrust::device_vector<float> d_azOffsets(nOutPixels);
+        pinned_host_vector<float> h_azOffsets;
+        azOffsetRaster.getBlock(h_azOffsets.data(), 0, rowStart, outWidth, outLength);
+        isce::cuda::core::Stream streamAzOffset;
+        checkCudaErrors( cudaMemcpyAsync(d_azOffsets.data().get(), h_azOffsets.data(),
+                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice, streamRgOffset.get()) );
+
+        /*
         isce::cuda::core::Stream streamAzOffset;
         isce::cuda::io::RasterDataStream datastreamAzOffset(&azOffsetRaster, streamAzOffset);
         datastreamAzOffset.load(d_azOffsets.data().get(), 0, rowStart, outWidth, outLength);
+        */
 
         // prepare SLC
         // Compute minimum row index needed from input image
@@ -295,9 +316,17 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         std::cout << "Reading in image data for tile " << tileCount << std::endl;
         int nInPixels = inWidth * (lastImageRow-firstImageRow);
         thrust::device_vector<thrust::complex<float>> d_slc(nInPixels);
+        pinned_host_vector<thrust::complex<float>> h_slc;
+        inputSlc.getBlock(h_slc.data(), 0, firstImageRow, inWidth, lastImageRow-firstImageRow, _inputBand);
+        isce::cuda::core::Stream streamSlc;
+        checkCudaErrors( cudaMemcpyAsync(d_slc.data().get(), h_slc.data(),
+                    nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice, streamRgOffset.get()) );
+
+        /*
         isce::cuda::core::Stream streamSlc;
         isce::cuda::io::RasterDataStream datastreamSlc(&inputSlc, streamSlc);
         inputSlc.getBlock(d_slc.data().get(), 0, firstImageRow, inWidth, lastImageRow-firstImageRow, _inputBand);
+        */
 
         thrust::device_vector<thrust::complex<float>> d_chip(nOutPixels * chipSize * chipSize); // make contiguous 2D
         thrust::device_vector<thrust::complex<float>> d_imgOut(nOutPixels); // tie in with RasterDataStream
