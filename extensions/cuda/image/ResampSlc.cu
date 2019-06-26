@@ -9,8 +9,11 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+#include <thrust/complex.h>
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
 #include <thrust/transform_reduce.h>
-#include <thrust/advance.h>
+#include <thrust/system/cuda/experimental/pinned_allocator.h>
 
 // isce::core
 #include <isce/core/Constants.h>
@@ -18,12 +21,16 @@
 // isce::cuda::core
 #include <isce/cuda/core/gpuPoly2d.h>
 #include <isce/cuda/core/gpuLUT1d.h>
-#include <isce/cuda/core/Stream.h>
+//#include <isce/cuda/core/Stream.h>
+#include <isce/cuda/core/gpuInterpolator.h>
 
-#include <isce/cuda/io/DataStream.h>
+#include <isce/cuda/except/Error.h>
+#include <isce/except/Error.h>
+
+//#include <isce/cuda/io/DataStream.h>
 
 #include "ResampSlc.h"
-#include "gpuResampSlc.h"
+//#include "gpuResampSlc.h"
 
 using isce::io::Raster;
 
@@ -231,33 +238,12 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         int outLength = rowEnd - rowStart;
         int nOutPixels = outWidth * outLength;
 
-        // initialize range offsets
-        thrust::device_vector<float> d_rgOffsets(nOutPixels);
-        pinned_host_vector<float> h_rgOffsets(nOutPixels);
-        rgOffsetRaster.getBlock(h_rgOffsets.data(), 0, rowStart, outWidth, outLength);
-        isce::cuda::core::Stream streamRgOffset;
-        checkCudaErrors( cudaMemcpyAsync(d_rgOffsets.data().get(), h_rgOffsets.data(),
-                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice, streamRgOffset.get()) );
-
-        /*
-        isce::cuda::core::Stream streamRgOffset;
-        isce::cuda::io::RasterDataStream datastreamRgOffset(&rgOffsetRaster, streamRgOffset);
-        datastreamRgOffset.load(d_rgOffsets.data().get(), 0, rowStart, outWidth, outLength);
-        */
-
-        // initialize azimuth offsets
-        thrust::device_vector<float> d_azOffsets(nOutPixels);
+        //thrust::host_vector<float> h_azOffsets(nOutPixels);
         pinned_host_vector<float> h_azOffsets(nOutPixels);
         azOffsetRaster.getBlock(h_azOffsets.data(), 0, rowStart, outWidth, outLength);
-        isce::cuda::core::Stream streamAzOffset;
-        checkCudaErrors( cudaMemcpyAsync(d_azOffsets.data().get(), h_azOffsets.data(),
-                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice, streamRgOffset.get()) );
-
-        /*
-        isce::cuda::core::Stream streamAzOffset;
-        isce::cuda::io::RasterDataStream datastreamAzOffset(&azOffsetRaster, streamAzOffset);
-        datastreamAzOffset.load(d_azOffsets.data().get(), 0, rowStart, outWidth, outLength);
-        */
+        //thrust::host_vector<float> h_rgOffsets(nOutPixels);
+        pinned_host_vector<float> h_rgOffsets(nOutPixels);
+        rgOffsetRaster.getBlock(h_rgOffsets.data(), 0, rowStart, outWidth, outLength);
 
         // prepare SLC
         // Compute minimum row index needed from input image
@@ -267,7 +253,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         for (int i = 0; i < std::min(rowBuffer, outLength); ++i) {
             for (int j = 0; j < outWidth; ++j) {
                 // Get azimuth offset for pixel
-                const double azOff = d_azOffsets[i,j];
+                const double azOff = h_azOffsets[i,j];
                 // Skip null values
                 if (azOff < -5.0e5 || std::isnan(azOff)) {
                     continue;
@@ -292,7 +278,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         for (int i = std::max(outLength - rowBuffer, 0); i < outLength; ++i) {
             for (int j = 0; j < outWidth; ++j) {
                 // Get azimuth offset for pixel
-                const double azOff = d_azOffsets[i,j];
+                const double azOff = h_azOffsets[i,j];
                 // Skip null values 
                 if (azOff < -5.0e5 || std::isnan(azOff)) {
                     continue;
@@ -316,11 +302,12 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         std::cout << "Reading in image data for tile " << tileCount << std::endl;
         int nInPixels = inWidth * (lastImageRow-firstImageRow);
         thrust::device_vector<thrust::complex<float>> d_slc(nInPixels);
-        pinned_host_vector<thrust::complex<float>> h_slc(nInPixels);
+        //thrust::host_vector<std::complex<float>> h_slc(nInPixels);
+        pinned_host_vector<std::complex<float>> h_slc(nInPixels);
         inputSlc.getBlock(h_slc.data(), 0, firstImageRow, inWidth, lastImageRow-firstImageRow, _inputBand);
-        isce::cuda::core::Stream streamSlc;
-        checkCudaErrors( cudaMemcpyAsync(d_slc.data().get(), h_slc.data(),
-                    nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice, streamSlc.get()) );
+        //isce::cuda::core::Stream streamSlc;
+        checkCudaErrors( cudaMemcpy(d_slc.data().get(), h_slc.data(),
+                    nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice/*, streamSlc.get()*/) );
 
         /*
         isce::cuda::core::Stream streamSlc;
@@ -340,6 +327,30 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         dim3 grid((nInPixels+(THRD_PER_BLOCK-1))/THRD_PER_BLOCK);
         removeCarrier<<<grid, block>>>(d_slc.data().get(), firstImageRow, outWidth, outLength, _rgCarrier, _azCarrier);
         // TODO synchronize before resampling
+
+        // initialize range offsets
+        thrust::device_vector<float> d_rgOffsets(nOutPixels);
+        //isce::cuda::core::Stream streamRgOffset;
+        checkCudaErrors( cudaMemcpy(d_rgOffsets.data().get(), h_rgOffsets.data(),
+                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice/*, streamRgOffset.get()*/) );
+
+        /*
+        isce::cuda::core::Stream streamRgOffset;
+        isce::cuda::io::RasterDataStream datastreamRgOffset(&rgOffsetRaster, streamRgOffset);
+        datastreamRgOffset.load(d_rgOffsets.data().get(), 0, rowStart, outWidth, outLength);
+        */
+
+        // initialize azimuth offsets
+        thrust::device_vector<float> d_azOffsets(nOutPixels);
+        //isce::cuda::core::Stream streamAzOffset;
+        checkCudaErrors( cudaMemcpy(d_azOffsets.data().get(), h_azOffsets.data(),
+                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice/*, streamRgOffset.get()*/) );
+
+        /*
+        isce::cuda::core::Stream streamAzOffset;
+        isce::cuda::io::RasterDataStream datastreamAzOffset(&azOffsetRaster, streamAzOffset);
+        datastreamAzOffset.load(d_azOffsets.data().get(), 0, rowStart, outWidth, outLength);
+        */
 
         // Perform interpolation
         // determine block layout
