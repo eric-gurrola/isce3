@@ -233,7 +233,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
 
         // initialize range offsets
         thrust::device_vector<float> d_rgOffsets(nOutPixels);
-        pinned_host_vector<float> h_rgOffsets;
+        pinned_host_vector<float> h_rgOffsets(nOutPixels);
         rgOffsetRaster.getBlock(h_rgOffsets.data(), 0, rowStart, outWidth, outLength);
         isce::cuda::core::Stream streamRgOffset;
         checkCudaErrors( cudaMemcpyAsync(d_rgOffsets.data().get(), h_rgOffsets.data(),
@@ -247,7 +247,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
 
         // initialize azimuth offsets
         thrust::device_vector<float> d_azOffsets(nOutPixels);
-        pinned_host_vector<float> h_azOffsets;
+        pinned_host_vector<float> h_azOffsets(nOutPixels);
         azOffsetRaster.getBlock(h_azOffsets.data(), 0, rowStart, outWidth, outLength);
         isce::cuda::core::Stream streamAzOffset;
         checkCudaErrors( cudaMemcpyAsync(d_azOffsets.data().get(), h_azOffsets.data(),
@@ -316,11 +316,11 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         std::cout << "Reading in image data for tile " << tileCount << std::endl;
         int nInPixels = inWidth * (lastImageRow-firstImageRow);
         thrust::device_vector<thrust::complex<float>> d_slc(nInPixels);
-        pinned_host_vector<thrust::complex<float>> h_slc;
+        pinned_host_vector<thrust::complex<float>> h_slc(nInPixels);
         inputSlc.getBlock(h_slc.data(), 0, firstImageRow, inWidth, lastImageRow-firstImageRow, _inputBand);
         isce::cuda::core::Stream streamSlc;
         checkCudaErrors( cudaMemcpyAsync(d_slc.data().get(), h_slc.data(),
-                    nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice, streamRgOffset.get()) );
+                    nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice, streamSlc.get()) );
 
         /*
         isce::cuda::core::Stream streamSlc;
