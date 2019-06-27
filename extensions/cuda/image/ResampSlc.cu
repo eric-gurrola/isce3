@@ -227,30 +227,40 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
     // Start timer
     auto timerStart = std::chrono::steady_clock::now();
 
+    // determine maximum size of device memory
+    int nInPixels = inWidth * inLength;
+    int nOutPixels = outWidth * _linesPerTile;
+
+    // allocate reusable memory
+    thrust::device_vector<thrust::complex<float>> d_slc(nInPixels);
+    thrust::device_vector<float> d_azOffsets(nOutPixels);
+    thrust::device_vector<float> d_rgOffsets(nOutPixels);
+    thrust::device_vector<thrust::complex<float>> d_chip(nOutPixels * chipSize * chipSize);
+    thrust::device_vector<thrust::complex<float>> d_imgOut(nOutPixels);
+    pinned_host_vector<float> h_azOffsets(nOutPixels);
+    pinned_host_vector<float> h_rgOffsets(nOutPixels);
+    pinned_host_vector<std::complex<float>> h_slc(nInPixels);
+
     // For each full tile of _linesPerTile lines...
     for (int tileCount = 0; tileCount < nTiles; tileCount++) {
 
-        int rowStart = tileCount * _linesPerTile;
-        int rowEnd(rowStart + _linesPerTile);
+        int tileOutLength = _linesPerTile;
         if (tileCount == (nTiles - 1)) {
-            rowEnd = outLength;
+            tileOutLength = outLength - tileCount * _linesPerTile;
         }
-        int outLength = rowEnd - rowStart;
-        int nOutPixels = outWidth * outLength;
+        int nTileOutPixels = outWidth * tileOutLength;
 
-        //thrust::host_vector<float> h_azOffsets(nOutPixels);
-        pinned_host_vector<float> h_azOffsets(nOutPixels);
-        azOffsetRaster.getBlock(h_azOffsets.data(), 0, rowStart, outWidth, outLength);
-        //thrust::host_vector<float> h_rgOffsets(nOutPixels);
-        pinned_host_vector<float> h_rgOffsets(nOutPixels);
-        rgOffsetRaster.getBlock(h_rgOffsets.data(), 0, rowStart, outWidth, outLength);
+        int rowStart = tileCount * _linesPerTile;
+        azOffsetRaster.getBlock(h_azOffsets.data(), 0, rowStart, outWidth, tileOutLength);
+        rgOffsetRaster.getBlock(h_rgOffsets.data(), 0, rowStart, outWidth, tileOutLength);
 
         // prepare SLC
         // Compute minimum row index needed from input image
-        int firstImageRow(outLength - 1);
+        int firstImageRow(tileOutLength - 1);
         bool haveOffsets = false;
         int chipHalf = chipSize/2;
-        for (int i = 0; i < std::min(rowBuffer, outLength); ++i) {
+
+        for (int i = 0; i < std::min(rowBuffer, tileOutLength); ++i) {
             for (int j = 0; j < outWidth; ++j) {
                 // Get azimuth offset for pixel
                 const double azOff = h_azOffsets[i,j];
@@ -275,7 +285,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         // Compute maximum row index needed from input image
         int lastImageRow(0);
         haveOffsets = false;
-        for (int i = std::max(outLength - rowBuffer, 0); i < outLength; ++i) {
+        for (int i = std::max(tileOutLength - rowBuffer, 0); i < tileOutLength; ++i) {
             for (int j = 0; j < outWidth; ++j) {
                 // Get azimuth offset for pixel
                 const double azOff = h_azOffsets[i,j];
@@ -300,23 +310,13 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         // Get corresponding image indices
         // replace below with stream init
         std::cout << "Reading in image data for tile " << tileCount << std::endl;
-        int nInPixels = inWidth * (lastImageRow-firstImageRow);
-        thrust::device_vector<thrust::complex<float>> d_slc(nInPixels);
-        //thrust::host_vector<std::complex<float>> h_slc(nInPixels);
-        pinned_host_vector<std::complex<float>> h_slc(nInPixels);
+        int nTileInPixels = inWidth * (lastImageRow-firstImageRow);
+        //thrust::host_vector<std::complex<float>> h_slc(nTileInPixels);
         inputSlc.getBlock(h_slc.data(), 0, firstImageRow, inWidth, lastImageRow-firstImageRow, _inputBand);
         //isce::cuda::core::Stream streamSlc;
         checkCudaErrors( cudaMemcpy(d_slc.data().get(), h_slc.data(),
-                    nInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice/*, streamSlc.get()*/) );
+                    nTileInPixels*sizeof(thrust::complex<float>), cudaMemcpyHostToDevice/*, streamSlc.get()*/) );
 
-        /*
-        isce::cuda::core::Stream streamSlc;
-        isce::cuda::io::RasterDataStream datastreamSlc(&inputSlc, streamSlc);
-        inputSlc.getBlock(d_slc.data().get(), 0, firstImageRow, inWidth, lastImageRow-firstImageRow, _inputBand);
-        */
-
-        thrust::device_vector<thrust::complex<float>> d_chip(nOutPixels * chipSize * chipSize); // make contiguous 2D
-        thrust::device_vector<thrust::complex<float>> d_imgOut(nOutPixels); // tie in with RasterDataStream
         gpuPoly2d d_rgCarrier(_rgCarrier);
         gpuPoly2d d_azCarrier(_azCarrier);
         gpuLUT1d<double> d_dopplerLUT(_dopplerLUT);
@@ -324,15 +324,14 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         // move phase removal computation into device
         // determine block layout
         dim3 block(THRD_PER_BLOCK);
-        dim3 grid((nInPixels+(THRD_PER_BLOCK-1))/THRD_PER_BLOCK);
-        removeCarrier<<<grid, block>>>(d_slc.data().get(), firstImageRow, outWidth, outLength, _rgCarrier, _azCarrier);
+        dim3 grid((nTileInPixels+(THRD_PER_BLOCK-1))/THRD_PER_BLOCK);
+        removeCarrier<<<grid, block>>>(d_slc.data().get(), firstImageRow, outWidth, tileOutLength, _rgCarrier, _azCarrier);
         // TODO synchronize before resampling
 
         // initialize range offsets
-        thrust::device_vector<float> d_rgOffsets(nOutPixels);
         //isce::cuda::core::Stream streamRgOffset;
         checkCudaErrors( cudaMemcpy(d_rgOffsets.data().get(), h_rgOffsets.data(),
-                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice/*, streamRgOffset.get()*/) );
+                    nTileOutPixels*sizeof(float), cudaMemcpyHostToDevice/*, streamRgOffset.get()*/) );
 
         /*
         isce::cuda::core::Stream streamRgOffset;
@@ -341,10 +340,9 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
         */
 
         // initialize azimuth offsets
-        thrust::device_vector<float> d_azOffsets(nOutPixels);
         //isce::cuda::core::Stream streamAzOffset;
         checkCudaErrors( cudaMemcpy(d_azOffsets.data().get(), h_azOffsets.data(),
-                    nOutPixels*sizeof(float), cudaMemcpyHostToDevice/*, streamRgOffset.get()*/) );
+                    nTileOutPixels*sizeof(float), cudaMemcpyHostToDevice/*, streamRgOffset.get()*/) );
 
         /*
         isce::cuda::core::Stream streamAzOffset;
@@ -354,7 +352,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
 
         // Perform interpolation
         // determine block layout
-        grid = (nOutPixels+(THRD_PER_BLOCK-1)) / THRD_PER_BLOCK;
+        grid = (nTileOutPixels+(THRD_PER_BLOCK-1)) / THRD_PER_BLOCK;
         int rowOffset = rowStart-firstImageRow;
         std::cout << "Interpolating tile " << tileCount << std::endl;
         transformTile<<<grid, block>>>(d_slc.data().get(),
@@ -363,7 +361,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
                 d_rgOffsets.data().get(), d_azOffsets.data().get(),
                 d_rgCarrier, d_azCarrier, d_dopplerLUT,
                 interp, flatten,
-                outWidth, outLength,
+                outWidth, tileOutLength,
                 inWidth, inLength,
                 this->startingRange(), this->rangePixelSpacing(),
                 this->prf(), this->wavelength(),
