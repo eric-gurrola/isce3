@@ -240,6 +240,7 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
     pinned_host_vector<float> h_azOffsets(nOutPixels);
     pinned_host_vector<float> h_rgOffsets(nOutPixels);
     pinned_host_vector<std::complex<float>> h_slc(nInPixels);
+    pinned_host_vector<std::complex<float>> h_imgOut(nOutPixels);
 
     // For each full tile of _linesPerTile lines...
     for (int tileCount = 0; tileCount < nTiles; tileCount++) {
@@ -370,6 +371,11 @@ resamp(isce::io::Raster & inputSlc, isce::io::Raster & outputSlc,
                 rowOffset,// needed to keep az in bounds in subtiles
                 rowStart); // needed to match az components on CPU
 
+        // copy device to host
+        checkCudaErrors( cudaMemcpy(h_imgOut.data(), d_imgOut.data().get(),
+                    nTileOutPixels*sizeof(thrust::complex<float>), cudaMemcpyDeviceToHost/*, streamSlc.get()*/) );
+        // write out block
+        outputSlc.setBlock(h_imgOut.data(), 0, rowStart, outWidth, tileOutLength);
     }
 
     // Print out timing information and reset
