@@ -23,6 +23,7 @@ isce.lib.root := lib/isce/
 isce.lib.stem := isce
 isce.lib.extern := mpi hdf5 fftw pyre
 isce.lib.prerequisites := cereal.lib
+isce.lib.c++.flags += $($(compiler.c++).std.c++17)
 
 # the cereal lib meta-data
 cereal.lib.root := contrib/cereal/include/cereal/
