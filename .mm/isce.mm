@@ -21,7 +21,7 @@ isce.tests :=
 # the isce lib meta-data
 isce.lib.root := lib/isce/
 isce.lib.stem := isce
-isce.lib.extern := mpi hdf5 fftw pyre
+isce.lib.extern := gdal mpi hdf5 fftw pyre
 isce.lib.prerequisites := cereal.lib
 isce.lib.c++.flags += $($(compiler.c++).std.c++17)
 
