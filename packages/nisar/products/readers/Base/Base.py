@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
+import h5py
 import pyre
+import isce3
 from ..protocols import ProductReader
 
 class Base(pyre.component,
@@ -51,6 +54,7 @@ class Base(pyre.component,
         # Polarization dictionary
         self.polarizations = {}
 
+        self.data = {}
         self.__parse(self.filename)
     
     #@pyre.export
@@ -58,7 +62,6 @@ class Base(pyre.component,
         '''
         Parse the HDF5 file and populate ISCE data structures.
         '''
-        import h5py
 
         self.filename = hdf5file
         self.populateIdentification()
@@ -71,14 +74,8 @@ class Base(pyre.component,
         '''
         Returns metadata corresponding to given frequency.
         '''
-        import h5py
-        import isce3
-        import os
-        #swathPath = os.path.join(self._RootPath, self.productType,
-        #                          self._SwathPath)
         swath = isce3.product.swath()
         with h5py.File(self.filename, 'r') as fid:
-              #swathGrp = fid[swathPath]
               swathGrp = fid[self.SwathPath]
               swath.loadFromH5(swathGrp, frequency)
 
@@ -104,9 +101,6 @@ class Base(pyre.component,
         '''
         extracts orbit 
         '''
-        import h5py
-        import isce3
-        import os
 
         #orbitPath = os.path.join(self._RootPath, self.productType, 
         #        self._MetadataPath, 'orbit')
@@ -124,9 +118,6 @@ class Base(pyre.component,
         '''
         Extract the Doppler centroid
         '''
-        import h5py
-        import isce3
-        import os
         import numpy as np
 
         dopplerPath = os.path.join(self.ProcessingInformationPath, 
@@ -155,8 +146,6 @@ class Base(pyre.component,
         Extract the azimuth time of the zero Doppler grid
         '''
 
-        import h5py
-        import os
         zeroDopplerTimePath = os.path.join(self.SwathPath, 
                                           'zeroDopplerTime')
         with h5py.File(self.filename, 'r') as fid:
@@ -170,8 +159,6 @@ class Base(pyre.component,
         Extract the slant range of the zero Doppler grid
         '''
 
-        import h5py
-        import os
         slantRangePath = os.path.join(self.SwathPath,
                                     'frequency' + frequency, 'slantRange')
 
@@ -185,8 +172,6 @@ class Base(pyre.component,
         '''
         Parse HDF5 and identify polarization channels available for each frequency.
         '''
-        import os
-        import h5py
         from nisar.h5 import bytestring, extractWithIterator
 
         try:
@@ -209,6 +194,53 @@ class Base(pyre.component,
 
         return
 
+    def getSlcData(self, frequency, polarization):
+        '''
+        Return complex data from given frequency and polarization
+        '''
+        slcData = []
+        with h5py.File(self.filename, 'r') as fid:
+            root = os.path.join(folder, 'frequency{0}'.format(frequency), '{0}'.format(polarization))
+            # key check performed in extractScalar(...)
+            slcData = extractScalar(
+                    fid[root], polarization, np.array,
+                    msg=msg.format(frequency, polarization))
+
+        return slcData
+
+    def parseSlcData(self, frequency, polarization):
+        '''
+        Extract complex data from previously identified polarization channels
+        '''
+        try:
+            frequencyList = self.frequencies
+        except:
+            raise RuntimeError('Cannot determine list of available frequencies without parsing Product Identification')
+
+        nFandP = 0
+        for frequency, polarizations in self.polarizations:
+            nFandP += len(self.polarization(frequency))
+        if nFandP == 0:
+            raise RuntimeError('Cannot proceed with SLC extraction; No polarizations for any frequencies')
+        
+        # Single threaded read
+        msg='Unable to extract to np.array SLC data of frequency {}, polarization {}'
+        with h5py.File(self.filename, 'r') as fid:
+            for frequency, polarizations in self.polarizations:
+                self.slcData[frequency] = {}
+                root = os.path.join(folder, 'frequency{0}'.format(frequency))
+                for polarization in polarizations:
+
+                    # investigate if using extract* is faster with its casting
+                    # or using dataset ndarray methods
+                    # https://stackoverflow.com/questions/46733052/read-hdf5-file-into-numpy-array
+                    self.slcData[frequency][polarization] = extractScalar(
+                            fid[root], polarization, np.array,
+                            msg=msg.format(frequency, polarization))
+
+        return
+
+
     @property
     def CFPath(self):
         return self._CFPath
@@ -219,32 +251,26 @@ class Base(pyre.component,
 
     @property
     def IdentificationPath(self):
-        import os
         return os.path.join(self.RootPath, self._IdentificationPath)
 
     @property
     def ProductPath(self):
-        import os
         return os.path.join(self.RootPath, self.productType)
 
     @property
     def MetadataPath(self):
-        import os
         return os.path.join(self.ProductPath, self._MetadataPath)
     
     @property
     def ProcessingInformationPath(self):
-        import os
         return os.path.join(self.MetadataPath, self._ProcessingInformation)
 
     @property
     def SwathPath(self):
-        import os
         return os.path.join(self.ProductPath, self._SwathPath)
 
     @property
     def GridPath(self):
-        import os
         return os.path.join(self.ProductPath, self._GridPath)
 
     @property
