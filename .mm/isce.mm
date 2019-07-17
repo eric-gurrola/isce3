@@ -27,7 +27,8 @@ isce.pkg.ext := extensions/
 
 # the isce lib meta-data
 isce.lib.root := lib/isce/
-isce.lib.stem := isce-$(isce.major).$(isce.minor)
+isce.lib.stem := isce
+isce.lib.libstem := isce-$(isce.major).$(isce.minor)
 isce.lib.extern := gdal hdf5 mpi fftw pyre
 isce.lib.prerequisites := cereal.lib
 isce.lib.c++.flags += $($(compiler.c++).std.c++17)
