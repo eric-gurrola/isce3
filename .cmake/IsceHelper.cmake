@@ -5,6 +5,15 @@ find_library(LJOURNAL journal HINTS ${PYRE_LIB_DIR})
 # Create a new ctest for TESTNAME.cpp
 # Additional include directories can be specified after TESTNAME
 function(add_isce_test TESTNAME)
+    # Only enable for the specified build configurations
+    if(ARGN)
+        if(NOT ${CMAKE_BUILD_TYPE} IN_LIST ARGN)
+            # Otherwise create a dummy target and bail
+            add_custom_target(${TESTNAME})
+            return()
+        endif()
+    endif()
+
     if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${TESTNAME}.cpp)
         add_executable(${TESTNAME} ${TESTNAME}.cpp)
     elseif(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${TESTNAME}.cu)
@@ -17,7 +26,7 @@ function(add_isce_test TESTNAME)
     if(DEFINED LISCECUDA)
         # Make CUDA libraries and headers available
         target_link_libraries(${TESTNAME} PUBLIC ${LISCECUDA})
-        target_include_directories(${TESTNAME} PUBLIC ${ISCE_BUILDINCLUDEDIR}/${LOCALPROJ}/${PACKAGENAME}/cuda)
+        target_include_directories(${TESTNAME} PUBLIC ${ISCE_BUILDINCLUDEDIR_CUDA})
     endif()
 
     target_include_directories(${TESTNAME} PUBLIC
@@ -54,9 +63,7 @@ function(add_isce_libdir PKGNAME CPPS HEADERS)
     # This is where regex can be used on headers if needed
     unset(BUILD_HEADERS)
     foreach(HFILE ${HEADERS})
-        set(DEST "${ISCE_BUILDINCLUDEDIR}/${LOCALPROJ}/${SUBDIR}/${PKGNAME}/${HFILE}")
-        configure_file(${CMAKE_CURRENT_LIST_DIR}/${HFILE} "${DEST}" COPYONLY)
-        list(APPEND BUILD_HEADERS "${DEST}")
+        list(APPEND BUILD_HEADERS "${CMAKE_CURRENT_LIST_DIR}/${HFILE}")
     endforeach()
 
     # Install headers as files

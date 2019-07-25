@@ -1,6 +1,8 @@
 //-*- C++ -*-
 //-*- coding: utf-8 -*-
 
+#include "RTC.h"
+
 #include <complex>
 #include <cmath>
 #include <iostream>
@@ -13,12 +15,10 @@
 #include <cstring>
 
 #include <isce/core/Constants.h>
-#include <isce/core/Cartesian.h>
 #include <isce/core/DateTime.h>
 #include <isce/core/Ellipsoid.h>
 
 #include <isce/geometry/geometry.h>
-#include <isce/geometry/RTC.h>
 #include <isce/geometry/Topo.h>
 
 using isce::core::cartesian_t;
@@ -152,7 +152,8 @@ void isce::geometry::facetRTC(const isce::product::RadarGridParameters& radarGri
                 dem_interp.interpolateXY(dem_xmid, dem_ymid)};
             // Compute facet-central LLH vector
             const Vec3 inputLLH = proj->inverse(inputDEM);
-            int geostat = isce::geometry::geo2rdr(inputLLH, ellps, orbit, dop,
+            //Should incorporate check on return status here
+            isce::geometry::geo2rdr(inputLLH, ellps, orbit, dop,
                     a, r, radarGrid.wavelength(), 1e-4, 100, 1e-4);
             const float azpix = (a - start) / pixazm;
             const float ranpix = (r - r0) / dr;
