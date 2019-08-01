@@ -27,4 +27,17 @@ class Plexus(pyre.plexus, family="isce3.components.plexus"):
         return isce3.meta.license
 
 
+    # interactive session management
+    def pyre_interactiveSessionContext(self, context=None):
+        """
+        Go interactive
+        """
+        # prime the execution context
+        context = context or {}
+        # grant access to my package
+        context['isce3'] = isce3  # my package
+        # and chain up
+        return super().pyre_interactiveSessionContext(context=context)
+
+
 # end of file
