@@ -21,8 +21,8 @@ isce.tests :=
 # the isce python package
 isce.pkg.name := isce3
 isce.pkg.root := packages/isce3/
-isce.pkg.bin :=
 isce.pkg.ext := extensions/
+isce.pkg.drivers := isce3
 
 # the isce lib meta-data
 isce.lib.root := lib/isce/

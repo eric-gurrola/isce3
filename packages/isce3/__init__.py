@@ -6,16 +6,18 @@
 from pyre import (
     # protocols, components, traits, and their infrastructure
     schemata, constraints, properties, protocol, component, foundry,
-    # decorators
+    # component interface decorators
     export, provides,
     # the manager of the pyre runtime
     executive,
-    # support for concurrency
-    nexus,
-    # support for multidimensional containers
+    # multidimensional containers
     grid,
+    # concurrency
+    nexus,
+    # workflows
+    flow,
     # miscellaneous
-    tracking, units
+    tracking, units, weaver,
     )
 
 
@@ -28,6 +30,7 @@ home, prefix, defaults = package.layout()
 # publish the local modules
 from . import (
     meta,        # package meta-data
+    shells,      # application support
 )
 
 
