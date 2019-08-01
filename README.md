@@ -10,10 +10,8 @@ project.
 THIS IS RESEARCH CODE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS.
 USE AT YOUR OWN RISK.
 
-Use of this software is controlled by a non-commercial use license agreement
-provided by the California Institute of Technology Jet Propulsion Laboratory.
-You must obtain a license in order to use this software.  Please consult the
-LICENSE file found in this package.
+USE OF THIS SOFTWARE IS CONTROLLED BY TERMS SPECIFIED IN THE LICENSE FILE.
+PLEASE CONSULT THE LICENSE FILE FOUND IN THIS PACKAGE.
 
 ISCE is a framework designed for the purpose of processing Interferometric
 Synthetic Aperture Radar (InSAR) data.  The framework aspects of it have been
